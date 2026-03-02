@@ -37,6 +37,12 @@ variable "deletion_protection" {
   default     = false
 }
 
+variable "ipv4_enabled" {
+  description = "Whether to assign a public IPv4 address to the Cloud SQL instance"
+  type        = bool
+  default     = false
+}
+
 resource "google_sql_database_instance" "main" {
   name             = "overload-party-db"
   project          = var.project_id
@@ -47,7 +53,7 @@ resource "google_sql_database_instance" "main" {
     tier    = var.tier
     edition = "ENTERPRISE"
     ip_configuration {
-      ipv4_enabled    = true  # Auth Proxy (CI db-migrate) uses public IP with IAM auth
+      ipv4_enabled    = var.ipv4_enabled
       private_network = var.network_id
     }
     backup_configuration {
@@ -60,6 +66,10 @@ resource "google_sql_database_instance" "main" {
     }
   }
   deletion_protection = var.deletion_protection
+
+  lifecycle {
+    ignore_changes = [root_password]
+  }
 }
 
 resource "google_sql_database" "main" {
@@ -84,4 +94,9 @@ output "instance_connection_name" {
 # IAM auth: DSN format for Auth Proxy sidecar (app connects to localhost:5432)
 output "database_url_iam" {
   value = var.service_account_email != "" ? "host=localhost port=5432 dbname=${var.database_name} user=${google_sql_user.iam_user[0].name} sslmode=disable" : ""
+}
+
+output "private_ip_address" {
+  description = "Private IP address of the Cloud SQL instance"
+  value       = google_sql_database_instance.main.private_ip_address
 }
