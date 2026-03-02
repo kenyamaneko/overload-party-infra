@@ -6,11 +6,7 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 6.0"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.0"
-    }
-  }
+}
 }
 
 locals {
@@ -70,6 +66,7 @@ module "cloudsql" {
   database_name         = "overload_party"
   network_id            = google_compute_network.main.self_link
   service_account_email = module.iam.service_account_email
+  ipv4_enabled          = false
 
   depends_on = [google_service_networking_connection.private]
 }
@@ -102,11 +99,33 @@ module "scheduler" {
 }
 
 # ──────────────────────────────────────────────
+# Cloud Run Job (DB Migration)
+# ──────────────────────────────────────────────
+
+module "migration_job" {
+  source = "../../modules/migration-job"
+
+  project_id            = local.project_id
+  region                = local.region
+  migration_image       = "asia-northeast1-docker.pkg.dev/overload-party-shared/overload-party/db-migrate:latest"
+  network               = google_compute_network.main.name
+  subnetwork            = google_compute_subnetwork.main.name
+  cloudsql_private_ip   = module.cloudsql.private_ip_address
+  database_name         = "overload_party"
+
+  depends_on = [google_service_networking_connection.private]
+}
+
+# ──────────────────────────────────────────────
 # Outputs
 # ──────────────────────────────────────────────
 
 output "cloudsql_connection_name" {
   value = module.cloudsql.instance_connection_name
+}
+
+output "cloudsql_private_ip" {
+  value = module.cloudsql.private_ip_address
 }
 
 output "database_url_iam" {
@@ -116,4 +135,8 @@ output "database_url_iam" {
 
 output "game_server_sa_email" {
   value = module.iam.service_account_email
+}
+
+output "migration_job_name" {
+  value = module.migration_job.job_name
 }

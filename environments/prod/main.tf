@@ -71,6 +71,7 @@ module "cloudsql" {
   network_id            = google_compute_network.main.self_link
   service_account_email = module.iam.service_account_email
   deletion_protection   = true
+  ipv4_enabled          = true # prod keeps public IP for now
 
   depends_on = [google_service_networking_connection.private]
 }
