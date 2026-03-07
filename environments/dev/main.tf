@@ -117,6 +117,23 @@ module "migration_job" {
 }
 
 # ──────────────────────────────────────────────
+# Newsfeed Job
+# ──────────────────────────────────────────────
+
+module "newsfeed" {
+  source = "../../modules/newsfeed"
+
+  project_id          = local.project_id
+  region              = local.region
+  newsfeed_image      = "asia-northeast1-docker.pkg.dev/overload-party-shared/overload-party/newsfeed:latest"
+  network             = google_compute_network.main.name
+  subnetwork          = google_compute_subnetwork.main.name
+  cloudsql_private_ip = module.cloudsql.private_ip_address
+
+  depends_on = [google_service_networking_connection.private]
+}
+
+# ──────────────────────────────────────────────
 # Outputs
 # ──────────────────────────────────────────────
 
@@ -139,4 +156,16 @@ output "game_server_sa_email" {
 
 output "migration_job_name" {
   value = module.migration_job.job_name
+}
+
+output "newsfeed_job_name" {
+  value = module.newsfeed.newsfeed_job_name
+}
+
+output "newsfeed_gcs_bucket" {
+  value = module.newsfeed.gcs_bucket_name
+}
+
+output "newsfeed_sa_email" {
+  value = module.newsfeed.newsfeed_sa_email
 }
