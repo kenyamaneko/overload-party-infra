@@ -93,6 +93,17 @@ module "iam" {
 # No Cloud Scheduler for prod — Cloud SQL is always on.
 
 # ──────────────────────────────────────────────
+# Static Assets (card illustrations, stamps)
+# ──────────────────────────────────────────────
+
+module "static_assets" {
+  source = "../../modules/static-assets"
+
+  project_id = local.project_id
+  region     = local.region
+}
+
+# ──────────────────────────────────────────────
 # Outputs
 # ──────────────────────────────────────────────
 
@@ -107,4 +118,12 @@ output "database_url_iam" {
 
 output "game_server_sa_email" {
   value = module.iam.service_account_email
+}
+
+output "assets_bucket_name" {
+  value = module.static_assets.bucket_name
+}
+
+output "assets_bucket_url" {
+  value = module.static_assets.bucket_url
 }

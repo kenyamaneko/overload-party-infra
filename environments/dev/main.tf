@@ -134,6 +134,17 @@ module "newsfeed" {
 }
 
 # ──────────────────────────────────────────────
+# Static Assets (card illustrations, stamps)
+# ──────────────────────────────────────────────
+
+module "static_assets" {
+  source = "../../modules/static-assets"
+
+  project_id = local.project_id
+  region     = local.region
+}
+
+# ──────────────────────────────────────────────
 # Outputs
 # ──────────────────────────────────────────────
 
@@ -168,4 +179,12 @@ output "newsfeed_gcs_bucket" {
 
 output "newsfeed_sa_email" {
   value = module.newsfeed.newsfeed_sa_email
+}
+
+output "assets_bucket_name" {
+  value = module.static_assets.bucket_name
+}
+
+output "assets_bucket_url" {
+  value = module.static_assets.bucket_url
 }

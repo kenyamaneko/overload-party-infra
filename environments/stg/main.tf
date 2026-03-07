@@ -117,6 +117,17 @@ module "migration_job" {
 }
 
 # ──────────────────────────────────────────────
+# Static Assets (card illustrations, stamps)
+# ──────────────────────────────────────────────
+
+module "static_assets" {
+  source = "../../modules/static-assets"
+
+  project_id = local.project_id
+  region     = local.region
+}
+
+# ──────────────────────────────────────────────
 # Outputs
 # ──────────────────────────────────────────────
 
@@ -139,4 +150,12 @@ output "game_server_sa_email" {
 
 output "migration_job_name" {
   value = module.migration_job.job_name
+}
+
+output "assets_bucket_name" {
+  value = module.static_assets.bucket_name
+}
+
+output "assets_bucket_url" {
+  value = module.static_assets.bucket_url
 }
