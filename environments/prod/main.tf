@@ -84,7 +84,7 @@ module "iam" {
   source = "../../modules/iam"
 
   project_id          = local.project_id
-  service_account_id  = "overload-party-server"
+  service_account_id  = "overload-party-app"
   gke_project_id      = "overload-party-shared"
   k8s_namespace       = "prod"
   k8s_service_account = "game-server"

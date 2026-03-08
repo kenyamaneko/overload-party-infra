@@ -47,7 +47,8 @@ make sql-stop ENV=dev
 
 | リポジトリ | 内容 |
 |-----------|------|
-| [overload-party-server](https://github.com/kenyamaneko/overload-party-server) | Go ゲームサーバー |
+| [overload-party-gateway](https://github.com/kenyamaneko/overload-party-gateway) | API ゲートウェイサーバー (Go) |
+| [overload-party-battle](https://github.com/kenyamaneko/overload-party-battle) | バトルサーバー (Go) |
 | [overload-party-client](https://github.com/kenyamaneko/overload-party-client) | React + Capacitor クライアント |
 | [overload-party-k8s](https://github.com/kenyamaneko/overload-party-k8s) | K8s マニフェスト + GKE/AR Terraform |
 | [overload-party-common](https://github.com/kenyamaneko/overload-party-common) | 共有データ (カード YAML, 定数, ドキュメント) |

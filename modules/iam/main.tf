@@ -1,8 +1,8 @@
-# Google Service Account for game-server
+# Google Service Account for application workloads (gateway, battle)
 resource "google_service_account" "game_server" {
   project      = var.project_id
   account_id   = var.service_account_id
-  display_name = "Overload Party Server"
+  display_name = "Overload Party App"
 }
 
 # Allow GSA to access Cloud SQL
