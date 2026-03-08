@@ -154,3 +154,10 @@ resource "google_cloud_run_v2_job_iam_member" "deploy_developer" {
   role     = "roles/run.developer"
   member   = "serviceAccount:${var.deploy_service_account_email}"
 }
+
+resource "google_service_account_iam_member" "deploy_act_as_migration" {
+  count              = var.deploy_service_account_email != "" ? 1 : 0
+  service_account_id = google_service_account.migration.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${var.deploy_service_account_email}"
+}
