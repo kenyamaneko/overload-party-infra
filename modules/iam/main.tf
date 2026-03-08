@@ -34,3 +34,11 @@ resource "google_project_iam_member" "deploy_sa_cloudsql_admin" {
   role    = "roles/cloudsql.admin"
   member  = "serviceAccount:${var.deploy_service_account_email}"
 }
+
+# Allow Terraform deployer SA to manage resources in this project
+resource "google_project_iam_member" "terraform_editor" {
+  count   = var.terraform_service_account_email != "" ? 1 : 0
+  project = var.project_id
+  role    = "roles/editor"
+  member  = "serviceAccount:${var.terraform_service_account_email}"
+}

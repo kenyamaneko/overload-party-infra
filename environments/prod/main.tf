@@ -71,7 +71,7 @@ module "cloudsql" {
   network_id            = google_compute_network.main.self_link
   service_account_email = module.iam.service_account_email
   deletion_protection   = true
-  ipv4_enabled          = true # prod keeps public IP for now
+  ipv4_enabled          = false
 
   depends_on = [google_service_networking_connection.private]
 }
@@ -86,8 +86,9 @@ module "iam" {
   project_id          = local.project_id
   service_account_id  = "overload-party-app"
   gke_project_id      = "overload-party-shared"
-  k8s_namespace       = "prod"
-  k8s_service_account = "game-server"
+  k8s_namespace                   = "prod"
+  k8s_service_account             = "game-server"
+  terraform_service_account_email = "terraform-deployer@overload-party-shared.iam.gserviceaccount.com"
 }
 
 # No Cloud Scheduler for prod — Cloud SQL is always on.

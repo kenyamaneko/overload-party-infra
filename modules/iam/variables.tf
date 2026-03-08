@@ -31,3 +31,9 @@ variable "deploy_service_account_email" {
   type        = string
   default     = ""
 }
+
+variable "terraform_service_account_email" {
+  description = "Terraform deployer SA email (for CI terraform apply)"
+  type        = string
+  default     = ""
+}

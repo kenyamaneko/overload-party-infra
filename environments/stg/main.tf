@@ -83,7 +83,8 @@ module "iam" {
   gke_project_id               = "overload-party-shared"
   k8s_namespace                = "stg"
   k8s_service_account          = "game-server"
-  deploy_service_account_email = "github-ci@overload-party-shared.iam.gserviceaccount.com"
+  deploy_service_account_email    = "github-ci@overload-party-shared.iam.gserviceaccount.com"
+  terraform_service_account_email = "terraform-deployer@overload-party-shared.iam.gserviceaccount.com"
 }
 
 # ──────────────────────────────────────────────
