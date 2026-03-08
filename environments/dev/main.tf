@@ -106,13 +106,14 @@ module "scheduler" {
 module "migration_job" {
   source = "../../modules/migration-job"
 
-  project_id            = local.project_id
-  region                = local.region
-  migration_image       = "asia-northeast1-docker.pkg.dev/overload-party-shared/overload-party/db-migrate:latest"
-  network               = google_compute_network.main.name
-  subnetwork            = google_compute_subnetwork.main.name
-  cloudsql_private_ip   = module.cloudsql.private_ip_address
-  database_name         = "overload_party"
+  project_id                   = local.project_id
+  region                       = local.region
+  migration_image              = "asia-northeast1-docker.pkg.dev/overload-party-shared/overload-party/db-migrate:latest"
+  network                      = google_compute_network.main.name
+  subnetwork                   = google_compute_subnetwork.main.name
+  cloudsql_private_ip          = module.cloudsql.private_ip_address
+  database_name                = "overload_party"
+  deploy_service_account_email = "github-ci@overload-party-shared.iam.gserviceaccount.com"
 
   depends_on = [google_service_networking_connection.private]
 }

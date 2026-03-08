@@ -134,7 +134,7 @@ resource "google_cloud_run_v2_job" "migration" {
 }
 
 # ──────────────────────────────────────────────
-# Allow deploy SA to execute the job
+# Allow deploy SA to update and execute the job
 # ──────────────────────────────────────────────
 
 resource "google_cloud_run_v2_job_iam_member" "deploy_invoker" {
@@ -143,5 +143,14 @@ resource "google_cloud_run_v2_job_iam_member" "deploy_invoker" {
   location = var.region
   name     = google_cloud_run_v2_job.migration.name
   role     = "roles/run.invoker"
+  member   = "serviceAccount:${var.deploy_service_account_email}"
+}
+
+resource "google_cloud_run_v2_job_iam_member" "deploy_developer" {
+  count    = var.deploy_service_account_email != "" ? 1 : 0
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_job.migration.name
+  role     = "roles/run.developer"
   member   = "serviceAccount:${var.deploy_service_account_email}"
 }
