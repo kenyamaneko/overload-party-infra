@@ -10,6 +10,15 @@ Overload Party のインフラ管理リポジトリ。Cloud SQL / IAM / Cloud Sc
 | stg  | `overload-party-stg`  | db-g1-small | 2:00 AM JST 自動停止 |
 | prod | `overload-party-prod` | db-g1-small | なし (常時稼働) |
 
+## Terraform の管轄範囲
+
+| リポ | 対象プロジェクト | 管理するもの |
+|------|-----------------|-------------|
+| **k8s** | `overload-party-shared` | GKE, Artifact Registry, WIF, CI/Deploy SA, shared 内 IAM |
+| **infra (このリポ)** | `dev` / `stg` / `prod` | VPC, Cloud SQL, App SA, Cloud Run Jobs, Scheduler, CI SA の環境別権限 |
+
+CI SA (`github-ci`) の **定義** は k8s、各環境プロジェクトへの **権限付与** は infra で管理する。
+
 ## ディレクトリ構成
 
 ```
@@ -21,6 +30,9 @@ modules/             # 共通モジュール
   cloudsql/          # Cloud SQL PostgreSQL
   iam/               # サービスアカウント + Workload Identity
   scheduler/         # Cloud Scheduler (Cloud SQL 自動停止/起動)
+  migration-job/     # DB マイグレーション (Cloud Run Job)
+  newsfeed/          # ニュースフィード (Cloud Run Job)
+  static-assets/     # 静的アセット (GCS)
 scripts/             # 運用スクリプト
 ```
 
