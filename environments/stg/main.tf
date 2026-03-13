@@ -80,11 +80,11 @@ module "iam" {
 
   project_id                   = local.project_id
   service_account_id           = "overload-party-app"
-  gke_project_id               = "overload-party-shared"
+  gke_project_id               = "keyandnotes-platform"
   k8s_namespace                = "stg"
   k8s_service_account          = "game-server"
-  deploy_service_account_email    = "github-ci@overload-party-shared.iam.gserviceaccount.com"
-  terraform_service_account_email = "terraform-deployer@overload-party-shared.iam.gserviceaccount.com"
+  deploy_service_account_email    = "github-ci@keyandnotes-platform.iam.gserviceaccount.com"
+  terraform_service_account_email = "terraform-deployer@keyandnotes-platform.iam.gserviceaccount.com"
 }
 
 # ──────────────────────────────────────────────
@@ -109,11 +109,12 @@ module "migration_job" {
 
   project_id            = local.project_id
   region                = local.region
-  migration_image       = "asia-northeast1-docker.pkg.dev/overload-party-shared/overload-party/db-migrate:latest"
+  migration_image       = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/db-migrate:latest"
   network               = google_compute_network.main.name
   subnetwork            = google_compute_subnetwork.main.name
-  cloudsql_private_ip   = module.cloudsql.private_ip_address
-  database_name         = "overload_party"
+  cloudsql_private_ip          = module.cloudsql.private_ip_address
+  database_name                = "overload_party"
+  deploy_service_account_email = "github-ci@keyandnotes-platform.iam.gserviceaccount.com"
 
   depends_on = [google_service_networking_connection.private]
 }

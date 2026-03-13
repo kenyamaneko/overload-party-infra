@@ -14,7 +14,7 @@ Overload Party のインフラ管理リポジトリ。Cloud SQL / IAM / Cloud Sc
 
 | リポ | 対象プロジェクト | 管理するもの |
 |------|-----------------|-------------|
-| **k8s** | `overload-party-shared` | GKE, Artifact Registry, WIF, CI/Deploy SA, shared 内 IAM |
+| **k8s** | `keyandnotes-platform` | GKE, Artifact Registry, WIF, CI/Deploy SA, platform 内 IAM |
 | **infra (このリポ)** | `dev` / `stg` / `prod` | VPC, Cloud SQL, App SA, Cloud Run Jobs, Scheduler, CI SA の環境別権限 |
 
 CI SA (`github-ci`) の **定義** は k8s、各環境プロジェクトへの **権限付与** は infra で管理する。

@@ -85,10 +85,10 @@ module "iam" {
 
   project_id          = local.project_id
   service_account_id  = "overload-party-app"
-  gke_project_id      = "overload-party-shared"
+  gke_project_id      = "keyandnotes-platform"
   k8s_namespace                   = "prod"
   k8s_service_account             = "game-server"
-  terraform_service_account_email = "terraform-deployer@overload-party-shared.iam.gserviceaccount.com"
+  terraform_service_account_email = "terraform-deployer@keyandnotes-platform.iam.gserviceaccount.com"
 }
 
 # No Cloud Scheduler for prod — Cloud SQL is always on.
