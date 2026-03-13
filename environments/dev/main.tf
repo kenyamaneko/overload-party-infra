@@ -60,13 +60,14 @@ resource "google_service_networking_connection" "private" {
 module "cloudsql" {
   source = "../../modules/cloudsql"
 
-  project_id            = local.project_id
-  region                = local.region
-  tier                  = "db-g1-small"
-  database_name         = "overload_party"
-  network_id            = google_compute_network.main.self_link
-  service_account_email = module.iam.service_account_email
-  ipv4_enabled          = false
+  project_id                    = local.project_id
+  region                        = local.region
+  tier                          = "db-g1-small"
+  database_name                 = "overload_party"
+  network_id                    = google_compute_network.main.self_link
+  service_account_email         = module.iam.service_account_email
+  ipv4_enabled                  = false
+  psc_allowed_consumer_projects = ["keyandnotes-platform"]
 
   depends_on = [google_service_networking_connection.private]
 }
@@ -190,4 +191,12 @@ output "assets_bucket_name" {
 
 output "assets_bucket_url" {
   value = module.static_assets.bucket_url
+}
+
+output "cloudsql_psc_service_attachment" {
+  value = module.cloudsql.psc_service_attachment_link
+}
+
+output "cloudsql_dns_name" {
+  value = module.cloudsql.dns_name
 }

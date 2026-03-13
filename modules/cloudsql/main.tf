@@ -43,6 +43,12 @@ variable "ipv4_enabled" {
   default     = false
 }
 
+variable "psc_allowed_consumer_projects" {
+  description = "Project IDs allowed to connect via PSC (empty = PSC disabled)"
+  type        = list(string)
+  default     = []
+}
+
 resource "google_sql_database_instance" "main" {
   name             = "overload-party-db"
   project          = var.project_id
@@ -55,6 +61,14 @@ resource "google_sql_database_instance" "main" {
     ip_configuration {
       ipv4_enabled    = var.ipv4_enabled
       private_network = var.network_id
+
+      dynamic "psc_config" {
+        for_each = length(var.psc_allowed_consumer_projects) > 0 ? [1] : []
+        content {
+          psc_enabled               = true
+          allowed_consumer_projects = var.psc_allowed_consumer_projects
+        }
+      }
     }
     backup_configuration {
       enabled    = true
@@ -99,4 +113,14 @@ output "database_url_iam" {
 output "private_ip_address" {
   description = "Private IP address of the Cloud SQL instance"
   value       = google_sql_database_instance.main.private_ip_address
+}
+
+output "psc_service_attachment_link" {
+  description = "PSC service attachment link (empty if PSC disabled)"
+  value       = try(google_sql_database_instance.main.psc_service_attachment_link, "")
+}
+
+output "dns_name" {
+  description = "PSC DNS name (empty if PSC disabled)"
+  value       = try(google_sql_database_instance.main.dns_name, "")
 }
