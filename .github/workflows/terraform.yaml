@@ -41,10 +41,10 @@ jobs:
           ENVS="[]"
           # If modules changed, run all environments
           if echo "${CHANGED}" | grep -q '^modules/'; then
-            ENVS='["dev","stg","prod"]'
+            ENVS='["dev","stg","prod","platform"]'
           else
             envs=()
-            for env in dev stg prod; do
+            for env in dev stg prod platform; do
               if echo "${CHANGED}" | grep -q "^environments/${env}/"; then
                 envs+=("\"${env}\"")
               fi
