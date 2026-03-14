@@ -1,6 +1,6 @@
 terraform {
   backend "gcs" {
-    bucket = "overload-party-tf-state"
-    prefix = "terraform/prod"
+    bucket = "keyandnotes-tf-state"
+    prefix = "overload-party/prod"
   }
 }

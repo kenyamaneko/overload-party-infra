@@ -17,10 +17,10 @@ destroy:
 	./scripts/infra-destroy.sh $(ENV)
 
 sql-start:
-	./scripts/cloudsql-start.sh $(ENV)
+	./db-ctl/cloudsql-start.sh $(ENV)
 
 sql-stop:
-	./scripts/cloudsql-stop.sh $(ENV)
+	./db-ctl/cloudsql-stop.sh $(ENV)
 
 newsfeed-pause:
 	gcloud scheduler jobs pause newsfeed-fetch --project=$(PROJECT) --location=$(REGION)
