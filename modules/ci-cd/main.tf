@@ -80,6 +80,14 @@ resource "google_project_iam_member" "ci_run_developer" {
   member   = "serviceAccount:${google_service_account.ci.email}"
 }
 
+# Cloud Run Jobs update 時にジョブの SA として動作する権限
+resource "google_project_iam_member" "ci_run_service_account_user" {
+  for_each = toset(var.cloudrun_projects)
+  project  = each.value
+  role     = "roles/iam.serviceAccountUser"
+  member   = "serviceAccount:${google_service_account.ci.email}"
+}
+
 # ---- Terraform Deployer Service Account ----
 
 resource "google_service_account" "terraform" {

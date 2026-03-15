@@ -63,13 +63,14 @@ module "ci_cd" {
   ]
 
   cloudfunctions_projects = ["overload-party-dev"]
-  cloudrun_projects       = ["overload-party-dev"]
+  cloudrun_projects       = ["overload-party-dev", "keyandnotes-ops"]
 }
 
 # Cloud Run in each environment project needs to pull images from this AR.
 resource "google_artifact_registry_repository_iam_member" "cloudrun_ar_reader" {
   for_each = {
     dev = "346314225010"
+    ops = "59651353372"
   }
 
   project    = local.project_id
