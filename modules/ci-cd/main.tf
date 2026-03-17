@@ -72,7 +72,7 @@ resource "google_project_iam_member" "ci_service_account_user" {
   member   = "serviceAccount:${google_service_account.ci.email}"
 }
 
-# Cloud Run Jobs update 権限（ops・newsfeed 用）
+# Cloud Run Jobs update 権限（ops: db-migrate 等, newsfeed: newsfeed-job）
 resource "google_project_iam_member" "ci_run_developer" {
   for_each = toset(var.cloudrun_projects)
   project  = each.value
@@ -80,7 +80,7 @@ resource "google_project_iam_member" "ci_run_developer" {
   member   = "serviceAccount:${google_service_account.ci.email}"
 }
 
-# Cloud Run Jobs update 時にジョブの SA として動作する権限
+# Cloud Run Jobs update 時にジョブの SA として動作する権限（ops: db-migrate 等, newsfeed: newsfeed-job）
 resource "google_project_iam_member" "ci_run_service_account_user" {
   for_each = toset(var.cloudrun_projects)
   project  = each.value
