@@ -60,6 +60,9 @@ resource "google_sql_database_instance" "main" {
     edition = "ENTERPRISE"
     ip_configuration {
       ipv4_enabled    = var.ipv4_enabled
+      # private_network (VPC peering) と PSC は併用可能。
+      # private_network: 同一プロジェクト内の Cloud Run Job が private IP で接続
+      # PSC: 別プロジェクト (keyandnotes-platform) の GKE から接続
       private_network = var.network_id
 
       dynamic "psc_config" {
@@ -117,10 +120,10 @@ output "private_ip_address" {
 
 output "psc_service_attachment_link" {
   description = "PSC service attachment link (empty if PSC disabled)"
-  value       = try(google_sql_database_instance.main.psc_service_attachment_link, "")
+  value       = length(var.psc_allowed_consumer_projects) > 0 ? google_sql_database_instance.main.psc_service_attachment_link : ""
 }
 
 output "dns_name" {
   description = "PSC DNS name (empty if PSC disabled)"
-  value       = try(google_sql_database_instance.main.dns_name, "")
+  value       = length(var.psc_allowed_consumer_projects) > 0 ? google_sql_database_instance.main.dns_name : ""
 }
