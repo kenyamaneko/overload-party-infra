@@ -2,7 +2,7 @@ ENV ?= dev
 PROJECT = overload-party-$(ENV)
 REGION = asia-northeast1
 
-.PHONY: init plan apply destroy sql-start sql-stop newsfeed-pause newsfeed-resume
+.PHONY: init plan apply destroy newsfeed-pause newsfeed-resume
 
 init:
 	cd environments/$(ENV) && terraform init
@@ -18,12 +18,6 @@ destroy:
 	@echo "This will DELETE the $(ENV) Cloud SQL instance and all data."
 	@read -p "Are you sure? (yes/no): " confirm && [ "$$confirm" = "yes" ] || (echo "Aborted."; exit 1)
 	cd environments/$(ENV) && terraform destroy -auto-approve
-
-sql-start:
-	./db-ctl/cloudsql-start.sh $(ENV)
-
-sql-stop:
-	./db-ctl/cloudsql-stop.sh $(ENV)
 
 newsfeed-pause:
 	gcloud scheduler jobs pause newsfeed-fetch --project=$(PROJECT) --location=$(REGION)
