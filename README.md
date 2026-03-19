@@ -35,7 +35,6 @@ modules/             # 共通モジュール
   migration-job/     # DB マイグレーション (Cloud Run Job)
   newsfeed/          # ニュースフィード (Cloud Run Job)
   static-assets/     # 静的アセット (GCS)
-scripts/             # 運用スクリプト
 ```
 
 ## 使い方
@@ -46,9 +45,7 @@ make plan ENV=dev
 make apply ENV=dev
 make destroy ENV=dev
 
-# Cloud SQL の手動起動/停止
-make sql-start ENV=dev
-make sql-stop ENV=dev
+# Cloud SQL の手動起動/停止は Slack コマンド (/db-start, /db-stop) で実行
 ```
 
 ## CI/CD
