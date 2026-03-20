@@ -79,6 +79,7 @@ resource "google_cloud_run_v2_job" "migration" {
   location            = var.region
   deletion_protection = false
 
+  # CI/CD がイメージタグを直接更新するため、Terraform の差分検知から除外
   lifecycle {
     ignore_changes = [template[0].template[0].containers[0].image]
   }

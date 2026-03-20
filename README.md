@@ -6,9 +6,9 @@ Overload Party のインフラ管理リポジトリ。Cloud SQL / IAM / Cloud Sc
 
 | 環境 | GCP Project | 用途 |
 |------|-------------|------|
-| dev  | `overload-party-dev`  | 開発環境（Cloud SQL, VPC, Cloud Run Jobs, Scheduler） |
-| stg  | `overload-party-stg`  | ステージング環境（同上） |
-| prod | `overload-party-prod` | 本番環境（同上、Scheduler なし） |
+| dev  | `overload-party-dev`  | 開発環境（VPC, Cloud SQL, Scheduler, Migration Job, Newsfeed Job） |
+| stg  | `overload-party-stg`  | ステージング環境（VPC, Cloud SQL, Scheduler, Migration Job） |
+| prod | `overload-party-prod` | 本番環境（VPC, Cloud SQL のみ、常時稼働） |
 | platform | `keyandnotes-platform` | 共有基盤（WIF, CI SA, Terraform SA, AR reader） |
 
 ## Terraform の管轄範囲
@@ -28,6 +28,7 @@ environments/        # 環境別 Terraform
   prod/              # 本番環境
   platform/          # 共有基盤 (WIF, CI/TF SA)
 modules/             # 共通モジュール
+  vpc/               # VPC + サブネット + Private Services Access
   ci-cd/             # WIF プール + CI SA + Terraform SA
   cloudsql/          # Cloud SQL PostgreSQL
   iam/               # サービスアカウント + Workload Identity
@@ -46,6 +47,37 @@ make apply ENV=dev
 make destroy ENV=dev
 
 # Cloud SQL の手動起動/停止は Slack コマンド (/db-start, /db-stop) で実行
+
+# テスト実行
+cd modules/scheduler && terraform test
+cd modules/iam && terraform test
+cd modules/vpc && terraform test
+```
+
+## 環境ごとの差異
+
+| モジュール | dev | stg | prod | 備考 |
+|-----------|-----|-----|------|------|
+| vpc | o | o | o | |
+| cloudsql | o | o | o | prod は `deletion_protection = true` |
+| iam | o | o | o | |
+| scheduler | o | o | - | prod は常時稼働のため不要 |
+| migration-job | o | o | - | prod の DB マイグレーションは手動実行 |
+| newsfeed | o | - | - | dev のみ（stg/prod は未デプロイ） |
+| static-assets | o | o | o | |
+
+### Cloud Scheduler の auto-start
+
+`modules/scheduler` は `start_schedule` 変数で朝の自動起動を設定できます（デフォルト: 無効）。
+
+```hcl
+module "scheduler" {
+  source         = "../../modules/scheduler"
+  project_id     = local.project_id
+  region         = local.region
+  stop_schedule  = "0 2 * * *"     # 2:00 AM JST に停止
+  start_schedule = "0 9 * * 1-5"   # 平日 9:00 AM JST に起動（任意）
+}
 ```
 
 ## CI/CD

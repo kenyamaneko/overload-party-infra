@@ -84,6 +84,7 @@ resource "google_sql_database_instance" "main" {
   }
   deletion_protection = var.deletion_protection
 
+  # root_password は初回作成後に外部で管理されるため、Terraform の差分検知から除外
   lifecycle {
     ignore_changes = [root_password]
   }

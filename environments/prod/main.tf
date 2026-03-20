@@ -6,10 +6,6 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 6.0"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.0"
-    }
   }
 }
 
@@ -27,34 +23,11 @@ provider "google" {
 # VPC Network
 # ──────────────────────────────────────────────
 
-resource "google_compute_network" "main" {
-  name                    = "overload-party-network"
-  project                 = local.project_id
-  auto_create_subnetworks = false
-}
+module "vpc" {
+  source = "../../modules/vpc"
 
-resource "google_compute_subnetwork" "main" {
-  name          = "overload-party-subnet"
-  project       = local.project_id
-  region        = local.region
-  network       = google_compute_network.main.id
-  ip_cidr_range = "10.0.0.0/20"
-}
-
-# Private services access for Cloud SQL private IP
-resource "google_compute_global_address" "private_ip" {
-  name          = "overload-party-private-ip"
-  project       = local.project_id
-  purpose       = "VPC_PEERING"
-  address_type  = "INTERNAL"
-  prefix_length = 16
-  network       = google_compute_network.main.id
-}
-
-resource "google_service_networking_connection" "private" {
-  network                 = google_compute_network.main.id
-  service                 = "servicenetworking.googleapis.com"
-  reserved_peering_ranges = [google_compute_global_address.private_ip.name]
+  project_id = local.project_id
+  region     = local.region
 }
 
 # ──────────────────────────────────────────────
@@ -68,12 +41,12 @@ module "cloudsql" {
   region                = local.region
   tier                  = "db-g1-small" # upgrade as needed
   database_name         = "overload_party"
-  network_id            = google_compute_network.main.self_link
+  network_id            = module.vpc.network_self_link
   service_account_email = module.iam.service_account_email
   deletion_protection   = true
   ipv4_enabled          = false
 
-  depends_on = [google_service_networking_connection.private]
+  depends_on = [module.vpc.service_networking_connection]
 }
 
 # ──────────────────────────────────────────────
