@@ -104,7 +104,16 @@ resource "google_service_account_iam_member" "terraform_wif" {
 }
 
 resource "google_project_iam_member" "terraform_editor" {
-  project = var.project_id
-  role    = "roles/editor"
-  member  = "serviceAccount:${google_service_account.terraform.email}"
+  for_each = toset(var.terraform_editor_projects)
+  project  = each.value
+  role     = "roles/editor"
+  member   = "serviceAccount:${google_service_account.terraform.email}"
+}
+
+# CI SA が Cloud SQL を起動/停止する権限（dev/stg で Slack コマンド等から利用）
+resource "google_project_iam_member" "ci_cloudsql_admin" {
+  for_each = toset(var.cloudsql_admin_projects)
+  project  = each.value
+  role     = "roles/cloudsql.admin"
+  member   = "serviceAccount:${google_service_account.ci.email}"
 }

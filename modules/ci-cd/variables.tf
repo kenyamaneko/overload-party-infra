@@ -45,3 +45,14 @@ variable "cloudrun_projects" {
   type        = list(string)
   default     = []
 }
+
+variable "terraform_editor_projects" {
+  description = "GCP projects where Terraform deployer SA needs editor permission"
+  type        = list(string)
+}
+
+variable "cloudsql_admin_projects" {
+  description = "GCP projects where CI SA needs Cloud SQL admin permission (start/stop)"
+  type        = list(string)
+  default     = []
+}

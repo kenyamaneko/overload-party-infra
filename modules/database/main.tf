@@ -25,10 +25,27 @@ variable "network_id" {
   type        = string
 }
 
-variable "service_account_email" {
-  description = "GSA email for IAM database authentication"
+variable "service_account_id" {
+  description = "Service account ID for the game server application"
+  type        = string
+}
+
+variable "gke_project_id" {
+  description = "GCP project ID where GKE cluster lives (for Workload Identity)"
   type        = string
   default     = ""
+}
+
+variable "k8s_namespace" {
+  description = "Kubernetes namespace for Workload Identity binding"
+  type        = string
+  default     = "dev"
+}
+
+variable "k8s_service_account" {
+  description = "Kubernetes ServiceAccount name for Workload Identity binding"
+  type        = string
+  default     = "game-server"
 }
 
 variable "deletion_protection" {
@@ -48,6 +65,39 @@ variable "psc_allowed_consumer_projects" {
   type        = list(string)
   default     = []
 }
+
+# ──────────────────────────────────────────────
+# Service Account (game server → Cloud SQL)
+# ──────────────────────────────────────────────
+
+resource "google_service_account" "game_server" {
+  project      = var.project_id
+  account_id   = var.service_account_id
+  display_name = "Overload Party App"
+}
+
+resource "google_project_iam_member" "cloudsql_client" {
+  project = var.project_id
+  role    = "roles/cloudsql.client"
+  member  = "serviceAccount:${google_service_account.game_server.email}"
+}
+
+resource "google_project_iam_member" "cloudsql_instance_user" {
+  project = var.project_id
+  role    = "roles/cloudsql.instanceUser"
+  member  = "serviceAccount:${google_service_account.game_server.email}"
+}
+
+resource "google_service_account_iam_member" "workload_identity" {
+  count              = var.gke_project_id != "" ? 1 : 0
+  service_account_id = google_service_account.game_server.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "serviceAccount:${var.gke_project_id}.svc.id.goog[${var.k8s_namespace}/${var.k8s_service_account}]"
+}
+
+# ──────────────────────────────────────────────
+# Cloud SQL Instance
+# ──────────────────────────────────────────────
 
 resource "google_sql_database_instance" "main" {
   name             = "overload-party-db"
@@ -98,12 +148,15 @@ resource "google_sql_database" "main" {
 
 # IAM database user (for Cloud SQL Auth Proxy with --auto-iam-authn)
 resource "google_sql_user" "iam_user" {
-  count    = var.service_account_email != "" ? 1 : 0
-  name     = trimsuffix(var.service_account_email, ".gserviceaccount.com")
+  name     = trimsuffix(google_service_account.game_server.email, ".gserviceaccount.com")
   instance = google_sql_database_instance.main.name
   project  = var.project_id
   type     = "CLOUD_IAM_SERVICE_ACCOUNT"
 }
+
+# ──────────────────────────────────────────────
+# Outputs
+# ──────────────────────────────────────────────
 
 output "instance_connection_name" {
   value = google_sql_database_instance.main.connection_name
@@ -111,7 +164,7 @@ output "instance_connection_name" {
 
 # IAM auth: DSN format for Auth Proxy sidecar (app connects to localhost:5432)
 output "database_url_iam" {
-  value = var.service_account_email != "" ? "host=localhost port=5432 dbname=${var.database_name} user=${google_sql_user.iam_user[0].name} sslmode=disable" : ""
+  value = "host=localhost port=5432 dbname=${var.database_name} user=${google_sql_user.iam_user.name} sslmode=disable"
 }
 
 output "private_ip_address" {
@@ -127,4 +180,8 @@ output "psc_service_attachment_link" {
 output "dns_name" {
   description = "PSC DNS name (empty if PSC disabled)"
   value       = length(var.psc_allowed_consumer_projects) > 0 ? google_sql_database_instance.main.dns_name : ""
+}
+
+output "service_account_email" {
+  value = google_service_account.game_server.email
 }

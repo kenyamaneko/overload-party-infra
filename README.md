@@ -28,14 +28,13 @@ environments/        # 環境別 Terraform
   prod/              # 本番環境
   platform/          # 共有基盤 (WIF, CI/TF SA)
 modules/             # 共通モジュール
-  vpc/               # VPC + サブネット + Private Services Access
-  ci-cd/             # WIF プール + CI SA + Terraform SA
-  cloudsql/          # Cloud SQL PostgreSQL
-  iam/               # サービスアカウント + Workload Identity
-  scheduler/         # Cloud Scheduler (Cloud SQL 自動停止/起動)
-  migration-job/     # DB マイグレーション (Cloud Run Job)
+  network/           # VPC + サブネット + Private Services Access
+  database/          # Cloud SQL PostgreSQL + アプリ SA + Workload Identity
+  db-autostop/       # Cloud Scheduler (Cloud SQL 自動停止/起動)
+  db-migration/      # DB マイグレーション (Cloud Run Job)
   newsfeed/          # ニュースフィード (Cloud Run Job)
-  static-assets/     # 静的アセット (GCS)
+  assets/            # ゲームアセット (Firebase Hosting)
+  ci-cd/             # WIF プール + CI SA + Terraform SA + 各プロジェクトへの権限付与
 ```
 
 ## 使い方
@@ -49,30 +48,28 @@ make destroy ENV=dev
 # Cloud SQL の手動起動/停止は Slack コマンド (/db-start, /db-stop) で実行
 
 # テスト実行
-cd modules/scheduler && terraform test
-cd modules/iam && terraform test
-cd modules/vpc && terraform test
+cd modules/db-autostop && terraform test
+cd modules/network && terraform test
 ```
 
 ## 環境ごとの差異
 
 | モジュール | dev | stg | prod | 備考 |
 |-----------|-----|-----|------|------|
-| vpc | o | o | o | |
-| cloudsql | o | o | o | prod は `deletion_protection = true` |
-| iam | o | o | o | |
-| scheduler | o | o | - | prod は常時稼働のため不要 |
-| migration-job | o | o | - | prod の DB マイグレーションは手動実行 |
+| network | o | o | o | |
+| database | o | o | o | prod は `deletion_protection = true`、アプリ SA も含む |
+| db-autostop | o | o | - | prod は常時稼働のため不要 |
+| db-migration | o | o | - | prod の DB マイグレーションは手動実行 |
 | newsfeed | o | - | - | dev のみ（stg/prod は未デプロイ） |
-| static-assets | o | o | o | |
+| assets | o | o | o | |
 
 ### Cloud Scheduler の auto-start
 
-`modules/scheduler` は `start_schedule` 変数で朝の自動起動を設定できます（デフォルト: 無効）。
+`modules/db-autostop` は `start_schedule` 変数で朝の自動起動を設定できます（デフォルト: 無効）。
 
 ```hcl
-module "scheduler" {
-  source         = "../../modules/scheduler"
+module "db_autostop" {
+  source         = "../../modules/db-autostop"
   project_id     = local.project_id
   region         = local.region
   stop_schedule  = "0 2 * * *"     # 2:00 AM JST に停止

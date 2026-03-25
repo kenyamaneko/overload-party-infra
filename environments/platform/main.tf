@@ -64,6 +64,17 @@ module "ci_cd" {
 
   cloudfunctions_projects = ["overload-party-dev"]
   cloudrun_projects       = ["overload-party-dev", "keyandnotes-ops"]
+
+  terraform_editor_projects = [
+    "keyandnotes-platform",
+    "overload-party-dev",
+    "overload-party-stg",
+    "overload-party-prod",
+  ]
+  cloudsql_admin_projects = [
+    "overload-party-dev",
+    "overload-party-stg",
+  ]
 }
 
 # Cloud Run in each environment project needs to pull images from this AR.
