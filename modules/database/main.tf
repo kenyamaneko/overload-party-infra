@@ -67,6 +67,16 @@ variable "psc_allowed_consumer_projects" {
 }
 
 # ──────────────────────────────────────────────
+# APIs
+# ──────────────────────────────────────────────
+
+resource "google_project_service" "sqladmin" {
+  project            = var.project_id
+  service            = "sqladmin.googleapis.com"
+  disable_on_destroy = false
+}
+
+# ──────────────────────────────────────────────
 # Service Account (game server → Cloud SQL)
 # ──────────────────────────────────────────────
 
@@ -109,7 +119,7 @@ resource "google_sql_database_instance" "main" {
     tier    = var.tier
     edition = "ENTERPRISE"
     ip_configuration {
-      ipv4_enabled    = var.ipv4_enabled
+      ipv4_enabled = var.ipv4_enabled
       # private_network (VPC peering) と PSC は併用可能。
       # private_network: 同一プロジェクト内の Cloud Run Job が private IP で接続
       # PSC: 別プロジェクト (keyandnotes-platform) の GKE から接続
@@ -134,9 +144,10 @@ resource "google_sql_database_instance" "main" {
   }
   deletion_protection = var.deletion_protection
 
-  # root_password は初回作成後に外部で管理されるため、Terraform の差分検知から除外
+  # root_password: 初回作成後に外部で管理
+  # activation_policy: 起動・停止は Terraform 外で管理（Cloud Scheduler / 手動）
   lifecycle {
-    ignore_changes = [root_password]
+    ignore_changes = [root_password, settings[0].activation_policy]
   }
 }
 

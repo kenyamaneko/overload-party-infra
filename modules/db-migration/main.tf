@@ -54,6 +54,16 @@ variable "deploy_service_account_email" {
 }
 
 # ──────────────────────────────────────────────
+# APIs
+# ──────────────────────────────────────────────
+
+resource "google_project_service" "run" {
+  project            = var.project_id
+  service            = "run.googleapis.com"
+  disable_on_destroy = false
+}
+
+# ──────────────────────────────────────────────
 # Service Account for Cloud Run Job
 # ──────────────────────────────────────────────
 

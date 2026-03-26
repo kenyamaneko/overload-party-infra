@@ -32,6 +32,16 @@ variable "timezone" {
 }
 
 # ──────────────────────────────────────────────
+# APIs
+# ──────────────────────────────────────────────
+
+resource "google_project_service" "cloudscheduler" {
+  project            = var.project_id
+  service            = "cloudscheduler.googleapis.com"
+  disable_on_destroy = false
+}
+
+# ──────────────────────────────────────────────
 # Service Account for Cloud Scheduler
 # ──────────────────────────────────────────────
 
@@ -62,7 +72,7 @@ resource "google_cloud_scheduler_job" "stop_cloudsql" {
   http_target {
     http_method = "PATCH"
     uri         = "https://sqladmin.googleapis.com/v1/projects/${var.project_id}/instances/${var.cloudsql_instance}"
-    body        = base64encode(jsonencode({
+    body = base64encode(jsonencode({
       settings = {
         activationPolicy = "NEVER"
       }
@@ -95,7 +105,7 @@ resource "google_cloud_scheduler_job" "start_cloudsql" {
   http_target {
     http_method = "PATCH"
     uri         = "https://sqladmin.googleapis.com/v1/projects/${var.project_id}/instances/${var.cloudsql_instance}"
-    body        = base64encode(jsonencode({
+    body = base64encode(jsonencode({
       settings = {
         activationPolicy = "ALWAYS"
       }

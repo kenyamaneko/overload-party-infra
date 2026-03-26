@@ -66,6 +66,28 @@ variable "deploy_service_account_email" {
 }
 
 # ──────────────────────────────────────────────
+# APIs
+# ──────────────────────────────────────────────
+
+resource "google_project_service" "run" {
+  project            = var.project_id
+  service            = "run.googleapis.com"
+  disable_on_destroy = false
+}
+
+resource "google_project_service" "cloudscheduler" {
+  project            = var.project_id
+  service            = "cloudscheduler.googleapis.com"
+  disable_on_destroy = false
+}
+
+resource "google_project_service" "aiplatform" {
+  project            = var.project_id
+  service            = "aiplatform.googleapis.com"
+  disable_on_destroy = false
+}
+
+# ──────────────────────────────────────────────
 # GCS Bucket (raw article storage)
 # ──────────────────────────────────────────────
 
