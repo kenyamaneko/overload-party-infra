@@ -48,6 +48,7 @@ make destroy ENV=dev
 # Cloud SQL の手動起動/停止は Slack コマンド (/db-start, /db-stop) で実行
 
 # テスト実行
+cd modules/database && terraform test
 cd modules/db-autostop && terraform test
 cd modules/network && terraform test
 ```
