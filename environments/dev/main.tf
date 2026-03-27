@@ -62,19 +62,6 @@ module "database" {
 }
 
 # ──────────────────────────────────────────────
-# DB Auto-stop (Cloud Scheduler)
-# ──────────────────────────────────────────────
-
-module "db_autostop" {
-  source = "../../modules/db-autostop"
-
-  project_id        = local.project_id
-  region            = local.region
-  cloudsql_instance = "overload-party-db"
-  stop_schedule     = "0 2 * * *" # 2:00 AM JST
-}
-
-# ──────────────────────────────────────────────
 # DB Migration (Cloud Run Job)
 # ──────────────────────────────────────────────
 
