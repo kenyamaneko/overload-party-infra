@@ -14,11 +14,19 @@ variable "subnet_cidr" {
   default     = "10.0.0.0/20"
 }
 
+# ──────────────────────────────────────────────
+# APIs
+# ──────────────────────────────────────────────
+
 resource "google_project_service" "servicenetworking" {
   project            = var.project_id
   service            = "servicenetworking.googleapis.com"
   disable_on_destroy = false
 }
+
+# ──────────────────────────────────────────────
+# Network
+# ──────────────────────────────────────────────
 
 resource "google_compute_network" "main" {
   name                    = "overload-party-network"
