@@ -62,6 +62,18 @@ module "database" {
 }
 
 # ──────────────────────────────────────────────
+# Cloud SQL 停止権限 (nightly-shutdown workflow 用)
+# github-deploy SA は k8s リポ (modules/ci-cd) で管理。
+# ここでは本プロジェクトでの操作権限のみ付与。
+# ──────────────────────────────────────────────
+
+resource "google_project_iam_member" "deploy_cloudsql_admin" {
+  project = local.project_id
+  role    = "roles/cloudsql.admin"
+  member  = "serviceAccount:github-deploy@keyandnotes-platform.iam.gserviceaccount.com"
+}
+
+# ──────────────────────────────────────────────
 # DB Migration (Cloud Run Job)
 # ──────────────────────────────────────────────
 
