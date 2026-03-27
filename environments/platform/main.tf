@@ -18,10 +18,11 @@ provider "google" {
   region  = local.region
 }
 
-# AR リポジトリは k8s リポで管理。ID だけ参照する。
-data "google_artifact_registry_repository" "overload_party" {
-  project       = local.project_id
-  location      = local.region
+module "artifact_registry" {
+  source = "../../modules/artifact-registry"
+
+  project_id    = local.project_id
+  region        = local.region
   repository_id = "overload-party"
 }
 
@@ -32,7 +33,7 @@ module "ci_cd" {
   region       = local.region
   github_owner = "kenyamaneko"
 
-  artifact_registry_id = data.google_artifact_registry_repository.overload_party.repository_id
+  artifact_registry_id = module.artifact_registry.repository_id
 
   allowed_repositories = [
     "overload-party-analytics",
@@ -86,7 +87,7 @@ resource "google_artifact_registry_repository_iam_member" "cloudrun_ar_reader" {
 
   project    = local.project_id
   location   = local.region
-  repository = data.google_artifact_registry_repository.overload_party.repository_id
+  repository = module.artifact_registry.repository_id
   role       = "roles/artifactregistry.reader"
   member     = "serviceAccount:service-${each.value}@serverless-robot-prod.iam.gserviceaccount.com"
 }
