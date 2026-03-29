@@ -39,12 +39,12 @@ jobs:
           CHANGED=$(git diff --name-only "${BASE}" HEAD)
 
           ENVS="[]"
-          # If modules changed, run all environments
+          # If modules changed, run all environments (except cloudflare — no GCP modules)
           if echo "${CHANGED}" | grep -q '^modules/'; then
             ENVS='["dev","stg","prod","platform"]'
           else
             envs=()
-            for env in dev stg prod platform; do
+            for env in dev stg prod platform cloudflare; do
               if echo "${CHANGED}" | grep -q "^environments/${env}/"; then
                 envs+=("\"${env}\"")
               fi
@@ -80,11 +80,15 @@ jobs:
       - name: Terraform Init
         working-directory: environments/${{ matrix.env }}
         run: terraform init
+        env:
+          TF_VAR_cloudflare_cdn_api_token: ${{ secrets.CLOUDFLARE_CDN_API_TOKEN }}
 
       - name: Terraform Plan
         id: plan
         working-directory: environments/${{ matrix.env }}
         run: terraform plan -no-color -out=tfplan 2>&1 | tee plan.txt
+        env:
+          TF_VAR_cloudflare_cdn_api_token: ${{ secrets.CLOUDFLARE_CDN_API_TOKEN }}
 
       - name: Comment PR
         uses: actions/github-script@v7
@@ -127,7 +131,11 @@ jobs:
       - name: Terraform Init
         working-directory: environments/${{ matrix.env }}
         run: terraform init
+        env:
+          TF_VAR_cloudflare_cdn_api_token: ${{ secrets.CLOUDFLARE_CDN_API_TOKEN }}
 
       - name: Terraform Apply
         working-directory: environments/${{ matrix.env }}
         run: terraform apply -auto-approve
+        env:
+          TF_VAR_cloudflare_cdn_api_token: ${{ secrets.CLOUDFLARE_CDN_API_TOKEN }}

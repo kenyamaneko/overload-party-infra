@@ -98,8 +98,9 @@ module "db_migration" {
 module "assets" {
   source = "../../modules/assets"
 
-  project_id = local.project_id
-  region     = local.region
+  project_id   = local.project_id
+  region       = local.region
+  asset_domain = "overload-party-assets-stg.keyandnotes.com"
 }
 
 # ──────────────────────────────────────────────
@@ -127,18 +128,18 @@ output "migration_job_name" {
   value = module.db_migration.job_name
 }
 
-output "assets_site_id" {
-  value = module.assets.site_id
-}
-
-output "assets_url" {
-  value = module.assets.default_url
-}
-
 output "assets_bucket_name" {
-  value = module.assets.bucket_name
+  value = module.assets.assets_bucket_name
 }
 
 output "assets_bucket_url" {
-  value = module.assets.bucket_url
+  value = module.assets.assets_bucket_url
+}
+
+output "scenarios_bucket_name" {
+  value = module.assets.scenarios_bucket_name
+}
+
+output "scenarios_bucket_url" {
+  value = module.assets.scenarios_bucket_url
 }
