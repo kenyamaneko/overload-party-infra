@@ -80,8 +80,6 @@ jobs:
       - name: Terraform Init
         working-directory: environments/${{ matrix.env }}
         run: terraform init
-        env:
-          TF_VAR_cloudflare_cdn_api_token: ${{ secrets.CLOUDFLARE_CDN_API_TOKEN }}
 
       - name: Terraform Plan
         id: plan
@@ -131,8 +129,6 @@ jobs:
       - name: Terraform Init
         working-directory: environments/${{ matrix.env }}
         run: terraform init
-        env:
-          TF_VAR_cloudflare_cdn_api_token: ${{ secrets.CLOUDFLARE_CDN_API_TOKEN }}
 
       - name: Terraform Apply
         working-directory: environments/${{ matrix.env }}

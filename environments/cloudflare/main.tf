@@ -29,19 +29,12 @@ provider "cloudflare" {
 }
 
 # ──────────────────────────────────────────────
-# Variables
-# ──────────────────────────────────────────────
-
-variable "cloudflare_zone_id" {
-  description = "Cloudflare zone ID for keyandnotes.com"
-  type        = string
-}
-
-# ──────────────────────────────────────────────
-# DNS — CNAME records
+# Locals
 # ──────────────────────────────────────────────
 
 locals {
+  zone_id = "9b3593693b647e917a656ecf7e49e056"
+
   assets = {
     dev  = { subdomain = "overload-party-assets-dev" }
     stg  = { subdomain = "overload-party-assets-stg" }
@@ -52,7 +45,7 @@ locals {
 resource "cloudflare_record" "assets" {
   for_each = local.assets
 
-  zone_id = var.cloudflare_zone_id
+  zone_id = local.zone_id
   name    = each.value.subdomain
   content = "c.storage.googleapis.com"
   type    = "CNAME"
