@@ -33,7 +33,7 @@ provider "cloudflare" {
 # ──────────────────────────────────────────────
 
 locals {
-  zone_id = "9b3593693b647e917a656ecf7e49e056"
+  zone_id = "9b3593693b647e917a656ecf7e49e056" # keyandnotes.com
 
   assets = {
     dev  = { subdomain = "overload-party-assets-dev" }

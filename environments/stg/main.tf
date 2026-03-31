@@ -6,25 +6,15 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 6.0"
     }
-    google-beta = {
-      source  = "hashicorp/google-beta"
-      version = "~> 6.0"
-    }
   }
 }
 
 locals {
   project_id = "overload-party-stg"
   region     = "asia-northeast1" # Tokyo
-  deploy_sa  = "serviceAccount:github-deploy@keyandnotes-platform.iam.gserviceaccount.com"
 }
 
 provider "google" {
-  project = local.project_id
-  region  = local.region
-}
-
-provider "google-beta" {
   project = local.project_id
   region  = local.region
 }
@@ -70,7 +60,7 @@ module "database" {
 resource "google_project_iam_member" "deploy_cloudsql_editor" {
   project = local.project_id
   role    = "roles/cloudsql.editor"
-  member  = local.deploy_sa
+  member  = var.deploy_sa
 }
 
 # ──────────────────────────────────────────────
