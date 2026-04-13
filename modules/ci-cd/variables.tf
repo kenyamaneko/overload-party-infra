@@ -56,3 +56,9 @@ variable "cloudsql_admin_projects" {
   type        = list(string)
   default     = []
 }
+
+variable "deploy_wif_repositories" {
+  description = "Repositories allowed to authenticate as the deploy service account (GKE kubectl apply)"
+  type        = list(string)
+  default     = []
+}

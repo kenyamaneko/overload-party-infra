@@ -1,4 +1,4 @@
-# ---- Workload Identity Federation ----
+# ---- Workload Identity 連携 ----
 
 resource "google_iam_workload_identity_pool" "github" {
   project                   = var.project_id
@@ -25,7 +25,7 @@ resource "google_iam_workload_identity_pool_provider" "github" {
   }
 }
 
-# ---- CI Service Account (イメージビルド・AR push・Cloud Functions deploy) ----
+# ---- CI サービスアカウント (イメージビルド・AR push・Cloud Functions deploy) ----
 
 resource "google_service_account" "ci" {
   project      = var.project_id
@@ -48,7 +48,6 @@ resource "google_artifact_registry_repository_iam_member" "ci_ar_writer" {
   member     = "serviceAccount:${google_service_account.ci.email}"
 }
 
-# Cloud Functions deploy 権限（analytics 用）
 resource "google_project_iam_member" "ci_cloudfunctions_developer" {
   for_each = toset(var.cloudfunctions_projects)
   project  = each.value
@@ -56,7 +55,6 @@ resource "google_project_iam_member" "ci_cloudfunctions_developer" {
   member   = "serviceAccount:${google_service_account.ci.email}"
 }
 
-# Cloud Functions deploy には Cloud Build 権限も必要
 resource "google_project_iam_member" "ci_cloudbuild_editor" {
   for_each = toset(var.cloudfunctions_projects)
   project  = each.value
@@ -64,7 +62,6 @@ resource "google_project_iam_member" "ci_cloudbuild_editor" {
   member   = "serviceAccount:${google_service_account.ci.email}"
 }
 
-# Cloud Functions の SA を使用する権限
 resource "google_project_iam_member" "ci_service_account_user" {
   for_each = toset(var.cloudfunctions_projects)
   project  = each.value
@@ -72,7 +69,6 @@ resource "google_project_iam_member" "ci_service_account_user" {
   member   = "serviceAccount:${google_service_account.ci.email}"
 }
 
-# Cloud Run Jobs update 権限（ops: db-migrate 等, newsfeed: newsfeed-job）
 resource "google_project_iam_member" "ci_run_developer" {
   for_each = toset(var.cloudrun_projects)
   project  = each.value
@@ -80,7 +76,6 @@ resource "google_project_iam_member" "ci_run_developer" {
   member   = "serviceAccount:${google_service_account.ci.email}"
 }
 
-# Cloud Run Jobs update 時にジョブの SA として動作する権限（ops: db-migrate 等, newsfeed: newsfeed-job）
 resource "google_project_iam_member" "ci_run_service_account_user" {
   for_each = toset(var.cloudrun_projects)
   project  = each.value
@@ -88,7 +83,7 @@ resource "google_project_iam_member" "ci_run_service_account_user" {
   member   = "serviceAccount:${google_service_account.ci.email}"
 }
 
-# ---- Terraform Deployer Service Account ----
+# ---- Terraform デプロイ用サービスアカウント ----
 
 resource "google_service_account" "terraform" {
   project      = var.project_id
@@ -110,10 +105,40 @@ resource "google_project_iam_member" "terraform_editor" {
   member   = "serviceAccount:${google_service_account.terraform.email}"
 }
 
-# CI SA が Cloud SQL を起動/停止する権限（dev/stg で Slack コマンド等から利用）
 resource "google_project_iam_member" "ci_cloudsql_admin" {
   for_each = toset(var.cloudsql_admin_projects)
   project  = each.value
   role     = "roles/cloudsql.admin"
   member   = "serviceAccount:${google_service_account.ci.email}"
+}
+
+# ---- デプロイ用サービスアカウント (GKE kubectl apply) ----
+
+resource "google_service_account" "deploy" {
+  count        = length(var.deploy_wif_repositories) > 0 ? 1 : 0
+  project      = var.project_id
+  account_id   = "github-deploy"
+  display_name = "GitHub Actions Deploy (k8s)"
+}
+
+resource "google_service_account_iam_member" "deploy_wif" {
+  for_each           = toset(var.deploy_wif_repositories)
+  service_account_id = google_service_account.deploy[0].name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository/${var.github_owner}/${each.value}"
+}
+
+resource "google_project_iam_member" "deploy_container_developer" {
+  count   = length(var.deploy_wif_repositories) > 0 ? 1 : 0
+  project = var.project_id
+  role    = "roles/container.developer"
+  member  = "serviceAccount:${google_service_account.deploy[0].email}"
+}
+
+# PSC forwarding rule の作成/削除に必要（env-lifecycle workflow）
+resource "google_project_iam_member" "deploy_compute_network_admin" {
+  count   = length(var.deploy_wif_repositories) > 0 ? 1 : 0
+  project = var.project_id
+  role    = "roles/compute.networkAdmin"
+  member  = "serviceAccount:${google_service_account.deploy[0].email}"
 }

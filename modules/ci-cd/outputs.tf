@@ -12,3 +12,8 @@ output "terraform_service_account_email" {
   description = "Terraform deployer service account email"
   value       = google_service_account.terraform.email
 }
+
+output "deploy_service_account_email" {
+  description = "Deploy service account email (GKE kubectl apply)"
+  value       = length(var.deploy_wif_repositories) > 0 ? google_service_account.deploy[0].email : ""
+}

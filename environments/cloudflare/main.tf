@@ -1,12 +1,3 @@
-# Cloudflare CDN for game assets.
-#
-# GCS の CNAME バケット機能を利用する。バケット名 = サブドメインにすることで、
-# Cloudflare がプロキシしたリクエストの Host ヘッダから GCS が自動的にバケットを解決する。
-# Origin Rule や Transform Rule は不要。
-#
-# 前提: Cloudflare の SSL モードが Flexible であること
-# （GCS CNAME バケットは HTTP のみ対応のため）。
-
 terraform {
   required_version = ">= 1.5"
 
@@ -29,7 +20,7 @@ provider "cloudflare" {
 }
 
 # ──────────────────────────────────────────────
-# Locals
+# ローカル変数
 # ──────────────────────────────────────────────
 
 locals {
@@ -40,7 +31,16 @@ locals {
     stg  = { subdomain = "overload-party-assets-stg" }
     prod = { subdomain = "overload-party-assets" }
   }
+
+  # API サーバー DNS レコード (k8s リポから移管)
+  api_records = {
+    dev = { name = "overloadparty-dev" }
+  }
 }
+
+# ──────────────────────────────────────────────
+# DNS -- CNAME レコード (アセット CDN)
+# ──────────────────────────────────────────────
 
 resource "cloudflare_record" "assets" {
   for_each = local.assets
@@ -50,4 +50,23 @@ resource "cloudflare_record" "assets" {
   content = "c.storage.googleapis.com"
   type    = "CNAME"
   proxied = true
+}
+
+# ──────────────────────────────────────────────
+# DNS -- A レコード (API サーバー、k8s リポから移管)
+# ──────────────────────────────────────────────
+
+resource "cloudflare_record" "api" {
+  for_each = local.api_records
+
+  zone_id = local.zone_id
+  name    = each.value.name
+  content = "127.0.0.1"
+  type    = "A"
+  proxied = true
+
+  # CI (env-lifecycle.yaml) が Ingress IP で動的に書き換える
+  lifecycle {
+    ignore_changes = [content, proxied]
+  }
 }
