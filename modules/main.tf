@@ -85,8 +85,7 @@ module "pubsub" {
 }
 
 # ──────────────────────────────────────────────
-# Firestore (game_config store)
-# account パイロット先行。他サービスは順次追加。
+# Firestore (game_config store, Native モード)
 # ──────────────────────────────────────────────
 
 module "firestore" {
@@ -94,7 +93,12 @@ module "firestore" {
 
   project_id = var.project_id
   reader_service_account_emails = {
-    account = module.service_accounts.accounts["account"].email
+    account  = module.service_accounts.accounts["account"].email
+    card     = module.service_accounts.accounts["card"].email
+    shop     = module.service_accounts.accounts["shop"].email
+    scenario = module.service_accounts.accounts["scenario"].email
+    gateway  = module.service_accounts.accounts["gateway"].email
+    battle   = module.service_accounts.accounts["battle"].email
   }
 }
 
