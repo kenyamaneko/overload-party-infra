@@ -19,7 +19,7 @@ provider "google" {
 }
 
 module "artifact_registry" {
-  source = "../../modules/artifact-registry"
+  source = "../../modules/foundation/artifact-registry"
 
   project_id    = local.project_id
   region        = local.region
@@ -27,7 +27,7 @@ module "artifact_registry" {
 }
 
 module "ci_cd" {
-  source = "../../modules/ci-cd"
+  source = "../../modules/ops/ci-cd"
 
   project_id   = local.project_id
   region       = local.region
@@ -114,7 +114,7 @@ resource "google_artifact_registry_repository_iam_member" "cloudrun_ar_reader" {
 # GKE クラスタは keyandnotes-platform リポジトリへ移管済み
 
 module "psc_cloudsql_dev" {
-  source = "../../modules/psc-cloudsql"
+  source = "../../modules/platform/psc-cloudsql"
 
   project_id             = local.project_id
   region                 = local.region

@@ -17,23 +17,29 @@ GKE クラスタは [keyandnotes-platform](https://github.com/kenyamaneko/keyand
 
 ```
 environments/
-  dev/               開発環境
-  stg/               ステージング環境
-  prod/              本番環境
-  platform/          共有基盤
-  cloudflare/        Cloudflare CDN + DNS
+  dev/                   開発環境
+  stg/                   ステージング環境
+  prod/                  本番環境
+  platform/              共有基盤
+  cloudflare/            Cloudflare CDN + DNS
 modules/
-  network/           VPC + サブネット + Private Services Access
-  database/          Cloud SQL PostgreSQL + IAM users
-  psc-cloudsql/      PSC endpoint for Cloud SQL (cross-project)
-  service-accounts/  Per-service GSA + Workload Identity
-  pubsub/            Pub/Sub topics + subscriptions + IAM
-  db-migration/      DB マイグレーション (Cloud Run Job)
-  newsfeed/          ニュースフィード (Cloud Run Job)
-  assets/            ゲームアセット (GCS バケット)
-  ci-cd/             WIF + CI SA + Terraform SA + Deploy SA
-  artifact-registry/ Artifact Registry
-  shop-secrets/      Shop IAP Secrets (Secret Manager)
+  foundation/            プロジェクト立ち上げに必要な基盤レイヤ
+    network/             VPC + サブネット + Private Services Access
+    service-accounts/    Per-service GSA + Workload Identity
+    artifact-registry/   Artifact Registry
+  data/                  データストア
+    database/            Cloud SQL PostgreSQL + IAM users
+    firestore/           Firestore (game_config store)
+    pubsub/              Pub/Sub topics + subscriptions + IAM
+  platform/              プロジェクト跨ぎの接続性
+    psc-cloudsql/        PSC endpoint for Cloud SQL (cross-project)
+  app/                   アプリ固有のリソース
+    newsfeed/            ニュースフィード (Cloud Run Job)
+    shop-secrets/        Shop IAP Secrets (Secret Manager)
+    assets/              ゲームアセット (GCS バケット)
+  ops/                   運用 / CI/CD
+    ci-cd/               WIF + CI SA + Terraform SA + Deploy SA
+    db-migration/        DB マイグレーション (Cloud Run Job)
 ```
 
 ## 使い方
@@ -43,25 +49,26 @@ make plan ENV=dev
 make apply ENV=dev
 
 # テスト
-cd modules/database && terraform test
-cd modules/network && terraform test
+cd modules/data/database && terraform test
+cd modules/foundation/network && terraform test
 ```
 
 ## 環境ごとの差異
 
 | モジュール | dev | stg | prod | platform | 備考 |
 |-----------|-----|-----|------|----------|------|
-| network | o | o | o | - | |
-| database | o | o | o | - | prod は `deletion_protection = true` |
-| psc-cloudsql | - | - | - | o | dev のみ (per-env instantiation) |
-| service-accounts | o | o | o | - | dev のみ newsfeed GSA を含む |
-| pubsub | o | o | o | - | |
-| db-migration | o | o | - | - | |
-| newsfeed | o | - | - | - | |
-| assets | o | o | o | - | |
-| ci-cd | - | - | - | o | WIF + CI SA + TF SA + Deploy SA |
-| artifact-registry | - | - | - | o | |
-| shop-secrets | o | o | o | - | |
+| foundation/network | o | o | o | - | |
+| foundation/service-accounts | o | o | o | - | dev のみ newsfeed GSA を含む |
+| foundation/artifact-registry | - | - | - | o | |
+| data/database | o | o | o | - | prod は `deletion_protection = true` |
+| data/firestore | o | o | o | - | |
+| data/pubsub | o | o | o | - | |
+| platform/psc-cloudsql | - | - | - | o | dev/stg/prod 各環境分を per-env instantiation |
+| app/newsfeed | o | - | - | - | dev のみ |
+| app/shop-secrets | o | o | o | - | |
+| app/assets | o | o | o | - | |
+| ops/ci-cd | - | - | - | o | WIF + CI SA + TF SA + Deploy SA |
+| ops/db-migration | o | o | - | - | |
 
 ## CI/CD
 

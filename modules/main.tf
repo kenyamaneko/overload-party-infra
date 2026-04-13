@@ -27,7 +27,7 @@ locals {
 # ──────────────────────────────────────────────
 
 module "network" {
-  source = "./network"
+  source = "./foundation/network"
 
   project_id = var.project_id
   region     = var.region
@@ -38,7 +38,7 @@ module "network" {
 # ──────────────────────────────────────────────
 
 module "database" {
-  source = "./database"
+  source = "./data/database"
 
   project_id                    = var.project_id
   region                        = var.region
@@ -64,7 +64,7 @@ module "database" {
 # ──────────────────────────────────────────────
 
 module "service_accounts" {
-  source = "./service-accounts"
+  source = "./foundation/service-accounts"
 
   project_id    = var.project_id
   k8s_namespace = var.k8s_namespace
@@ -77,7 +77,7 @@ module "service_accounts" {
 # ──────────────────────────────────────────────
 
 module "pubsub" {
-  source = "./pubsub"
+  source = "./data/pubsub"
 
   project_id                        = var.project_id
   matchmaking_service_account_email = module.service_accounts.accounts["matchmaking"].email
@@ -93,7 +93,7 @@ module "pubsub" {
 # ──────────────────────────────────────────────
 
 module "firestore" {
-  source = "./firestore"
+  source = "./data/firestore"
 
   project_id  = var.project_id
   location_id = var.firestore_location
@@ -124,7 +124,7 @@ resource "google_project_iam_member" "deploy_cloudsql_editor" {
 
 module "db_migration" {
   count  = var.migration_image != "" ? 1 : 0
-  source = "./db-migration"
+  source = "./ops/db-migration"
 
   project_id                   = var.project_id
   region                       = var.region
@@ -151,7 +151,7 @@ resource "google_service_account" "newsfeed" {
 
 module "newsfeed" {
   count  = var.enable_newsfeed ? 1 : 0
-  source = "./newsfeed"
+  source = "./app/newsfeed"
 
   project_id                   = var.project_id
   region                       = var.region
@@ -172,7 +172,7 @@ module "newsfeed" {
 # ──────────────────────────────────────────────
 
 module "shop_secrets" {
-  source = "./shop-secrets"
+  source = "./app/shop-secrets"
 
   project_id                 = var.project_id
   shop_service_account_email = module.service_accounts.accounts["shop"].email
@@ -183,7 +183,7 @@ module "shop_secrets" {
 # ──────────────────────────────────────────────
 
 module "assets" {
-  source = "./assets"
+  source = "./app/assets"
 
   project_id            = var.project_id
   region                = var.region
