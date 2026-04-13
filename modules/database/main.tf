@@ -1,57 +1,56 @@
 variable "project_id" {
-  description = "GCP project ID"
+  description = "Google Cloud プロジェクト ID"
   type        = string
 }
 
 variable "region" {
-  description = "GCP region"
+  description = "Google Cloud リージョン"
+  type        = string
+}
+
+variable "instance_name" {
+  description = "Cloud SQL インスタンス名"
   type        = string
 }
 
 variable "tier" {
-  description = "Cloud SQL machine tier"
+  description = "Cloud SQL マシンタイプ"
   type        = string
-  default     = "db-g1-small"
 }
 
 variable "database_name" {
-  description = "PostgreSQL database name"
+  description = "PostgreSQL データベース名"
   type        = string
-  default     = "overload_party"
 }
 
 variable "network_id" {
-  description = "VPC network self_link for private IP"
+  description = "Private IP 用 VPC ネットワークの self_link"
   type        = string
 }
 
 variable "service_account_id" {
-  description = "DEPRECATED: shared game server GSA. Remove after per-service IAM cutover is verified."
+  description = "（DEPRECATED）共有ゲームサーバー GSA。サービス別 IAM 完了後に削除予定"
   type        = string
 }
 
 variable "service_iam_users" {
-  description = "Map of service name -> GSA email for per-service Cloud SQL IAM database users"
+  description = "サービス名 -> GSA email のマップ（サービス別 Cloud SQL IAM ユーザー作成用）"
   type        = map(string)
-  default     = {}
 }
 
 variable "deletion_protection" {
-  description = "Whether deletion protection is enabled"
+  description = "削除保護を有効化するか"
   type        = bool
-  default     = false
 }
 
 variable "ipv4_enabled" {
-  description = "Whether to assign a public IPv4 address to the Cloud SQL instance"
+  description = "Cloud SQL インスタンスにパブリック IPv4 を割り当てるか"
   type        = bool
-  default     = false
 }
 
 variable "psc_allowed_consumer_projects" {
-  description = "Project IDs allowed to connect via PSC (empty = PSC disabled)"
+  description = "PSC 接続を許可する consumer プロジェクト ID 一覧（空なら PSC 無効）"
   type        = list(string)
-  default     = []
 }
 
 # ──────────────────────────────────────────────
@@ -91,7 +90,7 @@ resource "google_project_iam_member" "cloudsql_instance_user" {
 # ──────────────────────────────────────────────
 
 resource "google_sql_database_instance" "main" {
-  name             = "overload-party-db"
+  name             = var.instance_name
   project          = var.project_id
   region           = var.region
   database_version = "POSTGRES_16"

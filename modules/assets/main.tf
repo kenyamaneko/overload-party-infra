@@ -3,17 +3,22 @@
 # ──────────────────────────────────────────────
 
 variable "project_id" {
-  description = "GCP project ID"
+  description = "Google Cloud プロジェクト ID"
   type        = string
 }
 
 variable "region" {
-  description = "GCS bucket location"
+  description = "GCS バケットのロケーション"
   type        = string
 }
 
-variable "asset_domain" {
-  description = "Asset CDN domain (= GCS CNAME bucket name). e.g. overload-party-assets-dev.keyandnotes.com"
+variable "assets_bucket_name" {
+  description = "公開アセットバケット名（CDN CNAME 用、グローバル一意。例: overload-party-assets-dev.keyandnotes.com）"
+  type        = string
+}
+
+variable "scenarios_bucket_name" {
+  description = "非公開シナリオスクリプトバケット名（グローバル一意）"
   type        = string
 }
 
@@ -22,7 +27,7 @@ variable "asset_domain" {
 # ──────────────────────────────────────────────
 
 resource "google_storage_bucket" "assets" {
-  name                        = var.asset_domain
+  name                        = var.assets_bucket_name
   project                     = var.project_id
   location                    = var.region
   uniform_bucket_level_access = true
@@ -40,7 +45,7 @@ resource "google_storage_bucket_iam_member" "assets_public" {
 # ──────────────────────────────────────────────
 
 resource "google_storage_bucket" "scenarios" {
-  name                        = "${var.project_id}-scenarios"
+  name                        = var.scenarios_bucket_name
   project                     = var.project_id
   location                    = var.region
   uniform_bucket_level_access = true
@@ -56,7 +61,7 @@ output "assets_bucket_name" {
 }
 
 output "assets_bucket_url" {
-  value = "https://${var.asset_domain}"
+  value = "https://${google_storage_bucket.assets.name}"
 }
 
 output "scenarios_bucket_name" {

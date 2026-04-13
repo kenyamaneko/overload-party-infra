@@ -17,10 +17,34 @@ provider "google" {
 module "infra" {
   source = "../../modules"
 
-  project_id          = "overload-party-prod"
-  k8s_namespace       = "overload-party-prod"
-  asset_domain        = "overload-party-assets.keyandnotes.com"
-  deletion_protection = true
+  project_id    = "overload-party-prod"
+  region        = "asia-northeast1"
+  k8s_namespace = "overload-party-prod"
+
+  # Cloud SQL
+  cloudsql_instance_name = "overload-party-db"
+  cloudsql_tier          = "db-g1-small"
+  database_name          = "overload_party"
+  # prod のみ削除保護を有効化（誤削除防止）
+  deletion_protection           = true
+  ipv4_enabled                  = false
+  psc_allowed_consumer_projects = []
+
+  # Firestore
+  firestore_location = "asia-northeast1"
+
+  # GCS バケット名（グローバル一意。prod は -prod サフィックス無しで本番ドメインに揃える）
+  assets_bucket_name    = "overload-party-assets.keyandnotes.com"
+  scenarios_bucket_name = "overload-party-prod-scenarios"
+  # newsfeed / migration は prod 未使用
+  newsfeed_bucket_name = ""
+
+  # Optional 機能
+  deploy_sa                    = ""
+  migration_image              = ""
+  deploy_service_account_email = ""
+  enable_newsfeed              = false
+  newsfeed_image               = ""
 }
 
 # ──────────────────────────────────────────────

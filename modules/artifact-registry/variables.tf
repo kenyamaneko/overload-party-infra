@@ -1,16 +1,14 @@
 variable "project_id" {
-  description = "GCP project ID"
+  description = "Google Cloud プロジェクト ID"
   type        = string
 }
 
 variable "region" {
-  description = "GCP region"
+  description = "Google Cloud リージョン"
   type        = string
-  default     = "asia-northeast1"
 }
 
 variable "repository_id" {
-  description = "Artifact Registry repository ID"
+  description = "Artifact Registry リポジトリ ID"
   type        = string
-  default     = "overload-party"
 }

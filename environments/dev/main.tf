@@ -17,15 +17,33 @@ provider "google" {
 module "infra" {
   source = "../../modules"
 
-  project_id                    = "overload-party-dev"
-  k8s_namespace                 = "overload-party-dev"
-  asset_domain                  = "overload-party-assets-dev.keyandnotes.com"
+  project_id    = "overload-party-dev"
+  region        = "asia-northeast1"
+  k8s_namespace = "overload-party-dev"
+
+  # Cloud SQL
+  cloudsql_instance_name = "overload-party-db"
+  cloudsql_tier          = "db-g1-small"
+  database_name          = "overload_party"
+  deletion_protection    = false
+  ipv4_enabled           = false
+  # PSC は dev のみ有効化（k8s 環境からの cross-project 接続テスト用）
   psc_allowed_consumer_projects = ["keyandnotes-platform"]
-  deploy_sa                     = var.deploy_sa
-  migration_image               = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/db-migrate:latest"
-  deploy_service_account_email  = "github-ci@keyandnotes-platform.iam.gserviceaccount.com"
-  enable_newsfeed               = true
-  newsfeed_image                = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/newsfeed:latest"
+
+  # Firestore
+  firestore_location = "asia-northeast1"
+
+  # GCS バケット名（グローバル一意。env 名サフィックスで衝突を回避）
+  assets_bucket_name    = "overload-party-assets-dev.keyandnotes.com"
+  scenarios_bucket_name = "overload-party-dev-scenarios"
+  newsfeed_bucket_name  = "overload-party-dev-newsfeed"
+
+  # Optional 機能（dev は migration / newsfeed どちらも有効）
+  deploy_sa                    = var.deploy_sa
+  migration_image              = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/db-migrate:latest"
+  deploy_service_account_email = "github-ci@keyandnotes-platform.iam.gserviceaccount.com"
+  enable_newsfeed              = true
+  newsfeed_image               = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/newsfeed:latest"
 }
 
 # ──────────────────────────────────────────────

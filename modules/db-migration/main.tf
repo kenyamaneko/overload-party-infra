@@ -3,51 +3,47 @@
 # ──────────────────────────────────────────────
 
 variable "project_id" {
-  description = "GCP project ID"
+  description = "Google Cloud プロジェクト ID"
   type        = string
 }
 
 variable "region" {
-  description = "GCP region"
+  description = "Google Cloud リージョン"
   type        = string
 }
 
 variable "migration_image" {
-  description = "Container image for the migration job"
+  description = "マイグレーションジョブのコンテナイメージ"
   type        = string
 }
 
 variable "network" {
-  description = "VPC network name for Direct VPC Egress"
+  description = "Direct VPC Egress 用 VPC ネットワーク名"
   type        = string
 }
 
 variable "subnetwork" {
-  description = "VPC subnetwork name for Direct VPC Egress"
+  description = "Direct VPC Egress 用 サブネット名"
   type        = string
 }
 
 variable "cloudsql_private_ip" {
-  description = "Private IP address of the Cloud SQL instance"
+  description = "Cloud SQL インスタンスの内部 IP"
   type        = string
 }
 
 variable "database_name" {
-  description = "PostgreSQL database name"
+  description = "接続先 PostgreSQL データベース名"
   type        = string
-  default     = "overload_party"
-}
-
-variable "db_password_secret_id" {
-  description = "Secret Manager secret ID containing the postgres password (created outside Terraform)"
-  type        = string
-  default     = "migration-db-password"
 }
 
 variable "deploy_service_account_email" {
-  description = "GitHub Actions deploy SA email (granted roles/run.invoker on this job)"
+  description = "GitHub Actions デプロイ SA email。空文字なら IAM 付与をスキップ"
   type        = string
-  default     = ""
+}
+
+locals {
+  db_password_secret_id = "migration-db-password"
 }
 
 # ──────────────────────────────────────────────
@@ -126,7 +122,7 @@ resource "google_cloud_run_v2_job" "migration" {
           name = "DATABASE_PASSWORD"
           value_source {
             secret_key_ref {
-              secret  = var.db_password_secret_id
+              secret  = local.db_password_secret_id
               version = "latest"
             }
           }

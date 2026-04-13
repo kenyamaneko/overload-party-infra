@@ -17,12 +17,33 @@ provider "google" {
 module "infra" {
   source = "../../modules"
 
-  project_id                   = "overload-party-stg"
-  k8s_namespace                = "overload-party-stg"
-  asset_domain                 = "overload-party-assets-stg.keyandnotes.com"
+  project_id    = "overload-party-stg"
+  region        = "asia-northeast1"
+  k8s_namespace = "overload-party-stg"
+
+  # Cloud SQL
+  cloudsql_instance_name        = "overload-party-db"
+  cloudsql_tier                 = "db-g1-small"
+  database_name                 = "overload_party"
+  deletion_protection           = false
+  ipv4_enabled                  = false
+  psc_allowed_consumer_projects = []
+
+  # Firestore
+  firestore_location = "asia-northeast1"
+
+  # GCS バケット名（グローバル一意）
+  assets_bucket_name    = "overload-party-assets-stg.keyandnotes.com"
+  scenarios_bucket_name = "overload-party-stg-scenarios"
+  # newsfeed は stg 無効
+  newsfeed_bucket_name = ""
+
+  # Optional 機能
   deploy_sa                    = var.deploy_sa
   migration_image              = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/db-migrate:latest"
   deploy_service_account_email = "github-ci@keyandnotes-platform.iam.gserviceaccount.com"
+  enable_newsfeed              = false
+  newsfeed_image               = ""
 }
 
 # ──────────────────────────────────────────────

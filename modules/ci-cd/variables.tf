@@ -1,64 +1,59 @@
 variable "project_id" {
-  description = "GCP project ID (keyandnotes-platform)"
+  description = "Google Cloud プロジェクト ID（keyandnotes-platform）"
   type        = string
 }
 
 variable "region" {
-  description = "GCP region"
+  description = "Google Cloud リージョン"
   type        = string
-  default     = "asia-northeast1"
 }
 
 variable "github_owner" {
-  description = "GitHub organization or user name"
+  description = "GitHub オーガニゼーション名またはユーザー名"
   type        = string
 }
 
 variable "allowed_repositories" {
-  description = "All repositories allowed to authenticate via WIF"
+  description = "WIF 経由の認証を許可するリポジトリ一覧"
   type        = list(string)
 }
 
 variable "ci_wif_repositories" {
-  description = "Repositories allowed to authenticate as the CI service account"
+  description = "CI サービスアカウントとして認証を許可するリポジトリ一覧"
   type        = list(string)
 }
 
 variable "terraform_wif_repositories" {
-  description = "Repositories allowed to authenticate as the Terraform deployer service account"
+  description = "Terraform Deployer サービスアカウントとして認証を許可するリポジトリ一覧"
   type        = list(string)
 }
 
 variable "artifact_registry_id" {
-  description = "Artifact Registry repository ID for CI writer access"
+  description = "CI ライター権限を付与する Artifact Registry リポジトリ ID"
   type        = string
 }
 
 variable "cloudfunctions_projects" {
-  description = "GCP projects where CI SA needs Cloud Functions deploy permission"
+  description = "CI SA に Cloud Functions デプロイ権限を付与するプロジェクト一覧"
   type        = list(string)
-  default     = []
 }
 
 variable "cloudrun_projects" {
-  description = "GCP projects where CI SA needs Cloud Run Jobs update permission"
+  description = "CI SA に Cloud Run Jobs 更新権限を付与するプロジェクト一覧"
   type        = list(string)
-  default     = []
 }
 
 variable "terraform_editor_projects" {
-  description = "GCP projects where Terraform deployer SA needs editor permission"
+  description = "Terraform Deployer SA に editor 権限を付与するプロジェクト一覧"
   type        = list(string)
 }
 
 variable "cloudsql_admin_projects" {
-  description = "GCP projects where CI SA needs Cloud SQL admin permission (start/stop)"
+  description = "CI SA に Cloud SQL admin 権限を付与するプロジェクト一覧（start/stop 用）"
   type        = list(string)
-  default     = []
 }
 
 variable "deploy_wif_repositories" {
-  description = "Repositories allowed to authenticate as the deploy service account (GKE kubectl apply)"
+  description = "Deploy サービスアカウント（GKE kubectl apply 用）として認証を許可するリポジトリ一覧"
   type        = list(string)
-  default     = []
 }

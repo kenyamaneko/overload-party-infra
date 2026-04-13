@@ -3,68 +3,59 @@
 # ──────────────────────────────────────────────
 
 variable "project_id" {
-  description = "GCP project ID"
+  description = "Google Cloud プロジェクト ID"
   type        = string
 }
 
 variable "region" {
-  description = "GCP region"
+  description = "Google Cloud リージョン"
   type        = string
 }
 
 variable "newsfeed_image" {
-  description = "Container image for the newsfeed job"
+  description = "Newsfeed ジョブのコンテナイメージ"
   type        = string
 }
 
 variable "network" {
-  description = "VPC network name for Direct VPC Egress"
+  description = "Direct VPC Egress 用 VPC ネットワーク名"
   type        = string
 }
 
 variable "subnetwork" {
-  description = "VPC subnetwork name for Direct VPC Egress"
+  description = "Direct VPC Egress 用 サブネット名"
   type        = string
 }
 
 variable "cloudsql_private_ip" {
-  description = "Private IP address of the Cloud SQL instance"
+  description = "Cloud SQL インスタンスの内部 IP"
   type        = string
 }
 
 variable "database_name" {
-  description = "PostgreSQL database name"
+  description = "接続先 PostgreSQL データベース名"
   type        = string
-  default     = "overload_party"
 }
 
-variable "vertex_location" {
-  description = "Vertex AI region"
+variable "bucket_name" {
+  description = "記事データを保存する GCS バケット名（グローバル一意）"
   type        = string
-  default     = "us-central1"
-}
-
-variable "schedule" {
-  description = "Cron schedule for the newsfeed job"
-  type        = string
-  default     = "0 */2 * * *" # every 2 hours
-}
-
-variable "timezone" {
-  description = "Timezone for Cloud Scheduler"
-  type        = string
-  default     = "Asia/Tokyo"
 }
 
 variable "deploy_service_account_email" {
-  description = "GitHub Actions deploy SA email (granted roles/run.invoker on this job)"
+  description = "GitHub Actions デプロイ SA email。空文字なら IAM 付与をスキップ"
   type        = string
-  default     = ""
 }
 
 variable "service_account_email" {
-  description = "GSA email for the newsfeed Cloud Run Job"
+  description = "Newsfeed Cloud Run Job 実行用 GSA email"
   type        = string
+}
+
+locals {
+  vertex_location = "us-central1"
+  schedule        = "0 */2 * * *"
+  timezone        = "Asia/Tokyo"
 }
 
 # ──────────────────────────────────────────────
@@ -94,7 +85,7 @@ resource "google_project_service" "aiplatform" {
 # ──────────────────────────────────────────────
 
 resource "google_storage_bucket" "newsfeed" {
-  name                        = "${var.project_id}-newsfeed"
+  name                        = var.bucket_name
   project                     = var.project_id
   location                    = var.region
   uniform_bucket_level_access = true
@@ -175,7 +166,7 @@ resource "google_cloud_run_v2_job" "newsfeed" {
 
         env {
           name  = "VERTEX_LOCATION"
-          value = var.vertex_location
+          value = local.vertex_location
         }
       }
 
@@ -213,8 +204,8 @@ resource "google_cloud_scheduler_job" "newsfeed" {
   project     = var.project_id
   region      = var.region
   description = "Trigger newsfeed Cloud Run Job every 2 hours"
-  schedule    = var.schedule
-  time_zone   = var.timezone
+  schedule    = local.schedule
+  time_zone   = local.timezone
 
   http_target {
     http_method = "POST"

@@ -1,17 +1,17 @@
 variable "project_id" {
-  description = "GCP project ID"
+  description = "Google Cloud プロジェクト ID"
   type        = string
 }
 
 variable "region" {
-  description = "GCP region"
+  description = "Google Cloud リージョン"
   type        = string
 }
 
-variable "subnet_cidr" {
-  description = "CIDR range for the subnet"
-  type        = string
-  default     = "10.0.0.0/20"
+locals {
+  network_name = "overload-party-network"
+  subnet_name  = "overload-party-subnet"
+  subnet_cidr  = "10.0.0.0/20"
 }
 
 # ──────────────────────────────────────────────
@@ -29,17 +29,17 @@ resource "google_project_service" "servicenetworking" {
 # ──────────────────────────────────────────────
 
 resource "google_compute_network" "main" {
-  name                    = "overload-party-network"
+  name                    = local.network_name
   project                 = var.project_id
   auto_create_subnetworks = false
 }
 
 resource "google_compute_subnetwork" "main" {
-  name          = "overload-party-subnet"
+  name          = local.subnet_name
   project       = var.project_id
   region        = var.region
   network       = google_compute_network.main.id
-  ip_cidr_range = var.subnet_cidr
+  ip_cidr_range = local.subnet_cidr
 }
 
 resource "google_compute_global_address" "private_ip" {

@@ -17,6 +17,9 @@ locals {
     shop     = "overload-party-shop"
     scenario = "overload-party-scenario"
   }
+
+  game_server_sa_account_id = "overload-party-app"
+  newsfeed_sa_account_id    = "overload-party-newsfeed"
 }
 
 # ──────────────────────────────────────────────
@@ -39,10 +42,11 @@ module "database" {
 
   project_id                    = var.project_id
   region                        = var.region
-  tier                          = var.tier
-  database_name                 = "overload_party"
+  instance_name                 = var.cloudsql_instance_name
+  tier                          = var.cloudsql_tier
+  database_name                 = var.database_name
   network_id                    = module.network.network_self_link
-  service_account_id            = "overload-party-app"
+  service_account_id            = local.game_server_sa_account_id
   ipv4_enabled                  = var.ipv4_enabled
   psc_allowed_consumer_projects = var.psc_allowed_consumer_projects
   deletion_protection           = var.deletion_protection
@@ -91,7 +95,8 @@ module "pubsub" {
 module "firestore" {
   source = "./firestore"
 
-  project_id = var.project_id
+  project_id  = var.project_id
+  location_id = var.firestore_location
   reader_service_account_emails = {
     account  = module.service_accounts.accounts["account"].email
     card     = module.service_accounts.accounts["card"].email
@@ -127,7 +132,7 @@ module "db_migration" {
   network                      = module.network.network_name
   subnetwork                   = module.network.subnetwork_name
   cloudsql_private_ip          = module.database.private_ip_address
-  database_name                = "overload_party"
+  database_name                = var.database_name
   deploy_service_account_email = var.deploy_service_account_email
 
   depends_on = [module.network.service_networking_connection]
@@ -140,7 +145,7 @@ module "db_migration" {
 resource "google_service_account" "newsfeed" {
   count        = var.enable_newsfeed ? 1 : 0
   project      = var.project_id
-  account_id   = "overload-party-newsfeed"
+  account_id   = local.newsfeed_sa_account_id
   display_name = "Overload Party Newsfeed (Cloud Run Job)"
 }
 
@@ -148,13 +153,16 @@ module "newsfeed" {
   count  = var.enable_newsfeed ? 1 : 0
   source = "./newsfeed"
 
-  project_id            = var.project_id
-  region                = var.region
-  newsfeed_image        = var.newsfeed_image
-  network               = module.network.network_name
-  subnetwork            = module.network.subnetwork_name
-  cloudsql_private_ip   = module.database.private_ip_address
-  service_account_email = google_service_account.newsfeed[0].email
+  project_id                   = var.project_id
+  region                       = var.region
+  newsfeed_image               = var.newsfeed_image
+  network                      = module.network.network_name
+  subnetwork                   = module.network.subnetwork_name
+  cloudsql_private_ip          = module.database.private_ip_address
+  database_name                = var.database_name
+  bucket_name                  = var.newsfeed_bucket_name
+  service_account_email        = google_service_account.newsfeed[0].email
+  deploy_service_account_email = var.deploy_service_account_email
 
   depends_on = [module.network.service_networking_connection]
 }
@@ -177,7 +185,8 @@ module "shop_secrets" {
 module "assets" {
   source = "./assets"
 
-  project_id   = var.project_id
-  region       = var.region
-  asset_domain = var.asset_domain
+  project_id            = var.project_id
+  region                = var.region
+  assets_bucket_name    = var.assets_bucket_name
+  scenarios_bucket_name = var.scenarios_bucket_name
 }
