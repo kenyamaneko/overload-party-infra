@@ -1,8 +1,5 @@
-# Newsfeed Cloud Run Job + GCS bucket + IAM + Cloud Scheduler
-# Fetches cloud provider RSS feeds, summarizes with Vertex AI, stores in PostgreSQL.
-
 # ──────────────────────────────────────────────
-# Variables
+# 変数
 # ──────────────────────────────────────────────
 
 variable "project_id" {
@@ -65,8 +62,13 @@ variable "deploy_service_account_email" {
   default     = ""
 }
 
+variable "service_account_email" {
+  description = "GSA email for the newsfeed Cloud Run Job"
+  type        = string
+}
+
 # ──────────────────────────────────────────────
-# APIs
+# API 有効化
 # ──────────────────────────────────────────────
 
 resource "google_project_service" "run" {
@@ -88,7 +90,7 @@ resource "google_project_service" "aiplatform" {
 }
 
 # ──────────────────────────────────────────────
-# GCS Bucket (raw article storage)
+# GCS バケット (記事データ保存)
 # ──────────────────────────────────────────────
 
 resource "google_storage_bucket" "newsfeed" {
@@ -100,7 +102,7 @@ resource "google_storage_bucket" "newsfeed" {
 
   lifecycle_rule {
     condition {
-      age = 90 # 90日経過した生データを削除
+      age = 90
     }
     action {
       type = "Delete"
@@ -109,51 +111,29 @@ resource "google_storage_bucket" "newsfeed" {
 }
 
 # ──────────────────────────────────────────────
-# Service Account for newsfeed job
+# IAM (Cloud SQL は module.service_accounts で付与)
 # ──────────────────────────────────────────────
 
-resource "google_service_account" "newsfeed" {
-  project      = var.project_id
-  account_id   = "overload-party-newsfeed"
-  display_name = "Overload Party Newsfeed (Cloud Run Job)"
-}
-
-# Cloud SQL access (IAM auth)
-resource "google_project_iam_member" "newsfeed_cloudsql_client" {
-  project = var.project_id
-  role    = "roles/cloudsql.client"
-  member  = "serviceAccount:${google_service_account.newsfeed.email}"
-}
-
-resource "google_project_iam_member" "newsfeed_cloudsql_instance_user" {
-  project = var.project_id
-  role    = "roles/cloudsql.instanceUser"
-  member  = "serviceAccount:${google_service_account.newsfeed.email}"
-}
-
-# GCS write access (raw article storage)
 resource "google_storage_bucket_iam_member" "newsfeed_gcs_writer" {
   bucket = google_storage_bucket.newsfeed.name
   role   = "roles/storage.objectCreator"
-  member = "serviceAccount:${google_service_account.newsfeed.email}"
+  member = "serviceAccount:${var.service_account_email}"
 }
 
-# GCS read access (for retry: read raw content)
 resource "google_storage_bucket_iam_member" "newsfeed_gcs_reader" {
   bucket = google_storage_bucket.newsfeed.name
   role   = "roles/storage.objectViewer"
-  member = "serviceAccount:${google_service_account.newsfeed.email}"
+  member = "serviceAccount:${var.service_account_email}"
 }
 
-# Vertex AI (Gemini) access
 resource "google_project_iam_member" "newsfeed_vertex_ai_user" {
   project = var.project_id
   role    = "roles/aiplatform.user"
-  member  = "serviceAccount:${google_service_account.newsfeed.email}"
+  member  = "serviceAccount:${var.service_account_email}"
 }
 
 # ──────────────────────────────────────────────
-# Cloud Run v2 Job
+# Cloud Run v2 ジョブ
 # ──────────────────────────────────────────────
 
 resource "google_cloud_run_v2_job" "newsfeed" {
@@ -162,7 +142,7 @@ resource "google_cloud_run_v2_job" "newsfeed" {
   location            = var.region
   deletion_protection = false
 
-  # CI/CD がイメージタグを直接更新するため、Terraform の差分検知から除外
+  # CI/CD がイメージタグを直接更新するため drift を許容
   lifecycle {
     ignore_changes = [template[0].template[0].containers[0].image]
   }
@@ -171,7 +151,7 @@ resource "google_cloud_run_v2_job" "newsfeed" {
     task_count = 1
 
     template {
-      service_account = google_service_account.newsfeed.email
+      service_account = var.service_account_email
       max_retries     = 1
       timeout         = "1800s" # 30 min max
 
@@ -180,7 +160,7 @@ resource "google_cloud_run_v2_job" "newsfeed" {
 
         env {
           name  = "DATABASE_URL"
-          value = "postgres://${google_service_account.newsfeed.email}@${var.cloudsql_private_ip}:5432/${var.database_name}?sslmode=disable"
+          value = "postgres://${var.service_account_email}@${var.cloudsql_private_ip}:5432/${var.database_name}?sslmode=disable"
         }
 
         env {
@@ -204,14 +184,14 @@ resource "google_cloud_run_v2_job" "newsfeed" {
           network    = var.network
           subnetwork = var.subnetwork
         }
-        egress = "PRIVATE_RANGES_ONLY" # Cloud SQL (private IP) goes via VPC; Vertex AI + RSS go directly from Cloud Run
+        egress = "PRIVATE_RANGES_ONLY"
       }
     }
   }
 }
 
 # ──────────────────────────────────────────────
-# Cloud Scheduler (trigger newsfeed job)
+# Cloud Scheduler (Newsfeed ジョブトリガー)
 # ──────────────────────────────────────────────
 
 resource "google_service_account" "newsfeed_scheduler" {
@@ -248,7 +228,7 @@ resource "google_cloud_scheduler_job" "newsfeed" {
 }
 
 # ──────────────────────────────────────────────
-# Allow deploy SA to execute the job (CI/CD)
+# デプロイ SA にジョブ実行権限を付与 (CI/CD)
 # ──────────────────────────────────────────────
 
 resource "google_cloud_run_v2_job_iam_member" "deploy_invoker" {
@@ -261,7 +241,7 @@ resource "google_cloud_run_v2_job_iam_member" "deploy_invoker" {
 }
 
 # ──────────────────────────────────────────────
-# Outputs
+# 出力
 # ──────────────────────────────────────────────
 
 output "newsfeed_job_name" {
@@ -272,6 +252,3 @@ output "gcs_bucket_name" {
   value = google_storage_bucket.newsfeed.name
 }
 
-output "newsfeed_sa_email" {
-  value = google_service_account.newsfeed.email
-}

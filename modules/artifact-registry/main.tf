@@ -1,5 +1,5 @@
 # ──────────────────────────────────────────────
-# APIs
+# API 有効化
 # ──────────────────────────────────────────────
 
 resource "google_project_service" "artifactregistry" {
@@ -9,7 +9,7 @@ resource "google_project_service" "artifactregistry" {
 }
 
 # ──────────────────────────────────────────────
-# Artifact Registry
+# コンテナレジストリ
 # ──────────────────────────────────────────────
 
 resource "google_artifact_registry_repository" "docker" {

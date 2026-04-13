@@ -15,7 +15,7 @@ variable "subnet_cidr" {
 }
 
 # ──────────────────────────────────────────────
-# APIs
+# API 有効化
 # ──────────────────────────────────────────────
 
 resource "google_project_service" "servicenetworking" {
@@ -25,7 +25,7 @@ resource "google_project_service" "servicenetworking" {
 }
 
 # ──────────────────────────────────────────────
-# Network
+# ネットワーク
 # ──────────────────────────────────────────────
 
 resource "google_compute_network" "main" {
@@ -42,7 +42,6 @@ resource "google_compute_subnetwork" "main" {
   ip_cidr_range = var.subnet_cidr
 }
 
-# Private services access for Cloud SQL private IP
 resource "google_compute_global_address" "private_ip" {
   name          = "overload-party-private-ip"
   project       = var.project_id

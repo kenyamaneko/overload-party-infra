@@ -1,16 +1,5 @@
-# ゲームアセット配信:
-#   - カードイラスト・スタンプ → GCS 公開バケット + Cloudflare CDN でユーザー端末に直接配信
-#   - シナリオスクリプト        → GCS 非公開バケットにサーバーからアクセス（API 経由で配信）
-#
-# 公開バケットは Cloudflare CNAME バケットとして使用するため、
-# バケット名 = サブドメイン（例: overload-party-assets-dev.keyandnotes.com）。
-# Cloudflare CDN の CNAME 設定は environments/cloudflare/ で管理する。
-#
-# デプロイは CI から `gcloud storage cp` で行う。
-# Terraform はバケットの作成のみ管理し、コンテンツのデプロイは行わない。
-
 # ──────────────────────────────────────────────
-# Variables
+# 変数
 # ──────────────────────────────────────────────
 
 variable "project_id" {
@@ -29,10 +18,8 @@ variable "asset_domain" {
 }
 
 # ──────────────────────────────────────────────
-# GCS Bucket — public (card illustrations, stamps, story art/audio)
+# GCS バケット — 公開 (カードイラスト、スタンプ、ストーリーアート / 音声)
 # ──────────────────────────────────────────────
-# バケット名をドメインと一致させることで、Cloudflare からの
-# CNAME (→ c.storage.googleapis.com) で GCS が自動解決する。
 
 resource "google_storage_bucket" "assets" {
   name                        = var.asset_domain
@@ -49,7 +36,7 @@ resource "google_storage_bucket_iam_member" "assets_public" {
 }
 
 # ──────────────────────────────────────────────
-# GCS Bucket — private (scenario scripts)
+# GCS バケット — 非公開 (シナリオスクリプト)
 # ──────────────────────────────────────────────
 
 resource "google_storage_bucket" "scenarios" {
@@ -61,7 +48,7 @@ resource "google_storage_bucket" "scenarios" {
 }
 
 # ──────────────────────────────────────────────
-# Outputs
+# 出力
 # ──────────────────────────────────────────────
 
 output "assets_bucket_name" {

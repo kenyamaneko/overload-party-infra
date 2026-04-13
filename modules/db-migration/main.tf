@@ -1,8 +1,5 @@
-# Cloud Run v2 Job for DB migration with Direct VPC Egress.
-# Connects to Cloud SQL via Private IP using password authentication.
-
 # ──────────────────────────────────────────────
-# Variables
+# 変数
 # ──────────────────────────────────────────────
 
 variable "project_id" {
@@ -54,7 +51,7 @@ variable "deploy_service_account_email" {
 }
 
 # ──────────────────────────────────────────────
-# APIs
+# API 有効化
 # ──────────────────────────────────────────────
 
 resource "google_project_service" "run" {
@@ -64,7 +61,7 @@ resource "google_project_service" "run" {
 }
 
 # ──────────────────────────────────────────────
-# Service Account for Cloud Run Job
+# Cloud Run Job 用サービスアカウント
 # ──────────────────────────────────────────────
 
 resource "google_service_account" "migration" {
@@ -80,7 +77,7 @@ resource "google_project_iam_member" "migration_secret_accessor" {
 }
 
 # ──────────────────────────────────────────────
-# Cloud Run v2 Job with Direct VPC Egress
+# Cloud Run v2 ジョブ (Direct VPC Egress)
 # ──────────────────────────────────────────────
 
 resource "google_cloud_run_v2_job" "migration" {
@@ -89,7 +86,7 @@ resource "google_cloud_run_v2_job" "migration" {
   location            = var.region
   deletion_protection = false
 
-  # CI/CD がイメージタグを直接更新するため、Terraform の差分検知から除外
+  # CI/CD がイメージタグを直接更新するため drift を許容
   lifecycle {
     ignore_changes = [template[0].template[0].containers[0].image]
   }
@@ -149,7 +146,7 @@ resource "google_cloud_run_v2_job" "migration" {
 }
 
 # ──────────────────────────────────────────────
-# Allow deploy SA to update and execute the job
+# デプロイ SA にジョブ更新・実行権限を付与
 # ──────────────────────────────────────────────
 
 resource "google_cloud_run_v2_job_iam_member" "deploy_invoker" {

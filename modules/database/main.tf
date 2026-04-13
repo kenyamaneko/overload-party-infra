@@ -26,26 +26,14 @@ variable "network_id" {
 }
 
 variable "service_account_id" {
-  description = "Service account ID for the game server application"
+  description = "DEPRECATED: shared game server GSA. Remove after per-service IAM cutover is verified."
   type        = string
 }
 
-variable "gke_project_id" {
-  description = "GCP project ID where GKE cluster lives (for Workload Identity)"
-  type        = string
-  default     = ""
-}
-
-variable "k8s_namespace" {
-  description = "Kubernetes namespace for Workload Identity binding"
-  type        = string
-  default     = "dev"
-}
-
-variable "k8s_service_account" {
-  description = "Kubernetes ServiceAccount name for Workload Identity binding"
-  type        = string
-  default     = "game-server"
+variable "service_iam_users" {
+  description = "Map of service name -> GSA email for per-service Cloud SQL IAM database users"
+  type        = map(string)
+  default     = {}
 }
 
 variable "deletion_protection" {
@@ -67,7 +55,7 @@ variable "psc_allowed_consumer_projects" {
 }
 
 # ──────────────────────────────────────────────
-# APIs
+# API 有効化
 # ──────────────────────────────────────────────
 
 resource "google_project_service" "sqladmin" {
@@ -77,7 +65,7 @@ resource "google_project_service" "sqladmin" {
 }
 
 # ──────────────────────────────────────────────
-# Service Account (game server → Cloud SQL)
+# サービスアカウント (ゲームサーバー → Cloud SQL)
 # ──────────────────────────────────────────────
 
 resource "google_service_account" "game_server" {
@@ -98,15 +86,8 @@ resource "google_project_iam_member" "cloudsql_instance_user" {
   member  = "serviceAccount:${google_service_account.game_server.email}"
 }
 
-resource "google_service_account_iam_member" "workload_identity" {
-  count              = var.gke_project_id != "" ? 1 : 0
-  service_account_id = google_service_account.game_server.name
-  role               = "roles/iam.workloadIdentityUser"
-  member             = "serviceAccount:${var.gke_project_id}.svc.id.goog[${var.k8s_namespace}/${var.k8s_service_account}]"
-}
-
 # ──────────────────────────────────────────────
-# Cloud SQL Instance
+# Cloud SQL インスタンス
 # ──────────────────────────────────────────────
 
 resource "google_sql_database_instance" "main" {
@@ -119,10 +100,7 @@ resource "google_sql_database_instance" "main" {
     tier    = var.tier
     edition = "ENTERPRISE"
     ip_configuration {
-      ipv4_enabled = var.ipv4_enabled
-      # private_network (VPC peering) と PSC は併用可能。
-      # private_network: 同一プロジェクト内の Cloud Run Job が private IP で接続
-      # PSC: 別プロジェクト (keyandnotes-platform) の GKE から接続
+      ipv4_enabled    = var.ipv4_enabled
       private_network = var.network_id
 
       dynamic "psc_config" {
@@ -144,8 +122,7 @@ resource "google_sql_database_instance" "main" {
   }
   deletion_protection = var.deletion_protection
 
-  # root_password: 初回作成後に外部で管理
-  # activation_policy: 起動・停止は Terraform 外で管理（Cloud Scheduler / 手動）
+  # root_password と activation_policy は Terraform 外で管理
   lifecycle {
     ignore_changes = [root_password, settings[0].activation_policy]
   }
@@ -157,7 +134,6 @@ resource "google_sql_database" "main" {
   project  = var.project_id
 }
 
-# IAM database user (for Cloud SQL Auth Proxy with --auto-iam-authn)
 resource "google_sql_user" "iam_user" {
   name     = trimsuffix(google_service_account.game_server.email, ".gserviceaccount.com")
   instance = google_sql_database_instance.main.name
@@ -165,17 +141,38 @@ resource "google_sql_user" "iam_user" {
   type     = "CLOUD_IAM_SERVICE_ACCOUNT"
 }
 
+resource "google_sql_user" "service_iam_users" {
+  for_each = var.service_iam_users
+
+  name     = trimsuffix(each.value, ".gserviceaccount.com")
+  instance = google_sql_database_instance.main.name
+  project  = var.project_id
+  type     = "CLOUD_IAM_SERVICE_ACCOUNT"
+}
+
 # ──────────────────────────────────────────────
-# Outputs
+# 出力
 # ──────────────────────────────────────────────
 
 output "instance_connection_name" {
   value = google_sql_database_instance.main.connection_name
 }
 
-# IAM auth: DSN format for Auth Proxy sidecar (app connects to localhost:5432)
+output "instance_name" {
+  description = "Cloud SQL instance short name"
+  value       = google_sql_database_instance.main.name
+}
+
 output "database_url_iam" {
   value = "host=localhost port=5432 dbname=${var.database_name} user=${google_sql_user.iam_user.name} sslmode=disable"
+}
+
+output "service_database_urls" {
+  description = "Map of service name -> DSN using per-service IAM user"
+  value = {
+    for svc, user in google_sql_user.service_iam_users :
+    svc => "host=localhost port=5432 dbname=${var.database_name} user=${user.name} sslmode=disable"
+  }
 }
 
 output "private_ip_address" {
