@@ -29,33 +29,9 @@ jobs:
 
       - id: detect
         name: Detect changed environments
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            BASE="${{ github.event.pull_request.base.sha }}"
-          else
-            BASE="${{ github.event.before }}"
-          fi
-
-          CHANGED=$(git diff --name-only "${BASE}" HEAD)
-
-          ENVS="[]"
-          # If modules changed, run all environments (except cloudflare — no GCP modules)
-          if echo "${CHANGED}" | grep -q '^modules/'; then
-            ENVS='["dev","stg","prod","platform"]'
-          else
-            envs=()
-            for env in dev stg prod platform cloudflare; do
-              if echo "${CHANGED}" | grep -q "^environments/${env}/"; then
-                envs+=("\"${env}\"")
-              fi
-            done
-            if [ ${#envs[@]} -gt 0 ]; then
-              ENVS="[$(IFS=,; echo "${envs[*]}")]"
-            fi
-          fi
-
-          echo "envs=${ENVS}" >> "$GITHUB_OUTPUT"
-          echo "Detected environments: ${ENVS}"
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: .github/scripts/detect-envs.sh
 
   plan:
     needs: detect
@@ -90,20 +66,12 @@ jobs:
 
       - name: Comment PR
         uses: actions/github-script@v7
+        env:
+          TF_ENV: ${{ matrix.env }}
         with:
           script: |
-            const fs = require('fs');
-            const plan = fs.readFileSync('environments/${{ matrix.env }}/plan.txt', 'utf8');
-            const body = `### Terraform Plan — \`${{ matrix.env }}\`
-            \`\`\`
-            ${plan.slice(-60000)}
-            \`\`\``;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: body,
-            });
+            const commentPlan = require('./.github/scripts/comment-plan.js');
+            await commentPlan({ github, context });
 
   apply:
     needs: detect
