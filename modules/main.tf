@@ -1,5 +1,5 @@
 locals {
-  services = {
+  k8s_services = {
     gateway     = "overload-party-gateway"
     matchmaking = "overload-party-matchmaking"
     battle      = "overload-party-battle"
@@ -9,6 +9,10 @@ locals {
     scenario    = "overload-party-scenario"
   }
 
+  non_k8s_services = {
+    newsfeed = "overload-party-newsfeed"
+  }
+
   db_services = {
     gateway  = "overload-party-gateway"
     battle   = "overload-party-battle"
@@ -16,15 +20,11 @@ locals {
     account  = "overload-party-account"
     shop     = "overload-party-shop"
     scenario = "overload-party-scenario"
+    newsfeed = "overload-party-newsfeed"
   }
 
   game_server_sa_account_id = "overload-party-app"
-  newsfeed_sa_account_id    = "overload-party-newsfeed"
 }
-
-# ──────────────────────────────────────────────
-# ネットワーク
-# ──────────────────────────────────────────────
 
 module "network" {
   source = "./foundation/network"
@@ -33,9 +33,15 @@ module "network" {
   region     = var.region
 }
 
-# ──────────────────────────────────────────────
-# データベース (Cloud SQL PostgreSQL)
-# ──────────────────────────────────────────────
+module "service_accounts" {
+  source = "./foundation/service-accounts"
+
+  project_id       = var.project_id
+  k8s_namespace    = var.k8s_namespace
+  k8s_services     = local.k8s_services
+  non_k8s_services = local.non_k8s_services
+  db_services      = local.db_services
+}
 
 module "database" {
   source = "./data/database"
@@ -50,31 +56,12 @@ module "database" {
   ipv4_enabled                  = var.ipv4_enabled
   psc_allowed_consumer_projects = var.psc_allowed_consumer_projects
   deletion_protection           = var.deletion_protection
+  deploy_sa                     = var.deploy_sa
 
-  service_iam_users = merge(
-    { for svc, _ in local.db_services : svc => module.service_accounts.accounts[svc].email },
-    var.enable_newsfeed ? { newsfeed = google_service_account.newsfeed[0].email } : {}
-  )
+  service_iam_users = { for svc, _ in local.db_services : svc => module.service_accounts.accounts[svc].email }
 
   depends_on = [module.network.service_networking_connection]
 }
-
-# ──────────────────────────────────────────────
-# サービス別 GSA + Workload Identity
-# ──────────────────────────────────────────────
-
-module "service_accounts" {
-  source = "./foundation/service-accounts"
-
-  project_id    = var.project_id
-  k8s_namespace = var.k8s_namespace
-  services      = local.services
-  db_services   = local.db_services
-}
-
-# ──────────────────────────────────────────────
-# Pub/Sub
-# ──────────────────────────────────────────────
 
 module "pubsub" {
   source = "./data/pubsub"
@@ -87,10 +74,6 @@ module "pubsub" {
   account_service_account_email     = module.service_accounts.accounts["account"].email
   card_service_account_email        = module.service_accounts.accounts["card"].email
 }
-
-# ──────────────────────────────────────────────
-# Firestore (game_config store, Native モード)
-# ──────────────────────────────────────────────
 
 module "firestore" {
   source = "./data/firestore"
@@ -106,21 +89,6 @@ module "firestore" {
     battle   = module.service_accounts.accounts["battle"].email
   }
 }
-
-# ──────────────────────────────────────────────
-# Cloud SQL 停止権限 (nightly-shutdown workflow 用)
-# ──────────────────────────────────────────────
-
-resource "google_project_iam_member" "deploy_cloudsql_editor" {
-  count   = var.deploy_sa != "" ? 1 : 0
-  project = var.project_id
-  role    = "roles/cloudsql.editor"
-  member  = var.deploy_sa
-}
-
-# ──────────────────────────────────────────────
-# DB マイグレーション (Cloud Run Job)
-# ──────────────────────────────────────────────
 
 module "db_migration" {
   count  = var.migration_image != "" ? 1 : 0
@@ -138,19 +106,7 @@ module "db_migration" {
   depends_on = [module.network.service_networking_connection]
 }
 
-# ──────────────────────────────────────────────
-# Newsfeed ジョブ
-# ──────────────────────────────────────────────
-
-resource "google_service_account" "newsfeed" {
-  count        = var.enable_newsfeed ? 1 : 0
-  project      = var.project_id
-  account_id   = local.newsfeed_sa_account_id
-  display_name = "Overload Party Newsfeed (Cloud Run Job)"
-}
-
 module "newsfeed" {
-  count  = var.enable_newsfeed ? 1 : 0
   source = "./app/newsfeed"
 
   project_id                   = var.project_id
@@ -161,15 +117,11 @@ module "newsfeed" {
   cloudsql_private_ip          = module.database.private_ip_address
   database_name                = var.database_name
   bucket_name                  = var.newsfeed_bucket_name
-  service_account_email        = google_service_account.newsfeed[0].email
+  service_account_email        = module.service_accounts.accounts["newsfeed"].email
   deploy_service_account_email = var.deploy_service_account_email
 
   depends_on = [module.network.service_networking_connection]
 }
-
-# ──────────────────────────────────────────────
-# Shop IAP シークレット (Secret Manager)
-# ──────────────────────────────────────────────
 
 module "shop_secrets" {
   source = "./app/shop-secrets"
@@ -177,10 +129,6 @@ module "shop_secrets" {
   project_id                 = var.project_id
   shop_service_account_email = module.service_accounts.accounts["shop"].email
 }
-
-# ──────────────────────────────────────────────
-# ゲームアセット
-# ──────────────────────────────────────────────
 
 module "assets" {
   source = "./app/assets"

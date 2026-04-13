@@ -1,5 +1,5 @@
 resource "google_service_account" "accounts" {
-  for_each = var.services
+  for_each = local.all_services
 
   project      = var.project_id
   account_id   = each.value
@@ -7,7 +7,7 @@ resource "google_service_account" "accounts" {
 }
 
 resource "google_service_account_iam_member" "workload_identity" {
-  for_each = var.services
+  for_each = var.k8s_services
 
   service_account_id = google_service_account.accounts[each.key].name
   role               = "roles/iam.workloadIdentityUser"

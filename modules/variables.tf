@@ -71,7 +71,7 @@ variable "scenarios_bucket_name" {
 }
 
 variable "newsfeed_bucket_name" {
-  description = "Newsfeed 記事データバケット名（グローバル一意）。enable_newsfeed = false なら空文字でよい"
+  description = "Newsfeed 記事データバケット名（グローバル一意）"
   type        = string
 }
 
@@ -94,12 +94,7 @@ variable "deploy_service_account_email" {
   type        = string
 }
 
-variable "enable_newsfeed" {
-  description = "Newsfeed ジョブを有効化するか"
-  type        = bool
-}
-
 variable "newsfeed_image" {
-  description = "Newsfeed コンテナイメージ。enable_newsfeed = false なら空文字でよい"
+  description = "Newsfeed コンテナイメージ"
   type        = string
 }
