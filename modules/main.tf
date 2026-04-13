@@ -85,6 +85,20 @@ module "pubsub" {
 }
 
 # ──────────────────────────────────────────────
+# Firestore (game_config store)
+# account パイロット先行。他サービスは順次追加。
+# ──────────────────────────────────────────────
+
+module "firestore" {
+  source = "./firestore"
+
+  project_id = var.project_id
+  reader_service_account_emails = {
+    account = module.service_accounts.accounts["account"].email
+  }
+}
+
+# ──────────────────────────────────────────────
 # Cloud SQL 停止権限 (nightly-shutdown workflow 用)
 # ──────────────────────────────────────────────
 

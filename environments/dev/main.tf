@@ -97,11 +97,6 @@ moved {
   to   = module.infra.google_project_iam_member.deploy_cloudsql_editor[0]
 }
 
-moved {
-  from = google_service_account.newsfeed
-  to   = module.infra.google_service_account.newsfeed[0]
-}
-
 # ──────────────────────────────────────────────
 # 出力
 # ──────────────────────────────────────────────
