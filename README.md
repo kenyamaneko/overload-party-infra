@@ -1,6 +1,7 @@
 # overload-party-infra
 
-Overload Party のインフラ管理リポジトリ。VPC / Cloud SQL / GKE / Pub/Sub / IAM / CDN の Terraform を管理する。
+Overload Party のインフラ管理リポジトリ。VPC / Cloud SQL / Pub/Sub / IAM / CDN の Terraform を管理する。
+GKE クラスタは [keyandnotes-platform](https://github.com/kenyamaneko/keyandnotes-platform) リポジトリに分離。
 
 ## 環境一覧
 
@@ -9,7 +10,7 @@ Overload Party のインフラ管理リポジトリ。VPC / Cloud SQL / GKE / Pu
 | dev | `overload-party-dev` | 開発環境 |
 | stg | `overload-party-stg` | ステージング環境 |
 | prod | `overload-party-prod` | 本番環境 |
-| platform | `keyandnotes-platform` | 共有基盤 (GKE, WIF, CI/TF/Deploy SA, AR) |
+| platform | `keyandnotes-platform` | 共有基盤 (WIF, CI/TF/Deploy SA, AR, PSC) |
 | cloudflare | -- | CDN (アセット配信用 CNAME) + API DNS (A records) |
 
 ## ディレクトリ構成
@@ -24,8 +25,6 @@ environments/
 modules/
   network/           VPC + サブネット + Private Services Access
   database/          Cloud SQL PostgreSQL + IAM users
-  gke/               GKE Autopilot クラスタ
-  gke-standard/      GKE Standard クラスタ (Autopilot からの移行用)
   psc-cloudsql/      PSC endpoint for Cloud SQL (cross-project)
   service-accounts/  Per-service GSA + Workload Identity
   pubsub/            Pub/Sub topics + subscriptions + IAM
@@ -54,8 +53,6 @@ cd modules/network && terraform test
 |-----------|-----|-----|------|----------|------|
 | network | o | o | o | - | |
 | database | o | o | o | - | prod は `deletion_protection = true` |
-| gke | - | - | - | o | Autopilot (keyandnotes-shared) |
-| gke-standard | - | - | - | o | Standard (keyandnotes-standard) |
 | psc-cloudsql | - | - | - | o | dev のみ (per-env instantiation) |
 | service-accounts | o | o | o | - | dev のみ newsfeed GSA を含む |
 | pubsub | o | o | o | - | |

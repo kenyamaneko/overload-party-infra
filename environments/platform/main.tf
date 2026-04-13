@@ -36,6 +36,7 @@ module "ci_cd" {
   artifact_registry_id = module.artifact_registry.repository_id
 
   allowed_repositories = [
+    "keyandnotes-platform",
     "overload-party-account",
     "overload-party-analytics",
     "overload-party-battle",
@@ -69,6 +70,7 @@ module "ci_cd" {
   ]
 
   terraform_wif_repositories = [
+    "keyandnotes-platform",
     "overload-party-infra",
     "overload-party-k8s",
   ]
@@ -107,27 +109,9 @@ resource "google_artifact_registry_repository_iam_member" "cloudrun_ar_reader" {
 }
 
 # ──────────────────────────────────────────────
-# GKE クラスタ (k8s リポから移管)
-# ──────────────────────────────────────────────
-
-module "gke" {
-  source = "../../modules/gke"
-
-  project_id   = local.project_id
-  region       = local.region
-  cluster_name = "keyandnotes-shared"
-}
-
-# Standard クラスタ。既存 Autopilot (keyandnotes-shared) と並行運用し、移行後に撤去する。
-module "gke_standard" {
-  source = "../../modules/gke-standard"
-
-  project_id = local.project_id
-}
-
-# ──────────────────────────────────────────────
 # Cloud SQL 用 PSC エンドポイント (環境別)
 # ──────────────────────────────────────────────
+# GKE クラスタは keyandnotes-platform リポジトリへ移管済み
 
 module "psc_cloudsql_dev" {
   source = "../../modules/psc-cloudsql"
@@ -156,14 +140,6 @@ output "terraform_service_account_email" {
 
 output "deploy_service_account_email" {
   value = module.ci_cd.deploy_service_account_email
-}
-
-output "gke_cluster_name" {
-  value = module.gke.cluster_name
-}
-
-output "gke_standard_cluster_name" {
-  value = module.gke_standard.cluster_name
 }
 
 output "psc_dev_address_name" {
