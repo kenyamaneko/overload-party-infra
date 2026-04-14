@@ -14,7 +14,7 @@ Cloud Pub/Sub (exactly-once delivery) のトピック、サブスクリプショ
 
 | Name | Description |
 |------|-------------|
-| `project_id` | GCP project ID |
+| `project_id` | Google Cloud project ID |
 | `matchmaking_service_account_email` | publisher on `matchmaking-events` |
 | `gateway_service_account_email` | subscriber on matchmaking / faction-selected / premium-updated |
 | `scenario_service_account_email` | publisher on `faction-selected` |

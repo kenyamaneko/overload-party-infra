@@ -160,7 +160,7 @@ resource "google_cloud_run_v2_job" "newsfeed" {
         }
 
         env {
-          name  = "GCP_PROJECT"
+          name  = "GOOGLE_CLOUD_PROJECT"
           value = var.project_id
         }
 
