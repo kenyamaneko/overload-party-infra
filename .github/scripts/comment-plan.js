@@ -13,7 +13,7 @@ module.exports = async ({ github, context }) => {
   const env = process.env.TF_ENV;
   if (!env) throw new Error('TF_ENV is required');
 
-  const planPath = path.join('environments', env, 'plan.txt');
+  const planPath = path.join('providers', env, 'plan.txt');
   const plan = fs.readFileSync(planPath, 'utf8');
 
   const body = [

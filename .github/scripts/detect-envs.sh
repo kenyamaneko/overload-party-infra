@@ -1,39 +1,60 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# 変更されたファイルから、Terraform を実行すべき環境一覧を JSON 配列で出力する。
+# 変更ファイルから Terraform を実行すべきディレクトリ (providers/ 配下の相対パス) を JSON 配列で出力する。
 # 入力: 環境変数 BASE_SHA, HEAD_SHA, GITHUB_OUTPUT
-# 出力: $GITHUB_OUTPUT に envs=<JSON 配列> を追記
+# 出力: $GITHUB_OUTPUT に paths=<JSON 配列> を追記 (例: ["google-cloud/env/dev","cloudflare"])
 
 : "${BASE_SHA:?BASE_SHA is required}"
 : "${HEAD_SHA:=HEAD}"
 
-ALL_ENVS=(dev stg prod platform cloudflare)
-# modules/ は GCP 系モジュール置き場なので、変更時は cloudflare を除く全環境を対象にする
-GCP_ENVS=(dev stg prod platform)
+GOOGLE_CLOUD_ENV_PATHS=("google-cloud/env/dev" "google-cloud/env/stg" "google-cloud/env/prod")
+GOOGLE_CLOUD_PLATFORM_PATHS=("google-cloud/platform")
+CLOUDFLARE_PATHS=("cloudflare")
+ALL_PATHS=("${GOOGLE_CLOUD_ENV_PATHS[@]}" "${GOOGLE_CLOUD_PLATFORM_PATHS[@]}" "${CLOUDFLARE_PATHS[@]}")
 
 CHANGED=$(git diff --name-only "${BASE_SHA}" "${HEAD_SHA}")
 
-envs=()
-if echo "${CHANGED}" | grep -q '^modules/'; then
-  envs=("${GCP_ENVS[@]}")
-else
-  for env in "${ALL_ENVS[@]}"; do
-    if echo "${CHANGED}" | grep -q "^environments/${env}/"; then
-      envs+=("${env}")
-    fi
+selected=""
+add_selection() {
+  for p in "$@"; do
+    case " ${selected} " in
+      *" ${p} "*) ;;
+      *) selected="${selected} ${p}" ;;
+    esac
   done
-fi
+}
 
-if [ ${#envs[@]} -eq 0 ]; then
-  ENVS_JSON="[]"
+# 共有モジュール変更 → その consumer 全部
+if echo "${CHANGED}" | grep -q '^providers/google-cloud/env/modules/'; then
+  add_selection "${GOOGLE_CLOUD_ENV_PATHS[@]}"
+fi
+# platform/modules/ は platform/ から呼ばれる (state root は platform 単一) ので
+# 次のループで providers/google-cloud/platform/ の直接変更として拾われる
+
+# 環境ディレクトリの直接変更 (platform/modules/ もこちらで捕捉される)
+for p in "${ALL_PATHS[@]}"; do
+  if echo "${CHANGED}" | grep -q "^providers/${p}/"; then
+    add_selection "${p}"
+  fi
+done
+
+paths=()
+for p in "${ALL_PATHS[@]}"; do
+  case " ${selected} " in
+    *" ${p} "*) paths+=("$p") ;;
+  esac
+done
+
+if [ ${#paths[@]} -eq 0 ]; then
+  PATHS_JSON="[]"
 else
-  quoted=$(printf '"%s",' "${envs[@]}")
-  ENVS_JSON="[${quoted%,}]"
+  quoted=$(printf '"%s",' "${paths[@]}")
+  PATHS_JSON="[${quoted%,}]"
 fi
 
-echo "Detected environments: ${ENVS_JSON}"
+echo "Detected paths: ${PATHS_JSON}"
 
 if [ -n "${GITHUB_OUTPUT:-}" ]; then
-  echo "envs=${ENVS_JSON}" >> "${GITHUB_OUTPUT}"
+  echo "paths=${PATHS_JSON}" >> "${GITHUB_OUTPUT}"
 fi

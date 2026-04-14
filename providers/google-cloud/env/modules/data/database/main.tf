@@ -161,46 +161,7 @@ resource "google_project_iam_member" "deploy_cloudsql_editor" {
   member  = var.deploy_sa
 }
 
-# ──────────────────────────────────────────────
-# 出力
-# ──────────────────────────────────────────────
-
-output "instance_connection_name" {
-  value = google_sql_database_instance.main.connection_name
-}
-
-output "instance_name" {
-  description = "Cloud SQL instance short name"
-  value       = google_sql_database_instance.main.name
-}
-
-output "database_url_iam" {
-  value = "host=localhost port=5432 dbname=${var.database_name} user=${google_sql_user.iam_user.name} sslmode=disable"
-}
-
-output "service_database_urls" {
-  description = "Map of service name -> DSN using per-service IAM user"
-  value = {
-    for svc, user in google_sql_user.service_iam_users :
-    svc => "host=localhost port=5432 dbname=${var.database_name} user=${user.name} sslmode=disable"
-  }
-}
-
 output "private_ip_address" {
-  description = "Private IP address of the Cloud SQL instance"
+  description = "Cloud SQL インスタンスの private IP。newsfeed / db-migration から参照"
   value       = google_sql_database_instance.main.private_ip_address
-}
-
-output "psc_service_attachment_link" {
-  description = "PSC service attachment link (empty if PSC disabled)"
-  value       = length(var.psc_allowed_consumer_projects) > 0 ? google_sql_database_instance.main.psc_service_attachment_link : ""
-}
-
-output "dns_name" {
-  description = "PSC DNS name (empty if PSC disabled)"
-  value       = length(var.psc_allowed_consumer_projects) > 0 ? google_sql_database_instance.main.dns_name : ""
-}
-
-output "service_account_email" {
-  value = google_service_account.game_server.email
 }

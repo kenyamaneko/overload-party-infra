@@ -78,21 +78,3 @@ resource "google_dns_record_set" "psc" {
   rrdatas      = [google_compute_address.psc.address]
 }
 
-# ──────────────────────────────────────────────
-# 出力 (env-up.sh がフォワーディングルール作成時に使用)
-# ──────────────────────────────────────────────
-
-output "psc_address_name" {
-  description = "Reserved internal IP name for the PSC endpoint"
-  value       = google_compute_address.psc.name
-}
-
-output "psc_address" {
-  description = "Reserved internal IP address"
-  value       = google_compute_address.psc.address
-}
-
-output "psc_service_attachment_link" {
-  description = "Cloud SQL PSC service attachment URI"
-  value       = data.google_sql_database_instance.target.psc_service_attachment_link
-}

@@ -19,7 +19,7 @@ provider "google" {
 }
 
 module "artifact_registry" {
-  source = "../../modules/foundation/artifact-registry"
+  source = "./modules/artifact-registry"
 
   project_id    = local.project_id
   region        = local.region
@@ -27,7 +27,7 @@ module "artifact_registry" {
 }
 
 module "ci_cd" {
-  source = "../../modules/ops/ci-cd"
+  source = "./modules/ci-cd"
 
   project_id   = local.project_id
   region       = local.region
@@ -114,7 +114,7 @@ resource "google_artifact_registry_repository_iam_member" "cloudrun_ar_reader" {
 # GKE クラスタは keyandnotes-platform リポジトリへ移管済み
 
 module "psc_cloudsql_dev" {
-  source = "../../modules/platform/psc-cloudsql"
+  source = "./modules/psc-cloudsql"
 
   project_id             = local.project_id
   region                 = local.region
@@ -124,28 +124,3 @@ module "psc_cloudsql_dev" {
   cloudsql_instance_name = "overload-party-db"
 }
 
-# ---- 出力 ----
-
-output "wif_provider" {
-  value = module.ci_cd.wif_provider
-}
-
-output "ci_service_account_email" {
-  value = module.ci_cd.ci_service_account_email
-}
-
-output "terraform_service_account_email" {
-  value = module.ci_cd.terraform_service_account_email
-}
-
-output "deploy_service_account_email" {
-  value = module.ci_cd.deploy_service_account_email
-}
-
-output "psc_dev_address_name" {
-  value = module.psc_cloudsql_dev.psc_address_name
-}
-
-output "psc_dev_service_attachment" {
-  value = module.psc_cloudsql_dev.psc_service_attachment_link
-}
