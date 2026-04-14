@@ -111,7 +111,6 @@ resource "google_artifact_registry_repository_iam_member" "cloudrun_ar_reader" {
 # ──────────────────────────────────────────────
 # Cloud SQL 用 PSC エンドポイント (環境別)
 # ──────────────────────────────────────────────
-# GKE クラスタは keyandnotes-platform リポジトリへ移管済み
 
 module "psc_cloudsql_dev" {
   source = "./modules/psc-cloudsql"
@@ -121,6 +120,28 @@ module "psc_cloudsql_dev" {
   network                = "default"
   env_name               = "dev"
   cloudsql_project_id    = "overload-party-dev"
+  cloudsql_instance_name = "overload-party-db"
+}
+
+module "psc_cloudsql_stg" {
+  source = "./modules/psc-cloudsql"
+
+  project_id             = local.project_id
+  region                 = local.region
+  network                = "default"
+  env_name               = "stg"
+  cloudsql_project_id    = "overload-party-stg"
+  cloudsql_instance_name = "overload-party-db"
+}
+
+module "psc_cloudsql_prod" {
+  source = "./modules/psc-cloudsql"
+
+  project_id             = local.project_id
+  region                 = local.region
+  network                = "default"
+  env_name               = "prod"
+  cloudsql_project_id    = "overload-party-prod"
   cloudsql_instance_name = "overload-party-db"
 }
 

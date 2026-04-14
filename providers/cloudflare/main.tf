@@ -34,7 +34,8 @@ locals {
 
   # API サーバー DNS レコード (k8s リポから移管)
   api_records = {
-    dev = { name = "overloadparty-dev" }
+    dev  = { name = "overloadparty-dev" }
+    prod = { name = "overloadparty-prod" }
   }
 }
 
