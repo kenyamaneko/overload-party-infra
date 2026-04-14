@@ -33,7 +33,7 @@ terraform state pull | jq -r '.resources[] | select(.type=="upstash_redis_databa
 
 endpoint / port は Upstash コンソール (Details タブ) か `terraform state show module.matchmaking_redis.upstash_redis_database.this` で確認。
 
-投入先は `matchmaking-upstash-redis-endpoint` (値: `<host>:<port>`) と `matchmaking-upstash-redis-token` (値: パスワード)。
+投入先は `matchmaking-upstash-redis-endpoint` (値: `<host>:<port>`) と `matchmaking-upstash-redis-password` (値: パスワード)。
 
 ### Upstash の Management API 認証情報
 

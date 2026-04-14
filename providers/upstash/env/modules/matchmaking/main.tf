@@ -18,7 +18,7 @@ locals {
 
   redis_secrets = {
     endpoint = "matchmaking-upstash-redis-endpoint"
-    token    = "matchmaking-upstash-redis-token"
+    password = "matchmaking-upstash-redis-password"
   }
 }
 
@@ -39,7 +39,7 @@ resource "google_project_service" "secretmanager" {
 # シークレット *リソース* のみ作成する。
 # バージョン (実値) は手動で追加する:
 #   gcloud secrets versions add matchmaking-upstash-redis-endpoint --project <project_id> --data-file=- <<< "<host>:<port>"
-#   gcloud secrets versions add matchmaking-upstash-redis-token    --project <project_id> --data-file=- <<< "<password>"
+#   gcloud secrets versions add matchmaking-upstash-redis-password --project <project_id> --data-file=- <<< "<password>"
 # host / port / password は Upstash コンソールまたは `terraform state show module.<name>.upstash_redis_database.this` から取得する。
 resource "google_secret_manager_secret" "redis" {
   for_each = local.redis_secrets
