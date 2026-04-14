@@ -61,6 +61,8 @@ jobs:
         run: terraform plan -no-color -out=tfplan 2>&1 | tee plan.txt
         env:
           TF_VAR_cloudflare_cdn_api_token: ${{ secrets.CLOUDFLARE_CDN_API_TOKEN }}
+          TF_VAR_upstash_email: ${{ vars.UPSTASH_EMAIL }}
+          TF_VAR_upstash_api_key: ${{ secrets.UPSTASH_API_KEY }}
 
       - name: Comment PR
         uses: actions/github-script@v7
@@ -101,3 +103,5 @@ jobs:
         run: terraform apply -auto-approve
         env:
           TF_VAR_cloudflare_cdn_api_token: ${{ secrets.CLOUDFLARE_CDN_API_TOKEN }}
+          TF_VAR_upstash_email: ${{ vars.UPSTASH_EMAIL }}
+          TF_VAR_upstash_api_key: ${{ secrets.UPSTASH_API_KEY }}
