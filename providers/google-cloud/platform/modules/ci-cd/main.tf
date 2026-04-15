@@ -142,3 +142,35 @@ resource "google_project_iam_member" "deploy_compute_network_admin" {
   role    = "roles/compute.networkAdmin"
   member  = "serviceAccount:${google_service_account.deploy[0].email}"
 }
+
+# ---- Cloud SQL Operator サービスアカウント (cloudsql-activation workflow 用) ----
+# ADR「ノードプールスケーリング戦略とGKEの所有権」の延長で、Cloud SQL の
+# 起動/停止も overload-party-infra (DB オーナー) が担当する。
+# ops の nightly-shutdown や Slack コマンドから workflow_dispatch で呼ばれる。
+
+resource "google_service_account" "cloudsql_operator" {
+  count        = length(var.cloudsql_operator_wif_repositories) > 0 ? 1 : 0
+  project      = var.project_id
+  account_id   = "gh-cloudsql-operator"
+  display_name = "GitHub Actions Cloud SQL Operator"
+}
+
+resource "google_service_account_iam_member" "cloudsql_operator_wif" {
+  for_each           = toset(var.cloudsql_operator_wif_repositories)
+  service_account_id = google_service_account.cloudsql_operator[0].name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository/${var.github_owner}/${each.value}"
+}
+
+# activation-policy の切替は cloudsql.admin が必要。
+# 対象は cloudsql_admin_projects と同じ (dev/stg のみ)。prod は停止しない。
+resource "google_project_iam_member" "cloudsql_operator_admin" {
+  for_each = length(var.cloudsql_operator_wif_repositories) > 0 ? toset(var.cloudsql_admin_projects) : toset([])
+  project  = each.value
+  role     = "roles/cloudsql.admin"
+  member   = "serviceAccount:${google_service_account.cloudsql_operator[0].email}"
+}
+
+output "cloudsql_operator_service_account_email" {
+  value = length(var.cloudsql_operator_wif_repositories) > 0 ? google_service_account.cloudsql_operator[0].email : null
+}

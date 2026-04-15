@@ -79,6 +79,11 @@ module "ci_cd" {
     "overload-party-k8s",
   ]
 
+  # cloudsql-activation workflow は infra リポに配置するため、infra だけ許可。
+  cloudsql_operator_wif_repositories = [
+    "overload-party-infra",
+  ]
+
   cloudfunctions_projects = ["overload-party-dev"]
   cloudrun_projects       = ["overload-party-dev", "keyandnotes-ops"]
 
@@ -123,25 +128,28 @@ module "psc_cloudsql_dev" {
   cloudsql_instance_name = "overload-party-db"
 }
 
-module "psc_cloudsql_stg" {
-  source = "./modules/psc-cloudsql"
-
-  project_id             = local.project_id
-  region                 = local.region
-  network                = "default"
-  env_name               = "stg"
-  cloudsql_project_id    = "overload-party-stg"
-  cloudsql_instance_name = "overload-party-db"
-}
-
-module "psc_cloudsql_prod" {
-  source = "./modules/psc-cloudsql"
-
-  project_id             = local.project_id
-  region                 = local.region
-  network                = "default"
-  env_name               = "prod"
-  cloudsql_project_id    = "overload-party-prod"
-  cloudsql_instance_name = "overload-party-db"
-}
+# stg / prod の PSC は overload-party-{stg,prod} プロジェクトに Cloud SQL
+# インスタンスが未作成のため data lookup が失敗する。
+# 本番準備時に env/{stg,prod} を apply して SQL を作ってから戻す。
+# module "psc_cloudsql_stg" {
+#   source = "./modules/psc-cloudsql"
+#
+#   project_id             = local.project_id
+#   region                 = local.region
+#   network                = "default"
+#   env_name               = "stg"
+#   cloudsql_project_id    = "overload-party-stg"
+#   cloudsql_instance_name = "overload-party-db"
+# }
+#
+# module "psc_cloudsql_prod" {
+#   source = "./modules/psc-cloudsql"
+#
+#   project_id             = local.project_id
+#   region                 = local.region
+#   network                = "default"
+#   env_name               = "prod"
+#   cloudsql_project_id    = "overload-party-prod"
+#   cloudsql_instance_name = "overload-party-db"
+# }
 

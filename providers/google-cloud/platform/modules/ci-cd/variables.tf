@@ -57,3 +57,8 @@ variable "deploy_wif_repositories" {
   description = "Deploy サービスアカウント（GKE kubectl apply 用）として認証を許可するリポジトリ一覧"
   type        = list(string)
 }
+
+variable "cloudsql_operator_wif_repositories" {
+  description = "Cloud SQL activation 操作用 SA として認証を許可するリポジトリ一覧（cloudsql-activation workflow 用）"
+  type        = list(string)
+}

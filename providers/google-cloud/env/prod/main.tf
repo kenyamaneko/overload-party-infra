@@ -42,7 +42,7 @@ module "infra" {
 
 # prod だけ Terraform で IP を常時保持する。dev/stg は env-lifecycle (k8s リポ) が
 # up/down で作成・削除しているが、prod は常時稼働で DNS を動かさないため削除不可。
-# ADR-018 の管理責務表参照。
+# 詳細はノードプールスケーリング戦略 ADR の管理責務表参照。
 resource "google_compute_global_address" "ingress" {
   name         = "overload-party-prod-ip"
   project      = "overload-party-prod"

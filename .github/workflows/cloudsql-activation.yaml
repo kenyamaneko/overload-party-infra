@@ -1,0 +1,68 @@
+name: Cloud SQL Activation
+
+# ADR の所有権原則に基づく実装:
+# Cloud SQL インスタンスは overload-party-infra (Terraform) が所有しているため、
+# 起動/停止 (activation-policy 切替) も infra が担当する。
+# ops の nightly-shutdown や Slack コマンドからは workflow_dispatch で呼ばれる。
+# 起動 (up) は自動スケジュールしない (朝は人間がディスパッチする運用)。
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "対象環境 (dev または stg)"
+        required: true
+        type: choice
+        options:
+          - dev
+          - stg
+      action:
+        description: "up = ALWAYS / down = NEVER"
+        required: true
+        type: choice
+        options:
+          - up
+          - down
+      slack_notification:
+        description: "完了時に Slack 通知する"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  activation:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDSQL_INSTANCE: overload-party-db
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.CLOUDSQL_OPERATOR_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Activate Cloud SQL
+        id: activate
+        env:
+          ENV: ${{ inputs.environment }}
+          POLICY: ${{ inputs.action == 'up' && 'ALWAYS' || 'NEVER' }}
+          CLOUDSQL_INSTANCE: ${{ env.CLOUDSQL_INSTANCE }}
+        run: ./.github/scripts/cloudsql-activation.sh
+
+      - name: Notify Slack
+        if: always() && inputs.slack_notification
+        env:
+          ACTION: ${{ inputs.action }}
+          ENV: ${{ inputs.environment }}
+          JOB_STATUS: ${{ job.status }}
+          RESULT: ${{ steps.activate.outputs.result }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: ./.github/scripts/notify-slack-cloudsql.sh
