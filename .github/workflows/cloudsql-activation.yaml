@@ -1,4 +1,4 @@
-name: Cloud SQL Activation
+name: Cloud SQL Up/Down
 
 # ADR の所有権原則に基づく実装:
 # Cloud SQL インスタンスは overload-party-infra (Terraform) が所有しているため、
