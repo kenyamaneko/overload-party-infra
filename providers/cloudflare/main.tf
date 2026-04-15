@@ -29,12 +29,12 @@ locals {
   assets = {
     dev  = { subdomain = "overload-party-assets-dev" }
     stg  = { subdomain = "overload-party-assets-stg" }
-    prod = { subdomain = "overload-party-assets" }
+    prod = { subdomain = "overload-party-assets-prod" }
   }
 
-  # API サーバー DNS レコード (k8s リポから移管)
   api_records = {
     dev  = { name = "overloadparty-dev" }
+    stg  = { name = "overloadparty-stg" }
     prod = { name = "overloadparty-prod" }
   }
 }
@@ -66,7 +66,7 @@ resource "cloudflare_record" "api" {
   type    = "A"
   proxied = true
 
-  # CI (env-lifecycle.yaml) が Ingress IP で動的に書き換える
+  # CI (env-lifecycle.yaml) が Ingress IP で動的に書き換えるためlifecycleを無視する
   lifecycle {
     ignore_changes = [content, proxied]
   }
