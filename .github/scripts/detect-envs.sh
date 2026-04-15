@@ -26,17 +26,15 @@ add_selection() {
   done
 }
 
-# 共有モジュール変更 → その consumer 全部
 if echo "${CHANGED}" | grep -q '^providers/google-cloud/env/modules/'; then
   add_selection "${GOOGLE_CLOUD_ENV_PATHS[@]}"
 fi
 if echo "${CHANGED}" | grep -q '^providers/upstash/env/modules/'; then
   add_selection "${UPSTASH_ENV_PATHS[@]}"
 fi
-# platform/modules/ は platform/ から呼ばれる (state root は platform 単一) ので
-# 次のループで providers/google-cloud/platform/ の直接変更として拾われる
+# platform/modules/ は platform/ から呼ばれる (state root は platform 単一) ため
+# 専用の if を置かず、下のループで providers/google-cloud/platform/ の直接変更として拾う
 
-# 環境ディレクトリの直接変更 (platform/modules/ もこちらで捕捉される)
 for p in "${ALL_PATHS[@]}"; do
   if echo "${CHANGED}" | grep -q "^providers/${p}/"; then
     add_selection "${p}"

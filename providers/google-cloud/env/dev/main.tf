@@ -40,19 +40,3 @@ module "infra" {
   newsfeed_image               = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/newsfeed:latest"
 }
 
-# orchestration レイヤのトップレベルリソースをサブモジュールに吸収したことによる state アドレス書き換え
-moved {
-  from = module.infra.google_service_account.newsfeed[0]
-  to   = module.infra.module.service_accounts.google_service_account.accounts["newsfeed"]
-}
-
-moved {
-  from = module.infra.google_project_iam_member.deploy_cloudsql_editor[0]
-  to   = module.infra.module.database.google_project_iam_member.deploy_cloudsql_editor[0]
-}
-
-moved {
-  from = module.infra.module.newsfeed[0]
-  to   = module.infra.module.newsfeed
-}
-
