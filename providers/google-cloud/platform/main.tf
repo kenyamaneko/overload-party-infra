@@ -85,7 +85,7 @@ module "ci_cd" {
   ]
 
   cloudfunctions_projects = ["overload-party-dev"]
-  cloudrun_projects       = ["overload-party-dev", "keyandnotes-ops"]
+  cloudrun_projects       = ["overload-party-dev", "overload-party-ops"]
 
   terraform_editor_projects = [
     "keyandnotes-platform",
@@ -103,7 +103,7 @@ module "ci_cd" {
 resource "google_artifact_registry_repository_iam_member" "cloudrun_ar_reader" {
   for_each = {
     dev = "346314225010"
-    ops = "59651353372"
+    ops = "1017837997433"
   }
 
   project    = local.project_id
