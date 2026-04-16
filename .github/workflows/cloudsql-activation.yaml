@@ -27,7 +27,7 @@ on:
         description: "完了時に Slack 通知する"
         required: false
         type: boolean
-        default: false
+        default: true
 
 permissions:
   contents: read
