@@ -18,56 +18,16 @@ provider "google" {
   region  = local.region
 }
 
-module "artifact_registry" {
-  source = "./modules/artifact-registry"
-
-  project_id    = local.project_id
-  region        = local.region
-  repository_id = "overload-party"
-}
+# Artifact Registry 本体と WIF pool / github-ci SA および Cloud Run サービスエージェントへの
+# reader 付与は keyandnotes-platform リポで所有する。
+# ここでは overload-party スコープの SA（terraform-deployer / github-deploy /
+# cloudsql-operator）と、github-ci への cross-project IAM 付与のみを扱う。
 
 module "ci_cd" {
   source = "./modules/ci-cd"
 
   project_id   = local.project_id
-  region       = local.region
   github_owner = "kenyamaneko"
-
-  artifact_registry_id = module.artifact_registry.repository_id
-
-  allowed_repositories = [
-    "keyandnotes-platform",
-    "overload-party-account",
-    "overload-party-analytics",
-    "overload-party-battle",
-    "overload-party-card",
-    "overload-party-client",
-    "overload-party-common",
-    "overload-party-gateway",
-    "overload-party-infra",
-    "overload-party-k8s",
-    "overload-party-matchmaking",
-    "overload-party-newsfeed",
-    "overload-party-ops",
-    "overload-party-scenario",
-    "overload-party-shop",
-  ]
-
-  ci_wif_repositories = [
-    "overload-party-account",
-    "overload-party-analytics",
-    "overload-party-battle",
-    "overload-party-card",
-    "overload-party-client",
-    "overload-party-common",
-    "overload-party-gateway",
-    "overload-party-infra",
-    "overload-party-matchmaking",
-    "overload-party-newsfeed",
-    "overload-party-ops",
-    "overload-party-scenario",
-    "overload-party-shop",
-  ]
 
   terraform_wif_repositories = [
     "keyandnotes-platform",
@@ -97,20 +57,6 @@ module "ci_cd" {
     "overload-party-dev",
     "overload-party-stg",
   ]
-}
-
-# 各環境プロジェクトの Cloud Run がこの AR からイメージをプルするための権限
-resource "google_artifact_registry_repository_iam_member" "cloudrun_ar_reader" {
-  for_each = {
-    dev = "346314225010"
-    ops = "1017837997433"
-  }
-
-  project    = local.project_id
-  location   = local.region
-  repository = module.artifact_registry.repository_id
-  role       = "roles/artifactregistry.reader"
-  member     = "serviceAccount:service-${each.value}@serverless-robot-prod.iam.gserviceaccount.com"
 }
 
 # ──────────────────────────────────────────────

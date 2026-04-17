@@ -1,86 +1,60 @@
-# ---- Workload Identity 連携 ----
+# WIF pool / github-ci SA / Artifact Registry 本体は keyandnotes-platform リポで所有する。
+# このモジュールは overload-party スコープの CI/CD SA (terraform-deployer / github-deploy /
+# cloudsql-operator) と、github-ci への overload-party-{dev,stg,ops} プロジェクト横断の
+# IAM 付与だけを担当する。
 
-resource "google_iam_workload_identity_pool" "github" {
+data "google_iam_workload_identity_pool" "github" {
   project                   = var.project_id
   workload_identity_pool_id = "github-actions"
-  display_name              = "GitHub Actions"
 }
 
-resource "google_iam_workload_identity_pool_provider" "github" {
-  project                            = var.project_id
-  workload_identity_pool_id          = google_iam_workload_identity_pool.github.workload_identity_pool_id
-  workload_identity_pool_provider_id = "github"
-  display_name                       = "GitHub"
-
-  attribute_mapping = {
-    "google.subject"             = "assertion.sub"
-    "attribute.repository"       = "assertion.repository"
-    "attribute.repository_owner" = "assertion.repository_owner"
-  }
-
-  attribute_condition = "assertion.repository in [${join(", ", [for r in var.allowed_repositories : "'${var.github_owner}/${r}'"])}]"
-
-  oidc {
-    issuer_uri = "https://token.actions.githubusercontent.com"
-  }
-}
-
-# ---- CI サービスアカウント (イメージビルド・AR push・Cloud Functions deploy) ----
-
-resource "google_service_account" "ci" {
-  project      = var.project_id
-  account_id   = "github-ci"
-  display_name = "GitHub Actions CI"
-}
-
-resource "google_service_account_iam_member" "ci_wif" {
-  for_each           = toset(var.ci_wif_repositories)
-  service_account_id = google_service_account.ci.name
-  role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository/${var.github_owner}/${each.value}"
-}
-
-resource "google_artifact_registry_repository_iam_member" "ci_ar_writer" {
+data "google_service_account" "ci" {
   project    = var.project_id
-  location   = var.region
-  repository = var.artifact_registry_id
-  role       = "roles/artifactregistry.writer"
-  member     = "serviceAccount:${google_service_account.ci.email}"
+  account_id = "github-ci"
 }
+
+# ---- github-ci への cross-project IAM（overload-party プロジェクト群への権限） ----
 
 resource "google_project_iam_member" "ci_cloudfunctions_developer" {
   for_each = toset(var.cloudfunctions_projects)
   project  = each.value
   role     = "roles/cloudfunctions.developer"
-  member   = "serviceAccount:${google_service_account.ci.email}"
+  member   = "serviceAccount:${data.google_service_account.ci.email}"
 }
 
 resource "google_project_iam_member" "ci_cloudbuild_editor" {
   for_each = toset(var.cloudfunctions_projects)
   project  = each.value
   role     = "roles/cloudbuild.builds.editor"
-  member   = "serviceAccount:${google_service_account.ci.email}"
+  member   = "serviceAccount:${data.google_service_account.ci.email}"
 }
 
 resource "google_project_iam_member" "ci_service_account_user" {
   for_each = toset(var.cloudfunctions_projects)
   project  = each.value
   role     = "roles/iam.serviceAccountUser"
-  member   = "serviceAccount:${google_service_account.ci.email}"
+  member   = "serviceAccount:${data.google_service_account.ci.email}"
 }
 
 resource "google_project_iam_member" "ci_run_developer" {
   for_each = toset(var.cloudrun_projects)
   project  = each.value
   role     = "roles/run.developer"
-  member   = "serviceAccount:${google_service_account.ci.email}"
+  member   = "serviceAccount:${data.google_service_account.ci.email}"
 }
 
 resource "google_project_iam_member" "ci_run_service_account_user" {
   for_each = toset(var.cloudrun_projects)
   project  = each.value
   role     = "roles/iam.serviceAccountUser"
-  member   = "serviceAccount:${google_service_account.ci.email}"
+  member   = "serviceAccount:${data.google_service_account.ci.email}"
+}
+
+resource "google_project_iam_member" "ci_cloudsql_admin" {
+  for_each = toset(var.cloudsql_admin_projects)
+  project  = each.value
+  role     = "roles/cloudsql.admin"
+  member   = "serviceAccount:${data.google_service_account.ci.email}"
 }
 
 # ---- Terraform デプロイ用サービスアカウント ----
@@ -95,7 +69,7 @@ resource "google_service_account_iam_member" "terraform_wif" {
   for_each           = toset(var.terraform_wif_repositories)
   service_account_id = google_service_account.terraform.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository/${var.github_owner}/${each.value}"
+  member             = "principalSet://iam.googleapis.com/${data.google_iam_workload_identity_pool.github.name}/attribute.repository/${var.github_owner}/${each.value}"
 }
 
 resource "google_project_iam_member" "terraform_editor" {
@@ -103,13 +77,6 @@ resource "google_project_iam_member" "terraform_editor" {
   project  = each.value
   role     = "roles/editor"
   member   = "serviceAccount:${google_service_account.terraform.email}"
-}
-
-resource "google_project_iam_member" "ci_cloudsql_admin" {
-  for_each = toset(var.cloudsql_admin_projects)
-  project  = each.value
-  role     = "roles/cloudsql.admin"
-  member   = "serviceAccount:${google_service_account.ci.email}"
 }
 
 # ---- デプロイ用サービスアカウント (GKE kubectl apply) ----
@@ -125,7 +92,7 @@ resource "google_service_account_iam_member" "deploy_wif" {
   for_each           = toset(var.deploy_wif_repositories)
   service_account_id = google_service_account.deploy[0].name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository/${var.github_owner}/${each.value}"
+  member             = "principalSet://iam.googleapis.com/${data.google_iam_workload_identity_pool.github.name}/attribute.repository/${var.github_owner}/${each.value}"
 }
 
 resource "google_project_iam_member" "deploy_container_developer" {
@@ -159,7 +126,7 @@ resource "google_service_account_iam_member" "cloudsql_operator_wif" {
   for_each           = toset(var.cloudsql_operator_wif_repositories)
   service_account_id = google_service_account.cloudsql_operator[0].name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository/${var.github_owner}/${each.value}"
+  member             = "principalSet://iam.googleapis.com/${data.google_iam_workload_identity_pool.github.name}/attribute.repository/${var.github_owner}/${each.value}"
 }
 
 # activation-policy の切替は cloudsql.admin が必要。

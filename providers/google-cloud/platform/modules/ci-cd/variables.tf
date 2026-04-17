@@ -3,34 +3,14 @@ variable "project_id" {
   type        = string
 }
 
-variable "region" {
-  description = "Google Cloud リージョン"
-  type        = string
-}
-
 variable "github_owner" {
   description = "GitHub オーガニゼーション名またはユーザー名"
   type        = string
 }
 
-variable "allowed_repositories" {
-  description = "WIF 経由の認証を許可するリポジトリ一覧"
-  type        = list(string)
-}
-
-variable "ci_wif_repositories" {
-  description = "CI サービスアカウントとして認証を許可するリポジトリ一覧"
-  type        = list(string)
-}
-
 variable "terraform_wif_repositories" {
   description = "Terraform Deployer サービスアカウントとして認証を許可するリポジトリ一覧"
   type        = list(string)
-}
-
-variable "artifact_registry_id" {
-  description = "CI ライター権限を付与する Artifact Registry リポジトリ ID"
-  type        = string
 }
 
 variable "cloudfunctions_projects" {
