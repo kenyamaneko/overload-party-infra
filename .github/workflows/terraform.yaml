@@ -18,6 +18,7 @@ permissions:
 jobs:
   detect:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     outputs:
       paths: ${{ steps.detect.outputs.paths }}
     steps:
@@ -35,6 +36,7 @@ jobs:
     needs: detect
     if: github.event_name == 'pull_request' && needs.detect.outputs.paths != '[]'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       matrix:
         path: ${{ fromJson(needs.detect.outputs.paths) }}
@@ -77,6 +79,7 @@ jobs:
     needs: detect
     if: github.event_name == 'push' && needs.detect.outputs.paths != '[]'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       max-parallel: 1
       matrix:
