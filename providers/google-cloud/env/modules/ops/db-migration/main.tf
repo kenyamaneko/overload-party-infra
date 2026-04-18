@@ -57,6 +57,21 @@ resource "google_project_service" "run" {
 }
 
 # ──────────────────────────────────────────────
+# DB migration 用 Secret Manager シークレット
+# Terraform が作るのは 枠 のみ。バージョン (実値) は手動で追加する:
+#   gcloud secrets versions add migration-db-password --project <project_id> --data-file=- <<< "<password>"
+# ──────────────────────────────────────────────
+
+resource "google_secret_manager_secret" "db_password" {
+  project   = var.project_id
+  secret_id = local.db_password_secret_id
+
+  replication {
+    auto {}
+  }
+}
+
+# ──────────────────────────────────────────────
 # Cloud Run Job 用サービスアカウント
 # ──────────────────────────────────────────────
 

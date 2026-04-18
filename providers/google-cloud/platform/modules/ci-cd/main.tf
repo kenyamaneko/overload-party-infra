@@ -79,6 +79,16 @@ resource "google_project_iam_member" "terraform_editor" {
   member   = "serviceAccount:${google_service_account.terraform.email}"
 }
 
+# roles/editor は pubsub の subscription/topic に対する getIamPolicy / setIamPolicy を
+# 含まないため、Pub/Sub リソースの IAM binding を terraform が読み書きできない。
+# これを補うため pubsub.admin を追加する。
+resource "google_project_iam_member" "terraform_pubsub_admin" {
+  for_each = toset(var.terraform_editor_projects)
+  project  = each.value
+  role     = "roles/pubsub.admin"
+  member   = "serviceAccount:${google_service_account.terraform.email}"
+}
+
 # ---- デプロイ用サービスアカウント (GKE kubectl apply) ----
 
 resource "google_service_account" "deploy" {
