@@ -52,6 +52,7 @@ module "ci_cd" {
     "overload-party-dev",
     "overload-party-stg",
     "overload-party-prod",
+    "overload-party-ops",
   ]
   cloudsql_admin_projects = [
     "overload-party-dev",
