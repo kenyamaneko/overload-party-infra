@@ -89,6 +89,16 @@ resource "google_project_iam_member" "terraform_pubsub_admin" {
   member   = "serviceAccount:${google_service_account.terraform.email}"
 }
 
+# roles/editor は secretmanager.secrets.setIamPolicy を含まないため、Secret Manager
+# リソースの IAM binding を terraform が書き込めない (pubsub と同じ制約)。
+# これを補うため secretmanager.admin を追加する。
+resource "google_project_iam_member" "terraform_secretmanager_admin" {
+  for_each = toset(var.terraform_editor_projects)
+  project  = each.value
+  role     = "roles/secretmanager.admin"
+  member   = "serviceAccount:${google_service_account.terraform.email}"
+}
+
 # ---- デプロイ用サービスアカウント (GKE kubectl apply) ----
 
 resource "google_service_account" "deploy" {
