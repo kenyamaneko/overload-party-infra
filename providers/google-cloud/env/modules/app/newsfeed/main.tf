@@ -42,8 +42,8 @@ variable "bucket_name" {
   type        = string
 }
 
-variable "deploy_service_account_email" {
-  description = "GitHub Actions デプロイ SA email。空文字なら IAM 付与をスキップ"
+variable "deploy_sa_member" {
+  description = "Cloud Run Job invoker を付与するデプロイ SA の IAM member 文字列"
   type        = string
 }
 
@@ -223,12 +223,16 @@ resource "google_cloud_scheduler_job" "newsfeed" {
 # ──────────────────────────────────────────────
 
 resource "google_cloud_run_v2_job_iam_member" "deploy_invoker" {
-  count    = var.deploy_service_account_email != "" ? 1 : 0
   project  = var.project_id
   location = var.region
   name     = google_cloud_run_v2_job.newsfeed.name
   role     = "roles/run.invoker"
-  member   = "serviceAccount:${var.deploy_service_account_email}"
+  member   = var.deploy_sa_member
+}
+
+moved {
+  from = google_cloud_run_v2_job_iam_member.deploy_invoker[0]
+  to   = google_cloud_run_v2_job_iam_member.deploy_invoker
 }
 
 # ──────────────────────────────────────────────

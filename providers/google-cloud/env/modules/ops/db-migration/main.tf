@@ -37,8 +37,8 @@ variable "database_name" {
   type        = string
 }
 
-variable "deploy_service_account_email" {
-  description = "GitHub Actions デプロイ SA email。空文字なら IAM 付与をスキップ"
+variable "deploy_sa_member" {
+  description = "Cloud Run Job invoker / developer / actAs を付与するデプロイ SA の IAM member 文字列"
   type        = string
 }
 
@@ -146,26 +146,38 @@ resource "google_cloud_run_v2_job" "migration" {
 # ──────────────────────────────────────────────
 
 resource "google_cloud_run_v2_job_iam_member" "deploy_invoker" {
-  count    = var.deploy_service_account_email != "" ? 1 : 0
   project  = var.project_id
   location = var.region
   name     = google_cloud_run_v2_job.migration.name
   role     = "roles/run.invoker"
-  member   = "serviceAccount:${var.deploy_service_account_email}"
+  member   = var.deploy_sa_member
 }
 
 resource "google_cloud_run_v2_job_iam_member" "deploy_developer" {
-  count    = var.deploy_service_account_email != "" ? 1 : 0
   project  = var.project_id
   location = var.region
   name     = google_cloud_run_v2_job.migration.name
   role     = "roles/run.developer"
-  member   = "serviceAccount:${var.deploy_service_account_email}"
+  member   = var.deploy_sa_member
 }
 
 resource "google_service_account_iam_member" "deploy_act_as_migration" {
-  count              = var.deploy_service_account_email != "" ? 1 : 0
   service_account_id = google_service_account.migration.name
   role               = "roles/iam.serviceAccountUser"
-  member             = "serviceAccount:${var.deploy_service_account_email}"
+  member             = var.deploy_sa_member
+}
+
+moved {
+  from = google_cloud_run_v2_job_iam_member.deploy_invoker[0]
+  to   = google_cloud_run_v2_job_iam_member.deploy_invoker
+}
+
+moved {
+  from = google_cloud_run_v2_job_iam_member.deploy_developer[0]
+  to   = google_cloud_run_v2_job_iam_member.deploy_developer
+}
+
+moved {
+  from = google_service_account_iam_member.deploy_act_as_migration[0]
+  to   = google_service_account_iam_member.deploy_act_as_migration
 }

@@ -34,8 +34,6 @@ module "infra" {
   scenarios_bucket_name = "overload-party-stg-scenarios"
   newsfeed_bucket_name  = "overload-party-stg-newsfeed"
 
-  deploy_sa                    = var.deploy_sa
-  migration_image              = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/db-migrate:latest"
-  deploy_service_account_email = "github-ci@keyandnotes-platform.iam.gserviceaccount.com"
-  newsfeed_image               = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/newsfeed:latest"
+  migration_image = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/db-migrate:latest"
+  newsfeed_image  = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/newsfeed:latest"
 }

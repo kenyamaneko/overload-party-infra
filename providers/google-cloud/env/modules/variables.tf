@@ -76,21 +76,11 @@ variable "newsfeed_bucket_name" {
 }
 
 # ──────────────────────────────────────────────
-# Optional 機能（空文字 / false で無効化）
+# コンテナイメージ
 # ──────────────────────────────────────────────
-
-variable "deploy_sa" {
-  description = "nightly Cloud SQL 停止用デプロイ SA の IAM member 文字列。空文字なら IAM 付与をスキップ"
-  type        = string
-}
 
 variable "migration_image" {
   description = "db-migrate コンテナイメージ。空文字なら db_migration モジュール無効"
-  type        = string
-}
-
-variable "deploy_service_account_email" {
-  description = "GitHub Actions デプロイ SA email（Cloud Run Job invoker 付与用）"
   type        = string
 }
 

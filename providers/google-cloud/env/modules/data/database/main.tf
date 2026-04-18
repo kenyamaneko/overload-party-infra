@@ -53,11 +53,6 @@ variable "psc_allowed_consumer_projects" {
   type        = list(string)
 }
 
-variable "deploy_sa" {
-  description = "nightly-shutdown 用に Cloud SQL 操作権限（roles/cloudsql.editor）を付与する IAM member 文字列。空文字なら付与スキップ"
-  type        = string
-}
-
 # ──────────────────────────────────────────────
 # API 有効化
 # ──────────────────────────────────────────────
@@ -152,13 +147,6 @@ resource "google_sql_user" "service_iam_users" {
   instance = google_sql_database_instance.main.name
   project  = var.project_id
   type     = "CLOUD_IAM_SERVICE_ACCOUNT"
-}
-
-resource "google_project_iam_member" "deploy_cloudsql_editor" {
-  count   = var.deploy_sa != "" ? 1 : 0
-  project = var.project_id
-  role    = "roles/cloudsql.editor"
-  member  = var.deploy_sa
 }
 
 output "private_ip_address" {

@@ -12,6 +12,20 @@ Overload Party の Google Cloud / Cloudflare / Upstash のリソースを Terraf
 - dev / stg / prod 共通の実装は `env/modules/` に書き、環境で値が異なるもの (project ID / SA email 等) は `env/{dev,stg,prod}/main.tf` から渡す
 - 1 state root からしか呼ばれないモジュールはその state root 配下に置く (例: `providers/google-cloud/platform/modules/`)
 
+## k8s リポとの責務分担
+
+Ingress / PSC / DNS / Reserved IP は **永続性の要件**で infra と overload-party-k8s のどちらが所有するかを分ける。仕様は [ADR 018 §管理責務の分担](https://github.com/kenyamaneko/overload-party-common/blob/main/docs/adr/018-argocd-gitops-and-nodepool-based-shutdown.md) に従う。
+
+| リソース | dev / stg | prod |
+|---|---|---|
+| Deployment / Service / ConfigMap / ServiceAccount | ArgoCD | ArgoCD |
+| Ingress / backendConfig / Service annotation | k8s `env-lifecycle` (up/down) | ArgoCD |
+| PSC forwarding rule | k8s `env-lifecycle` (up/down) | k8s `env-lifecycle` (初回作成後維持) |
+| Reserved global IP | k8s `env-lifecycle` (down で削除) | **infra** (常時保持・削除しない) |
+| Cloudflare DNS | k8s `env-lifecycle` (down で 127.0.0.1 に切替) | 常時有効 |
+
+理由: prod の IP は DNS が pin されるため destroy されてはならない。k8s `env-lifecycle` は down の度に IP を消すので prod の永続性を担保する別オーナーが必要 → Terraform (infra) が `env/prod/main.tf` で直接保持する。他のリソース群は env-lifecycle 側で統一管理することで、dev/stg の起動停止サイクルが自然に成立する。
+
 ## Secret Manager の値投入方針
 
 Terraform が作るのはシークレットの *枠* のみ。実値のバージョン登録は手動で行う。
