@@ -64,9 +64,11 @@ resource "cloudflare_record" "api" {
   name    = each.value.name
   content = "127.0.0.1"
   type    = "A"
-  proxied = true
+  # Cloudflare は proxied=true に対して 127.0.0.1 のような非 proxiable な IP を拒否する (API error 9003) ため、
+  # 初期値は false。env-lifecycle.yaml の up 時に実 IP + proxied=true に書き換えられる。
+  proxied = false
 
-  # CI (env-lifecycle.yaml) が Ingress IP で動的に書き換えるためlifecycleを無視する
+  # CI (env-lifecycle.yaml) が Ingress IP / proxied を動的に書き換えるため lifecycle を無視する
   lifecycle {
     ignore_changes = [content, proxied]
   }
