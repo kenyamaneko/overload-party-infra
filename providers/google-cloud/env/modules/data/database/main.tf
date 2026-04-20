@@ -121,9 +121,15 @@ resource "google_sql_database_instance" "main" {
   }
   deletion_protection = var.deletion_protection
 
-  # root_password と activation_policy は Terraform 外で管理
+  # root_password は Terraform 外で初期投入するため ignore。
+  # activation_policy は本来 dev/stg のみ「使わない時間帯は落とす」運用で
+  # Terraform 外から切り替わるため ignore したいが、Terraform の
+  # ignore_changes は静的リテラルしか受け付けず env ごとに変数で切り替える
+  # ことができない。prod の手動停止は drift として検知したいので ignore は
+  # 載せず全環境一律で plan に差分を出し、dev/stg 分のノイズは drift-monitor
+  # 側（targets.yaml の suppress）で抑止する方針にしている。
   lifecycle {
-    ignore_changes = [root_password, settings[0].activation_policy]
+    ignore_changes = [root_password]
   }
 }
 
