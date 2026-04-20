@@ -37,12 +37,3 @@ module "infra" {
   migration_image = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/db-migrate:latest"
   newsfeed_image  = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/newsfeed:latest"
 }
-
-# prod だけ Terraform で IP を常時保持する。dev/stg は env-lifecycle (k8s リポ) が
-# up/down で作成・削除しているが、prod は常時稼働で DNS を動かさないため削除不可。
-# 詳細はノードプールスケーリング戦略 ADR の管理責務表参照。
-resource "google_compute_global_address" "ingress" {
-  name         = "overload-party-prod-ip"
-  project      = "overload-party-prod"
-  address_type = "EXTERNAL"
-}
