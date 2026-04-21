@@ -8,5 +8,4 @@ tfplan
 *.tfplan
 .DS_Store
 .claude/
-CLAUDE.md
 .vscode/

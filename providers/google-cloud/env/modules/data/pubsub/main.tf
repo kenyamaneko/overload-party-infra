@@ -258,3 +258,24 @@ resource "google_pubsub_subscription_iam_member" "premium_updated_dlq_sa_subscri
   role         = "roles/pubsub.subscriber"
   member       = "serviceAccount:service-${data.google_project.this.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
 }
+
+# ==============================================================================
+# news-article-collected (ADR-020: newsfeed が publish、news が subscribe)
+# ==============================================================================
+#
+# news 側のサブスクリプション (`news-article-collected-news-sub`) は news サービスの
+# デプロイ時に別 PR で追加する。本 ADR 範囲ではトピック + newsfeed publisher のみ。
+
+resource "google_pubsub_topic" "news_article_collected" {
+  depends_on = [google_project_service.pubsub]
+
+  project = var.project_id
+  name    = "news-article-collected"
+}
+
+resource "google_pubsub_topic_iam_member" "news_article_collected_newsfeed_publisher" {
+  project = var.project_id
+  topic   = google_pubsub_topic.news_article_collected.name
+  role    = "roles/pubsub.publisher"
+  member  = "serviceAccount:${var.newsfeed_service_account_email}"
+}

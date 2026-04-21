@@ -36,5 +36,9 @@ module "infra" {
 
   migration_image = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/db-migrate:latest"
   newsfeed_image  = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/newsfeed:latest"
+
+  # dev は Cloud Scheduler を形式的に配置するのみ (cron は設定するが常時 PAUSED)。
+  # 手動実行は `gcloud run jobs execute newsfeed-job` を使う。
+  newsfeed_scheduler_paused = true
 }
 

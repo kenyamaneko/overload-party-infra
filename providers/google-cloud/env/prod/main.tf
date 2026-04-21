@@ -36,4 +36,7 @@ module "infra" {
 
   migration_image = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/db-migrate:latest"
   newsfeed_image  = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/newsfeed:latest"
+
+  # prod のみ Cloud Scheduler を有効化。2 時間周期で Cloud Run Job を起動する。
+  newsfeed_scheduler_paused = false
 }

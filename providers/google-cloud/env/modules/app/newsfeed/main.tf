@@ -52,6 +52,11 @@ variable "service_account_email" {
   type        = string
 }
 
+variable "scheduler_paused" {
+  description = "Cloud Scheduler を PAUSED 状態で作成するか。prod は false (有効)、dev/stg は true (手動 resume 前提)"
+  type        = bool
+}
+
 locals {
   vertex_location = "us-central1"
   schedule        = "0 */2 * * *"
@@ -150,13 +155,8 @@ resource "google_cloud_run_v2_job" "newsfeed" {
         image = var.newsfeed_image
 
         env {
-          name  = "DATABASE_URL"
-          value = "postgres://${var.service_account_email}@${var.cloudsql_private_ip}:5432/${var.database_name}?sslmode=disable"
-        }
-
-        env {
-          name  = "GCS_BUCKET"
-          value = google_storage_bucket.newsfeed.name
+          name  = "APP_ENV"
+          value = "production"
         }
 
         env {
@@ -206,6 +206,7 @@ resource "google_cloud_scheduler_job" "newsfeed" {
   description = "Trigger newsfeed Cloud Run Job every 2 hours"
   schedule    = local.schedule
   time_zone   = local.timezone
+  paused      = var.scheduler_paused
 
   http_target {
     http_method = "POST"

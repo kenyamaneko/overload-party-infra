@@ -76,6 +76,7 @@ module "pubsub" {
   shop_service_account_email        = module.service_accounts.accounts["shop"].email
   account_service_account_email     = module.service_accounts.accounts["account"].email
   card_service_account_email        = module.service_accounts.accounts["card"].email
+  newsfeed_service_account_email    = module.service_accounts.accounts["newsfeed"].email
 }
 
 module "firestore" {
@@ -122,6 +123,7 @@ module "newsfeed" {
   bucket_name           = var.newsfeed_bucket_name
   service_account_email = module.service_accounts.accounts["newsfeed"].email
   deploy_sa_member      = local.deploy_sa_member
+  scheduler_paused      = var.newsfeed_scheduler_paused
 
   depends_on = [module.network.service_networking_connection]
 }

@@ -42,3 +42,11 @@ module "matchmaking_redis" {
   primary_region = "asia-northeast1"
   eviction       = true
 }
+
+module "newsfeed_redis" {
+  source = "../modules/newsfeed"
+
+  env            = "dev"
+  primary_region = "asia-northeast1"
+  eviction       = true
+}

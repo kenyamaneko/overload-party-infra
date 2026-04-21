@@ -36,4 +36,8 @@ module "infra" {
 
   migration_image = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/db-migrate:latest"
   newsfeed_image  = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/newsfeed:latest"
+
+  # stg は通常 PAUSED。prod リリース前検証時のみ `gcloud scheduler jobs resume` で
+  # 一時的に有効化し、確認後に手動で pause に戻す運用。
+  newsfeed_scheduler_paused = true
 }
