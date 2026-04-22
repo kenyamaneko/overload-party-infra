@@ -258,9 +258,7 @@ resource "google_pubsub_subscription_iam_member" "premium_updated_dlq_sa_subscri
 }
 
 # ------------------------------------------------------------------------------
-# player-onboarded (ADR-022: scenario が publish、account / card / gateway が subscribe。
-# 初期 faction 選択の下流処理は player-onboarded に集約し、
-# 有料 faction 購入時のみ faction-purchased を発火する)
+# player-onboarded
 # ------------------------------------------------------------------------------
 
 resource "google_pubsub_topic" "player_onboarded" {
@@ -338,11 +336,8 @@ resource "google_pubsub_subscription_iam_member" "player_onboarded_dlq_sa_subscr
 }
 
 # ==============================================================================
-# news-article-collected (ADR-020: newsfeed が publish、news が subscribe)
+# news-article-collected
 # ==============================================================================
-#
-# news 側のサブスクリプション (`news-article-collected-news-sub`) は news サービスの
-# デプロイ時に別 PR で追加する。本 ADR 範囲ではトピック + newsfeed publisher のみ。
 
 resource "google_pubsub_topic" "news_article_collected" {
   depends_on = [google_project_service.pubsub]
@@ -351,9 +346,51 @@ resource "google_pubsub_topic" "news_article_collected" {
   name    = "news-article-collected"
 }
 
+resource "google_pubsub_topic" "news_article_collected_dlq" {
+  depends_on = [google_project_service.pubsub]
+
+  project = var.project_id
+  name    = "news-article-collected-dlq"
+}
+
+resource "google_pubsub_subscription" "news_article_collected_news" {
+  project = var.project_id
+  name    = "news-article-collected-news-sub"
+  topic   = google_pubsub_topic.news_article_collected.name
+
+  enable_exactly_once_delivery = true
+  ack_deadline_seconds         = 10
+
+  dead_letter_policy {
+    dead_letter_topic     = google_pubsub_topic.news_article_collected_dlq.id
+    max_delivery_attempts = 5
+  }
+}
+
 resource "google_pubsub_topic_iam_member" "news_article_collected_newsfeed_publisher" {
   project = var.project_id
   topic   = google_pubsub_topic.news_article_collected.name
   role    = "roles/pubsub.publisher"
   member  = "serviceAccount:${var.newsfeed_service_account_email}"
+}
+
+resource "google_pubsub_subscription_iam_member" "news_article_collected_news_subscriber" {
+  project      = var.project_id
+  subscription = google_pubsub_subscription.news_article_collected_news.name
+  role         = "roles/pubsub.subscriber"
+  member       = "serviceAccount:${var.news_service_account_email}"
+}
+
+resource "google_pubsub_topic_iam_member" "news_article_collected_dlq_sa_publisher" {
+  project = var.project_id
+  topic   = google_pubsub_topic.news_article_collected_dlq.name
+  role    = "roles/pubsub.publisher"
+  member  = "serviceAccount:service-${data.google_project.this.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+}
+
+resource "google_pubsub_subscription_iam_member" "news_article_collected_dlq_sa_subscriber" {
+  project      = var.project_id
+  subscription = google_pubsub_subscription.news_article_collected_news.name
+  role         = "roles/pubsub.subscriber"
+  member       = "serviceAccount:service-${data.google_project.this.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
 }

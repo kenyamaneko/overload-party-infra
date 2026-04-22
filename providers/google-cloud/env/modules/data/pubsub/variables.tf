@@ -34,6 +34,11 @@ variable "card_service_account_email" {
 }
 
 variable "newsfeed_service_account_email" {
-  description = "Email of the newsfeed Cloud Run Job GSA. Granted roles/pubsub.publisher on the news-article-collected topic (ADR-020)."
+  description = "Email of the newsfeed Cloud Run Job GSA. Granted roles/pubsub.publisher on the news-article-collected topic."
+  type        = string
+}
+
+variable "news_service_account_email" {
+  description = "Email of the news service GSA. Granted roles/pubsub.subscriber on the news-article-collected-news-sub subscription."
   type        = string
 }

@@ -7,6 +7,8 @@ locals {
     account     = "overload-party-account"
     shop        = "overload-party-shop"
     scenario    = "overload-party-scenario"
+    news        = "overload-party-news"
+    support     = "overload-party-support"
   }
 
   non_k8s_services = {
@@ -21,6 +23,8 @@ locals {
     shop     = "overload-party-shop"
     scenario = "overload-party-scenario"
     newsfeed = "overload-party-newsfeed"
+    news     = "overload-party-news"
+    support  = "overload-party-support"
   }
 
   game_server_sa_account_id = "overload-party-app"
@@ -77,6 +81,7 @@ module "pubsub" {
   account_service_account_email     = module.service_accounts.accounts["account"].email
   card_service_account_email        = module.service_accounts.accounts["card"].email
   newsfeed_service_account_email    = module.service_accounts.accounts["newsfeed"].email
+  news_service_account_email        = module.service_accounts.accounts["news"].email
 }
 
 module "firestore" {

@@ -10,6 +10,7 @@ Cloud Pub/Sub (exactly-once delivery) のトピック、サブスクリプショ
 | `faction-purchased` | shop | account, card, gateway | `faction-purchased-dlq` |
 | `premium-updated` | shop | account, gateway | `premium-updated-dlq` |
 | `player-onboarded` | scenario | account, card, gateway | `player-onboarded-dlq` |
+| `news-article-collected` | newsfeed | news | `news-article-collected-dlq` |
 
 ## Inputs
 
@@ -23,6 +24,7 @@ Cloud Pub/Sub (exactly-once delivery) のトピック、サブスクリプショ
 | `account_service_account_email` | subscriber on faction-purchased / premium-updated / player-onboarded |
 | `card_service_account_email` | subscriber on `faction-purchased` + `player-onboarded` |
 | `newsfeed_service_account_email` | Email of the newsfeed Cloud Run Job GSA. Granted roles/pubsub.publisher on the news-article-collected topic (ADR-020). |
+| `news_service_account_email` | subscriber on `news-article-collected` |
 
 ## Outputs
 
