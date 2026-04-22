@@ -131,7 +131,7 @@ module "newsfeed" {
 }
 
 module "shop_secrets" {
-  source = "./app/shop-secrets"
+  source = "./data/shop-secrets"
 
   project_id                 = var.project_id
   shop_service_account_email = module.service_accounts.accounts["shop"].email
