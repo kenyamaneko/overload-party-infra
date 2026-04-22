@@ -101,6 +101,9 @@ locals {
     account = "premium-updated-account-sub"
     gateway = "premium-updated-gateway-sub"
   }
+  player_onboarded_subscribers = {
+    account = "player-onboarded-account-sub"
+  }
 }
 
 # ------------------------------------------------------------------------------
@@ -255,6 +258,71 @@ resource "google_pubsub_subscription_iam_member" "premium_updated_dlq_sa_subscri
 
   project      = var.project_id
   subscription = google_pubsub_subscription.premium_updated[each.key].name
+  role         = "roles/pubsub.subscriber"
+  member       = "serviceAccount:service-${data.google_project.this.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+}
+
+# ------------------------------------------------------------------------------
+# player-onboarded (ADR-021: scenario が publish、account のみ subscribe。
+# 初期 faction 選択の下流処理は引き続き faction-selected 経由で card / gateway が拾う)
+# ------------------------------------------------------------------------------
+
+resource "google_pubsub_topic" "player_onboarded" {
+  depends_on = [google_project_service.pubsub]
+
+  project = var.project_id
+  name    = "player-onboarded"
+}
+
+resource "google_pubsub_topic" "player_onboarded_dlq" {
+  depends_on = [google_project_service.pubsub]
+
+  project = var.project_id
+  name    = "player-onboarded-dlq"
+}
+
+resource "google_pubsub_subscription" "player_onboarded" {
+  for_each = local.player_onboarded_subscribers
+
+  project = var.project_id
+  name    = each.value
+  topic   = google_pubsub_topic.player_onboarded.name
+
+  enable_exactly_once_delivery = true
+  ack_deadline_seconds         = 10
+
+  dead_letter_policy {
+    dead_letter_topic     = google_pubsub_topic.player_onboarded_dlq.id
+    max_delivery_attempts = 5
+  }
+}
+
+resource "google_pubsub_topic_iam_member" "player_onboarded_scenario_publisher" {
+  project = var.project_id
+  topic   = google_pubsub_topic.player_onboarded.name
+  role    = "roles/pubsub.publisher"
+  member  = "serviceAccount:${var.scenario_service_account_email}"
+}
+
+resource "google_pubsub_subscription_iam_member" "player_onboarded_account" {
+  project      = var.project_id
+  subscription = google_pubsub_subscription.player_onboarded["account"].name
+  role         = "roles/pubsub.subscriber"
+  member       = "serviceAccount:${var.account_service_account_email}"
+}
+
+resource "google_pubsub_topic_iam_member" "player_onboarded_dlq_sa_publisher" {
+  project = var.project_id
+  topic   = google_pubsub_topic.player_onboarded_dlq.name
+  role    = "roles/pubsub.publisher"
+  member  = "serviceAccount:service-${data.google_project.this.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+}
+
+resource "google_pubsub_subscription_iam_member" "player_onboarded_dlq_sa_subscriber" {
+  for_each = local.player_onboarded_subscribers
+
+  project      = var.project_id
+  subscription = google_pubsub_subscription.player_onboarded[each.key].name
   role         = "roles/pubsub.subscriber"
   member       = "serviceAccount:service-${data.google_project.this.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
 }

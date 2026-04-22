@@ -14,7 +14,7 @@ variable "gateway_service_account_email" {
 }
 
 variable "scenario_service_account_email" {
-  description = "Email of the scenario service GSA. Granted roles/pubsub.publisher on the faction-selected topic (initial faction selection handoff)."
+  description = "Email of the scenario service GSA. Granted roles/pubsub.publisher on the faction-selected and player-onboarded topics (initial faction selection handoff and onboarding completion)."
   type        = string
 }
 
@@ -24,7 +24,7 @@ variable "shop_service_account_email" {
 }
 
 variable "account_service_account_email" {
-  description = "Email of the account service GSA. Granted roles/pubsub.subscriber on the faction-selected-account-sub and premium-updated-account-sub subscriptions."
+  description = "Email of the account service GSA. Granted roles/pubsub.subscriber on the faction-selected-account-sub, premium-updated-account-sub, and player-onboarded-account-sub subscriptions."
   type        = string
 }
 
