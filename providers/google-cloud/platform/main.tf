@@ -62,6 +62,15 @@ module "ci_cd" {
 
 # ──────────────────────────────────────────────
 # Cloud SQL 用 PSC エンドポイント (環境別)
+#
+# 物理的に PSC エンドポイントは consumer 側ネットワーク (keyandnotes-platform の
+# VPC) にしか置けないが、state 所有権は env/{dev,stg,prod}/ 側に provider alias
+# 経由で寄せる方が筋が良い:
+#   - env apply だけで Cloud SQL → PSC 配線が完結する (下記 chicken-and-egg 回避)
+#   - env 追加時に platform/ を触らなくて済む
+#   - env-up/down ライフサイクルと state 所有が一致する
+# ただし state mv を伴う refactor になるため、全 env (prod 含む) が稼働して
+# 運用が安定してから実施する。それまでは現状の platform/ 所有を維持する。
 # ──────────────────────────────────────────────
 
 module "psc_cloudsql_dev" {
