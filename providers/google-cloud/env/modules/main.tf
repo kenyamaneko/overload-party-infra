@@ -27,8 +27,6 @@ locals {
     support  = "overload-party-support"
   }
 
-  game_server_sa_account_id = "overload-party-app"
-
   # GitHub Actions の CI/CD は keyandnotes-platform プロジェクトの github-ci SA に集約しており
   # env ごとに切り替えない。db-migration / newsfeed の Cloud Run Job invoker 等に付与する。
   deploy_sa_member = "serviceAccount:github-ci@keyandnotes-platform.iam.gserviceaccount.com"
@@ -60,7 +58,6 @@ module "database" {
   tier                          = var.cloudsql_tier
   database_name                 = var.database_name
   network_id                    = module.network.network_self_link
-  service_account_id            = local.game_server_sa_account_id
   ipv4_enabled                  = var.ipv4_enabled
   psc_allowed_consumer_projects = var.psc_allowed_consumer_projects
   deletion_protection           = var.deletion_protection

@@ -9,28 +9,6 @@ resource "google_project_service" "sqladmin" {
 }
 
 # ──────────────────────────────────────────────
-# サービスアカウント (ゲームサーバー → Cloud SQL)
-# ──────────────────────────────────────────────
-
-resource "google_service_account" "game_server" {
-  project      = var.project_id
-  account_id   = var.service_account_id
-  display_name = "Overload Party App"
-}
-
-resource "google_project_iam_member" "cloudsql_client" {
-  project = var.project_id
-  role    = "roles/cloudsql.client"
-  member  = "serviceAccount:${google_service_account.game_server.email}"
-}
-
-resource "google_project_iam_member" "cloudsql_instance_user" {
-  project = var.project_id
-  role    = "roles/cloudsql.instanceUser"
-  member  = "serviceAccount:${google_service_account.game_server.email}"
-}
-
-# ──────────────────────────────────────────────
 # Cloud SQL インスタンス
 # ──────────────────────────────────────────────
 
@@ -82,13 +60,6 @@ resource "google_sql_database" "main" {
   name     = var.database_name
   instance = google_sql_database_instance.main.name
   project  = var.project_id
-}
-
-resource "google_sql_user" "iam_user" {
-  name     = trimsuffix(google_service_account.game_server.email, ".gserviceaccount.com")
-  instance = google_sql_database_instance.main.name
-  project  = var.project_id
-  type     = "CLOUD_IAM_SERVICE_ACCOUNT"
 }
 
 resource "google_sql_user" "service_iam_users" {

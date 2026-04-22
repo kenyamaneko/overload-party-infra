@@ -28,11 +28,6 @@ variable "network_id" {
   type        = string
 }
 
-variable "service_account_id" {
-  description = "（DEPRECATED）共有ゲームサーバー GSA。サービス別 IAM 完了後に削除予定"
-  type        = string
-}
-
 variable "service_iam_users" {
   description = "サービス名 -> GSA email のマップ（サービス別 Cloud SQL IAM ユーザー作成用）"
   type        = map(string)
