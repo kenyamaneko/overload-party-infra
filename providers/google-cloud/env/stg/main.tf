@@ -30,6 +30,8 @@ module "infra" {
 
   firestore_location = "asia-northeast1"
 
+  # 独自ドメイン配信のため FQDN = バケット名が必須 (Cloudflare CNAME → c.storage.googleapis.com、
+  # GCS 側は Host ヘッダでバケットを解決するため名前が一致しないと 404 になる)
   assets_bucket_name    = "overload-party-assets-stg.keyandnotes.com"
   scenarios_bucket_name = "overload-party-stg-scenarios"
   newsfeed_bucket_name  = "overload-party-stg-newsfeed"
