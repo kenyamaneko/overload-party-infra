@@ -29,32 +29,32 @@ module "ci_cd" {
   project_id   = local.project_id
   github_owner = "kenyamaneko"
 
-  terraform_wif_repositories = [
+  terraform_authorized_repos = [
     "keyandnotes-platform",
     "overload-party-infra",
     "overload-party-k8s",
   ]
 
-  deploy_wif_repositories = [
+  deploy_authorized_repos = [
     "overload-party-k8s",
   ]
 
   # cloudsql-activation workflow は infra リポに配置するため、infra だけ許可。
-  cloudsql_operator_wif_repositories = [
+  cloudsql_operator_authorized_repos = [
     "overload-party-infra",
   ]
 
-  cloudfunctions_projects = ["overload-party-dev"]
-  cloudrun_projects       = ["overload-party-dev", "overload-party-ops"]
+  analytics_deploy_projects    = ["overload-party-dev"]
+  cloudrun_job_deploy_projects = ["overload-party-dev", "overload-party-ops"]
 
-  terraform_editor_projects = [
+  terraform_managed_projects = [
     "keyandnotes-platform",
     "overload-party-dev",
     "overload-party-stg",
     "overload-party-prod",
     "overload-party-ops",
   ]
-  cloudsql_admin_projects = [
+  cloudsql_lifecycle_projects = [
     "overload-party-dev",
     "overload-party-stg",
   ]

@@ -8,37 +8,37 @@ variable "github_owner" {
   type        = string
 }
 
-variable "terraform_wif_repositories" {
-  description = "Terraform Deployer サービスアカウントとして認証を許可するリポジトリ一覧"
+variable "terraform_authorized_repos" {
+  description = "Terraform Deployer SA を impersonate して terraform apply を流せる GitHub リポジトリ一覧"
   type        = list(string)
 }
 
-variable "cloudfunctions_projects" {
-  description = "CI SA に Cloud Functions デプロイ権限を付与するプロジェクト一覧"
+variable "analytics_deploy_projects" {
+  description = "analytics リポの Cloud Functions デプロイ先プロジェクト一覧。CI SA に cloudfunctions.developer / cloudbuild.builds.editor / iam.serviceAccountUser を付与"
   type        = list(string)
 }
 
-variable "cloudrun_projects" {
-  description = "CI SA に Cloud Run Jobs 更新権限を付与するプロジェクト一覧"
+variable "cloudrun_job_deploy_projects" {
+  description = "Cloud Run Jobs (newsfeed / ops 系) のデプロイ先プロジェクト一覧。CI SA に run.developer / iam.serviceAccountUser を付与"
   type        = list(string)
 }
 
-variable "terraform_editor_projects" {
-  description = "Terraform Deployer SA に editor 権限を付与するプロジェクト一覧"
+variable "terraform_managed_projects" {
+  description = "Terraform で管理するプロジェクト一覧。Terraform Deployer SA に editor + pubsub.admin + secretmanager.admin を付与"
   type        = list(string)
 }
 
-variable "cloudsql_admin_projects" {
-  description = "CI SA に Cloud SQL admin 権限を付与するプロジェクト一覧（start/stop 用）"
+variable "cloudsql_lifecycle_projects" {
+  description = "Cloud SQL の start/stop ライフサイクル操作 (nightly-shutdown / activation workflow) を行うプロジェクト一覧。prod は常時稼働のため含めない"
   type        = list(string)
 }
 
-variable "deploy_wif_repositories" {
-  description = "Deploy サービスアカウント（GKE kubectl apply 用）として認証を許可するリポジトリ一覧"
+variable "deploy_authorized_repos" {
+  description = "github-deploy SA (GKE kubectl apply 用) を impersonate できる GitHub リポジトリ一覧"
   type        = list(string)
 }
 
-variable "cloudsql_operator_wif_repositories" {
-  description = "Cloud SQL activation 操作用 SA として認証を許可するリポジトリ一覧（cloudsql-activation workflow 用）"
+variable "cloudsql_operator_authorized_repos" {
+  description = "gh-cloudsql-operator SA (cloudsql-activation workflow 用) を impersonate できる GitHub リポジトリ一覧"
   type        = list(string)
 }
