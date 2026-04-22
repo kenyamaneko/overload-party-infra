@@ -37,7 +37,7 @@ resource "google_service_account" "migration" {
   display_name = "DB Migration (Cloud Run Job)"
 }
 
-resource "google_project_iam_member" "migration_secret_accessor" {
+resource "google_project_iam_member" "migration_db_password_read" {
   project = var.project_id
   role    = "roles/secretmanager.secretAccessor"
   member  = "serviceAccount:${google_service_account.migration.email}"
@@ -124,7 +124,7 @@ resource "google_cloud_run_v2_job_iam_member" "deploy_invoker" {
   member   = var.deploy_sa_member
 }
 
-resource "google_cloud_run_v2_job_iam_member" "deploy_developer" {
+resource "google_cloud_run_v2_job_iam_member" "deploy_job_updater" {
   project  = var.project_id
   location = var.region
   name     = google_cloud_run_v2_job.migration.name
@@ -132,7 +132,7 @@ resource "google_cloud_run_v2_job_iam_member" "deploy_developer" {
   member   = var.deploy_sa_member
 }
 
-resource "google_service_account_iam_member" "deploy_act_as_migration" {
+resource "google_service_account_iam_member" "deploy_impersonate_migration_sa" {
   service_account_id = google_service_account.migration.name
   role               = "roles/iam.serviceAccountUser"
   member             = var.deploy_sa_member
@@ -151,4 +151,21 @@ moved {
 moved {
   from = google_service_account_iam_member.deploy_act_as_migration[0]
   to   = google_service_account_iam_member.deploy_act_as_migration
+}
+
+# ---- state migration: resource rename (purpose-focused naming) ----
+
+moved {
+  from = google_project_iam_member.migration_secret_accessor
+  to   = google_project_iam_member.migration_db_password_read
+}
+
+moved {
+  from = google_cloud_run_v2_job_iam_member.deploy_developer
+  to   = google_cloud_run_v2_job_iam_member.deploy_job_updater
+}
+
+moved {
+  from = google_service_account_iam_member.deploy_act_as_migration
+  to   = google_service_account_iam_member.deploy_impersonate_migration_sa
 }
