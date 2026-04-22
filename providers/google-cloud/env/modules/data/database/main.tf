@@ -62,13 +62,18 @@ resource "google_sql_database" "main" {
   project  = var.project_id
 }
 
-resource "google_sql_user" "service_iam_users" {
-  for_each = var.service_iam_users
+resource "google_sql_user" "db_users" {
+  for_each = var.db_users
 
   name     = trimsuffix(each.value, ".gserviceaccount.com")
   instance = google_sql_database_instance.main.name
   project  = var.project_id
   type     = "CLOUD_IAM_SERVICE_ACCOUNT"
+}
+
+moved {
+  from = google_sql_user.service_iam_users
+  to   = google_sql_user.db_users
 }
 
 output "private_ip_address" {

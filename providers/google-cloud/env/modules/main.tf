@@ -62,7 +62,7 @@ module "database" {
   psc_allowed_consumer_projects = var.psc_allowed_consumer_projects
   deletion_protection           = var.deletion_protection
 
-  service_iam_users = { for svc, _ in local.db_services : svc => module.service_accounts.accounts[svc].email }
+  db_users = { for svc, _ in local.db_services : svc => module.service_accounts.accounts[svc].email }
 
   depends_on = [module.network.service_networking_connection]
 }

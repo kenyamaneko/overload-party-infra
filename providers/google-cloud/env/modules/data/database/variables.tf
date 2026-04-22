@@ -28,8 +28,8 @@ variable "network_id" {
   type        = string
 }
 
-variable "service_iam_users" {
-  description = "サービス名 -> GSA email のマップ（サービス別 Cloud SQL IAM ユーザー作成用）"
+variable "db_users" {
+  description = "サービス別 Cloud SQL IAM ユーザを作成するためのマップ。キーはサービス名、値はそのサービスの GSA email"
   type        = map(string)
 }
 
