@@ -8,7 +8,7 @@ variable "location_id" {
   type        = string
 }
 
-variable "reader_service_account_emails" {
+variable "game_config_reader_emails" {
   description = "game_config を読み取るサービスの SA email 一覧。roles/datastore.user を付与する"
   type        = map(string)
 }

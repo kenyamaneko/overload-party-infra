@@ -89,7 +89,7 @@ module "firestore" {
 
   project_id  = var.project_id
   location_id = var.firestore_location
-  reader_service_account_emails = {
+  game_config_reader_emails = {
     account  = module.service_accounts.accounts["account"].email
     card     = module.service_accounts.accounts["card"].email
     shop     = module.service_accounts.accounts["shop"].email

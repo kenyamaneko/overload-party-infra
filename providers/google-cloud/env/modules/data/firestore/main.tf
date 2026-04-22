@@ -13,10 +13,15 @@ resource "google_firestore_database" "default" {
   depends_on = [google_project_service.firestore]
 }
 
-resource "google_project_iam_member" "datastore_user" {
-  for_each = var.reader_service_account_emails
+resource "google_project_iam_member" "game_config_reader" {
+  for_each = var.game_config_reader_emails
 
   project = var.project_id
   role    = "roles/datastore.user"
   member  = "serviceAccount:${each.value}"
+}
+
+moved {
+  from = google_project_iam_member.datastore_user
+  to   = google_project_iam_member.game_config_reader
 }
