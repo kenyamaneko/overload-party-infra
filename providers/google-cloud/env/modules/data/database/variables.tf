@@ -1,0 +1,54 @@
+variable "project_id" {
+  description = "Google Cloud プロジェクト ID"
+  type        = string
+}
+
+variable "region" {
+  description = "Google Cloud リージョン"
+  type        = string
+}
+
+variable "instance_name" {
+  description = "Cloud SQL インスタンス名"
+  type        = string
+}
+
+variable "tier" {
+  description = "Cloud SQL マシンタイプ"
+  type        = string
+}
+
+variable "database_name" {
+  description = "PostgreSQL データベース名"
+  type        = string
+}
+
+variable "network_id" {
+  description = "Private IP 用 VPC ネットワークの self_link"
+  type        = string
+}
+
+variable "service_account_id" {
+  description = "（DEPRECATED）共有ゲームサーバー GSA。サービス別 IAM 完了後に削除予定"
+  type        = string
+}
+
+variable "service_iam_users" {
+  description = "サービス名 -> GSA email のマップ（サービス別 Cloud SQL IAM ユーザー作成用）"
+  type        = map(string)
+}
+
+variable "deletion_protection" {
+  description = "削除保護を有効化するか"
+  type        = bool
+}
+
+variable "ipv4_enabled" {
+  description = "Cloud SQL インスタンスにパブリック IPv4 を割り当てるか"
+  type        = bool
+}
+
+variable "psc_allowed_consumer_projects" {
+  description = "PSC 接続を許可する consumer プロジェクト ID 一覧（空なら PSC 無効）"
+  type        = list(string)
+}
