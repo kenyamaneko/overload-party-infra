@@ -88,14 +88,14 @@ resource "google_pubsub_subscription_iam_member" "dlq_service_agent_subscriber" 
 }
 
 # ==============================================================================
-# サービス横断イベント (faction-selected, premium-updated)
+# サービス横断イベント (faction-purchased, premium-updated, player-onboarded)
 # ==============================================================================
 
 locals {
-  faction_selected_subscribers = {
-    account = "faction-selected-account-sub"
-    card    = "faction-selected-card-sub"
-    gateway = "faction-selected-gateway-sub"
+  faction_purchased_subscribers = {
+    account = "faction-purchased-account-sub"
+    card    = "faction-purchased-card-sub"
+    gateway = "faction-purchased-gateway-sub"
   }
   premium_updated_subscribers = {
     account = "premium-updated-account-sub"
@@ -103,90 +103,85 @@ locals {
   }
   player_onboarded_subscribers = {
     account = "player-onboarded-account-sub"
+    card    = "player-onboarded-card-sub"
+    gateway = "player-onboarded-gateway-sub"
   }
 }
 
 # ------------------------------------------------------------------------------
-# faction-selected
+# faction-purchased
 # ------------------------------------------------------------------------------
 
-resource "google_pubsub_topic" "faction_selected" {
+resource "google_pubsub_topic" "faction_purchased" {
   depends_on = [google_project_service.pubsub]
 
   project = var.project_id
-  name    = "faction-selected"
+  name    = "faction-purchased"
 }
 
-resource "google_pubsub_topic" "faction_selected_dlq" {
+resource "google_pubsub_topic" "faction_purchased_dlq" {
   depends_on = [google_project_service.pubsub]
 
   project = var.project_id
-  name    = "faction-selected-dlq"
+  name    = "faction-purchased-dlq"
 }
 
-resource "google_pubsub_subscription" "faction_selected" {
-  for_each = local.faction_selected_subscribers
+resource "google_pubsub_subscription" "faction_purchased" {
+  for_each = local.faction_purchased_subscribers
 
   project = var.project_id
   name    = each.value
-  topic   = google_pubsub_topic.faction_selected.name
+  topic   = google_pubsub_topic.faction_purchased.name
 
   enable_exactly_once_delivery = true
   ack_deadline_seconds         = 10
 
   dead_letter_policy {
-    dead_letter_topic     = google_pubsub_topic.faction_selected_dlq.id
+    dead_letter_topic     = google_pubsub_topic.faction_purchased_dlq.id
     max_delivery_attempts = 5
   }
 }
 
-resource "google_pubsub_topic_iam_member" "faction_selected_scenario_publisher" {
+resource "google_pubsub_topic_iam_member" "faction_purchased_shop_publisher" {
   project = var.project_id
-  topic   = google_pubsub_topic.faction_selected.name
-  role    = "roles/pubsub.publisher"
-  member  = "serviceAccount:${var.scenario_service_account_email}"
-}
-
-resource "google_pubsub_topic_iam_member" "faction_selected_shop_publisher" {
-  project = var.project_id
-  topic   = google_pubsub_topic.faction_selected.name
+  topic   = google_pubsub_topic.faction_purchased.name
   role    = "roles/pubsub.publisher"
   member  = "serviceAccount:${var.shop_service_account_email}"
 }
 
-resource "google_pubsub_subscription_iam_member" "faction_selected_account" {
+resource "google_pubsub_subscription_iam_member" "faction_purchased_account" {
   project      = var.project_id
-  subscription = google_pubsub_subscription.faction_selected["account"].name
+  subscription = google_pubsub_subscription.faction_purchased["account"].name
   role         = "roles/pubsub.subscriber"
   member       = "serviceAccount:${var.account_service_account_email}"
 }
 
-resource "google_pubsub_subscription_iam_member" "faction_selected_card" {
+resource "google_pubsub_subscription_iam_member" "faction_purchased_card" {
   project      = var.project_id
-  subscription = google_pubsub_subscription.faction_selected["card"].name
+  subscription = google_pubsub_subscription.faction_purchased["card"].name
   role         = "roles/pubsub.subscriber"
   member       = "serviceAccount:${var.card_service_account_email}"
 }
 
-resource "google_pubsub_subscription_iam_member" "faction_selected_gateway" {
+resource "google_pubsub_subscription_iam_member" "faction_purchased_gateway" {
   project      = var.project_id
-  subscription = google_pubsub_subscription.faction_selected["gateway"].name
+  subscription = google_pubsub_subscription.faction_purchased["gateway"].name
   role         = "roles/pubsub.subscriber"
   member       = "serviceAccount:${var.gateway_service_account_email}"
 }
 
-resource "google_pubsub_topic_iam_member" "faction_selected_dlq_sa_publisher" {
+resource "google_pubsub_topic_iam_member" "faction_purchased_dlq_sa_publisher" {
   project = var.project_id
-  topic   = google_pubsub_topic.faction_selected_dlq.name
+  topic   = google_pubsub_topic.faction_purchased_dlq.name
   role    = "roles/pubsub.publisher"
   member  = "serviceAccount:service-${data.google_project.this.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
 }
 
-resource "google_pubsub_subscription_iam_member" "faction_selected_dlq_sa_subscriber" {
-  for_each = local.faction_selected_subscribers
+resource "google_pubsub_subscription_iam_member" "faction_purchased_dlq_sa_subscriber" {
+  for_each = local.faction_purchased_subscribers
 
   project      = var.project_id
-  subscription = google_pubsub_subscription.faction_selected[each.key].name
+  subscription = google_pubsub_subscription.faction_purchased[each.key].name
   role         = "roles/pubsub.subscriber"
   member       = "serviceAccount:service-${data.google_project.this.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
 }
@@ -263,8 +258,9 @@ resource "google_pubsub_subscription_iam_member" "premium_updated_dlq_sa_subscri
 }
 
 # ------------------------------------------------------------------------------
-# player-onboarded (ADR-021: scenario が publish、account のみ subscribe。
-# 初期 faction 選択の下流処理は引き続き faction-selected 経由で card / gateway が拾う)
+# player-onboarded (ADR-022: scenario が publish、account / card / gateway が subscribe。
+# 初期 faction 選択の下流処理は player-onboarded に集約し、
+# 有料 faction 購入時のみ faction-purchased を発火する)
 # ------------------------------------------------------------------------------
 
 resource "google_pubsub_topic" "player_onboarded" {
@@ -309,6 +305,20 @@ resource "google_pubsub_subscription_iam_member" "player_onboarded_account" {
   subscription = google_pubsub_subscription.player_onboarded["account"].name
   role         = "roles/pubsub.subscriber"
   member       = "serviceAccount:${var.account_service_account_email}"
+}
+
+resource "google_pubsub_subscription_iam_member" "player_onboarded_card" {
+  project      = var.project_id
+  subscription = google_pubsub_subscription.player_onboarded["card"].name
+  role         = "roles/pubsub.subscriber"
+  member       = "serviceAccount:${var.card_service_account_email}"
+}
+
+resource "google_pubsub_subscription_iam_member" "player_onboarded_gateway" {
+  project      = var.project_id
+  subscription = google_pubsub_subscription.player_onboarded["gateway"].name
+  role         = "roles/pubsub.subscriber"
+  member       = "serviceAccount:${var.gateway_service_account_email}"
 }
 
 resource "google_pubsub_topic_iam_member" "player_onboarded_dlq_sa_publisher" {
