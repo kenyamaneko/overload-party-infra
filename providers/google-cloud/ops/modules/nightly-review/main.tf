@@ -1,22 +1,24 @@
 locals {
   job_name = "nightly-review"
 
-  # Anthropic API key は nightly-review 固有のため、この module が枠まで管理する。
-  # GitHub PAT / Slack webhook は overload-party-ops/terraform/shared 側で
-  # プロジェクト横断の共有 Secret として管理されており (cost-monitor / drift-monitor /
-  # slack-commands が同じ実値を参照する)、同じ URL / PAT を二重管理しないためそちらを
-  # 参照する。命名は shared 側の既存パターン (github-pat-*, slack-webhook-url) に
-  # 揃っているため、そのまま secret ID 文字列で指す。
-  self_managed_secret_ids = {
+  # この module が自モジュール専用 Secret の枠を所有する。実値は手動で投入:
+  #   gcloud secrets versions add nightly-review-anthropic-key --project <project_id> --data-file=- <<< "<ANTHROPIC_API_KEY>"
+  #   gcloud secrets versions add github-pat-nightly-review    --project <project_id> --data-file=- <<< "<GITHUB_PAT>"
+  module_owned_secret_ids = {
     anthropic_api_key = "nightly-review-anthropic-key"
+    github_token      = "github-pat-nightly-review"
   }
 
-  # コンテナ env 名 → 参照先 Secret ID の対応。
-  # shared 側 Secret も同一プロジェクト (overload-party-ops) にあるため ID だけで引ける。
+  # slack-webhook-url は slack-commands 等と同じ webhook URL を叩く真の共有 Secret。
+  # 枠 / accessor は overload-party-ops/terraform/shared で一元管理されている。実値の
+  # 二重管理を避けるためそちらを参照する (accessor への nightly-reviewer SA 追加は
+  # shared/terraform.tfvars 側で行う)。
+  shared_slack_webhook_secret_id = "slack-webhook-url"
+
   env_to_secret = {
-    ANTHROPIC_API_KEY = local.self_managed_secret_ids.anthropic_api_key
-    GITHUB_TOKEN      = "github-pat-nightly-review"
-    SLACK_WEBHOOK_URL = "slack-webhook-url"
+    ANTHROPIC_API_KEY = local.module_owned_secret_ids.anthropic_api_key
+    GITHUB_TOKEN      = local.module_owned_secret_ids.github_token
+    SLACK_WEBHOOK_URL = local.shared_slack_webhook_secret_id
   }
 }
 
@@ -37,15 +39,11 @@ resource "google_project_service" "secretmanager" {
 }
 
 # ──────────────────────────────────────────────
-# nightly-review 固有 Secret (Anthropic API key)
-# Terraform が作るのは 枠 のみ。バージョン (実値) は手動で追加する:
-#   gcloud secrets versions add nightly-review-anthropic-key --project <project_id> --data-file=- <<< "<ANTHROPIC_API_KEY>"
-# github-pat-nightly-review / slack-webhook-url は overload-party-ops/terraform/shared
-# で枠を定義しており、同リポの tfvars で nightly-reviewer SA を accessor に追加する。
+# 自モジュール所有 Secret (枠のみ、バージョンは手動投入)
 # ──────────────────────────────────────────────
 
 resource "google_secret_manager_secret" "nightly_review" {
-  for_each = local.self_managed_secret_ids
+  for_each = local.module_owned_secret_ids
 
   project   = var.project_id
   secret_id = each.value
@@ -67,13 +65,13 @@ resource "google_service_account" "nightly_reviewer" {
   display_name = "Nightly Review (Cloud Run Job)"
 }
 
-# プロジェクト全体に secretAccessor を広げず、対象シークレットだけに限定して
-# 付与する (最小権限原則)。
-# github-pat-nightly-review / slack-webhook-url の accessor は overload-party-ops/
-# terraform/shared/terraform.tfvars の *_accessors リストに nightly-reviewer SA を
-# 追加することで付与する (Secret 枠が shared にあるため IAM も shared 側で一元管理)。
+# 自 module 所有 Secret への accessor。プロジェクト全体に secretAccessor を広げず
+# 対象シークレットだけに限定する (最小権限原則)。
+# 真の共有 Secret である slack-webhook-url への accessor は、枠を持つ
+# overload-party-ops/terraform/shared/terraform.tfvars の slack_webhook_url_accessors
+# に nightly-reviewer SA を追加することで付与する。
 resource "google_secret_manager_secret_iam_member" "nightly_reviewer_accessor" {
-  for_each = local.self_managed_secret_ids
+  for_each = local.module_owned_secret_ids
 
   project   = var.project_id
   secret_id = google_secret_manager_secret.nightly_review[each.key].secret_id
