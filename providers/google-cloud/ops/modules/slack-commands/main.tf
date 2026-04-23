@@ -38,7 +38,7 @@ resource "google_secret_manager_secret" "slack_commands" {
 resource "google_service_account" "slack_commands" {
   project      = var.project_id
   account_id   = "slack-commands"
-  display_name = "Slack Commands Service"
+  display_name = "Slack Commands Service SA"
 }
 
 resource "google_secret_manager_secret_iam_member" "slack_commands_accessor" {
@@ -78,9 +78,15 @@ resource "google_cloud_run_v2_service" "slack_commands" {
   location = var.region
   ingress  = "INGRESS_TRAFFIC_ALL"
 
-  # CI/CD がイメージタグを直接更新するため drift を許容する。
   lifecycle {
-    ignore_changes = [template[0].containers[0].image]
+    # CI/CD がイメージタグを直接更新するため image の drift は許容。
+    # client / client_version は gcloud CLI 等での apply 時に自動付与される metadata で
+    # Terraform では管理しない。
+    ignore_changes = [
+      template[0].containers[0].image,
+      client,
+      client_version,
+    ]
   }
 
   template {
