@@ -9,37 +9,19 @@ locals {
     github_token      = "github-pat-nightly-review"
   }
 
-  # slack-webhook-url は slack-commands 等と同じ webhook URL を叩く真の共有 Secret。
-  # 枠 / accessor は overload-party-ops/terraform/shared で一元管理されている。実値の
-  # 二重管理を避けるためそちらを参照する (accessor への nightly-reviewer SA 追加は
-  # shared/terraform.tfvars 側で行う)。
-  shared_slack_webhook_secret_id = "slack-webhook-url"
-
+  # slack-webhook-url は shared module が枠を所有する「真の共有 Secret」。
+  # ここでは accessor IAM を nightly_reviewer SA に付与するためだけに参照する。
   env_to_secret = {
     ANTHROPIC_API_KEY = local.module_owned_secret_ids.anthropic_api_key
     GITHUB_TOKEN      = local.module_owned_secret_ids.github_token
-    SLACK_WEBHOOK_URL = local.shared_slack_webhook_secret_id
+    SLACK_WEBHOOK_URL = var.shared_slack_webhook_secret_id
   }
 }
 
 # ──────────────────────────────────────────────
-# API 有効化
-# ──────────────────────────────────────────────
-
-resource "google_project_service" "run" {
-  project            = var.project_id
-  service            = "run.googleapis.com"
-  disable_on_destroy = false
-}
-
-resource "google_project_service" "secretmanager" {
-  project            = var.project_id
-  service            = "secretmanager.googleapis.com"
-  disable_on_destroy = false
-}
-
-# ──────────────────────────────────────────────
 # 自モジュール所有 Secret (枠のみ、バージョンは手動投入)
+# API 有効化 (secretmanager / run) は ops/modules/shared が一元管理し、
+# composition 側の module depends_on で先行実行を保証している。
 # ──────────────────────────────────────────────
 
 resource "google_secret_manager_secret" "nightly_review" {
@@ -51,8 +33,6 @@ resource "google_secret_manager_secret" "nightly_review" {
   replication {
     auto {}
   }
-
-  depends_on = [google_project_service.secretmanager]
 }
 
 # ──────────────────────────────────────────────
@@ -67,14 +47,20 @@ resource "google_service_account" "nightly_reviewer" {
 
 # 自 module 所有 Secret への accessor。プロジェクト全体に secretAccessor を広げず
 # 対象シークレットだけに限定する (最小権限原則)。
-# 真の共有 Secret である slack-webhook-url への accessor は、枠を持つ
-# overload-party-ops/terraform/shared/terraform.tfvars の slack_webhook_url_accessors
-# に nightly-reviewer SA を追加することで付与する。
 resource "google_secret_manager_secret_iam_member" "nightly_reviewer_accessor" {
   for_each = local.module_owned_secret_ids
 
   project   = var.project_id
   secret_id = google_secret_manager_secret.nightly_review[each.key].secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.nightly_reviewer.email}"
+}
+
+# shared module 所有の slack-webhook-url への accessor。shared 側で枠を持つ ID を
+# var 経由で受け取り、nightly_reviewer SA 単体に限定して付与する。
+resource "google_secret_manager_secret_iam_member" "shared_slack_webhook_accessor" {
+  project   = var.project_id
+  secret_id = var.shared_slack_webhook_secret_id
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.nightly_reviewer.email}"
 }
@@ -125,8 +111,8 @@ resource "google_cloud_run_v2_job" "nightly_review" {
   }
 
   depends_on = [
-    google_project_service.run,
     google_secret_manager_secret_iam_member.nightly_reviewer_accessor,
+    google_secret_manager_secret_iam_member.shared_slack_webhook_accessor,
   ]
 }
 
