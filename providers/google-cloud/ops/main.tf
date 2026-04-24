@@ -122,12 +122,3 @@ module "drift_monitor" {
   monitored_projects = local.drift_monitored_projects
   tf_state_bucket    = "keyandnotes-tf-state"
 }
-
-# ──────────────────────────────────────────────
-# 他 composition が参照する output
-# ──────────────────────────────────────────────
-
-output "slack_commands_url" {
-  description = "slack-commands Cloud Run Service の URL。cloudflare-workers composition が remote state 経由で Worker binding に渡す"
-  value       = module.slack_commands.service_url
-}

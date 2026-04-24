@@ -231,11 +231,6 @@ resource "google_cloud_run_v2_job_iam_member" "deploy_invoker" {
   member   = var.deploy_sa_member
 }
 
-moved {
-  from = google_cloud_run_v2_job_iam_member.deploy_invoker[0]
-  to   = google_cloud_run_v2_job_iam_member.deploy_invoker
-}
-
 # ──────────────────────────────────────────────
 # 出力
 # ──────────────────────────────────────────────

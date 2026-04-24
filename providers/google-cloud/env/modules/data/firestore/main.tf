@@ -20,8 +20,3 @@ resource "google_project_iam_member" "game_config_reader" {
   role    = "roles/datastore.user"
   member  = "serviceAccount:${each.value}"
 }
-
-moved {
-  from = google_project_iam_member.datastore_user
-  to   = google_project_iam_member.game_config_reader
-}

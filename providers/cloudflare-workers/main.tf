@@ -25,25 +25,14 @@ locals {
   # Cloudflare account ID は env 横断で固定値。providers/cloudflare/ も同じ account を
   # zone_id 経由で扱っているため、秘匿情報ではなくここでハードコードする。
   cloudflare_account_id = "2fba420f13bcbad7ea84dda8342c08fd"
+
+  # slack-commands Cloud Run Service の URL (サービス名 + project + region で固定)。
+  # google provider を cloudflare-workers に持ち込まないためハードコードしている。
+  slack_commands_url = "https://slack-commands-msfqioc6qa-an.a.run.app"
 }
 
 provider "cloudflare" {
   api_token = var.cloudflare_workers_api_token
-}
-
-# ──────────────────────────────────────────────
-# slack-commands Cloud Run URL は providers/google-cloud/ops composition の output から
-# 動的に引く。tfvars へのハードコードをやめ、Cloud Run Service 再作成時の URL 変化に
-# 追従できるようにする。
-# ──────────────────────────────────────────────
-
-data "terraform_remote_state" "ops" {
-  backend = "gcs"
-
-  config = {
-    bucket = "keyandnotes-tf-state"
-    prefix = "overload-party/ops"
-  }
 }
 
 # ──────────────────────────────────────────────
@@ -60,7 +49,7 @@ resource "cloudflare_workers_script" "slack_commands_proxy" {
 
   plain_text_binding {
     name = "CLOUD_RUN_URL"
-    text = data.terraform_remote_state.ops.outputs.slack_commands_url
+    text = local.slack_commands_url
   }
 
   lifecycle {

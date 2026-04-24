@@ -137,35 +137,3 @@ resource "google_service_account_iam_member" "deploy_impersonate_migration_sa" {
   role               = "roles/iam.serviceAccountUser"
   member             = var.deploy_sa_member
 }
-
-moved {
-  from = google_cloud_run_v2_job_iam_member.deploy_invoker[0]
-  to   = google_cloud_run_v2_job_iam_member.deploy_invoker
-}
-
-moved {
-  from = google_cloud_run_v2_job_iam_member.deploy_developer[0]
-  to   = google_cloud_run_v2_job_iam_member.deploy_developer
-}
-
-moved {
-  from = google_service_account_iam_member.deploy_act_as_migration[0]
-  to   = google_service_account_iam_member.deploy_act_as_migration
-}
-
-# ---- state migration: resource rename (purpose-focused naming) ----
-
-moved {
-  from = google_project_iam_member.migration_secret_accessor
-  to   = google_project_iam_member.migration_db_password_read
-}
-
-moved {
-  from = google_cloud_run_v2_job_iam_member.deploy_developer
-  to   = google_cloud_run_v2_job_iam_member.deploy_job_updater
-}
-
-moved {
-  from = google_service_account_iam_member.deploy_act_as_migration
-  to   = google_service_account_iam_member.deploy_impersonate_migration_sa
-}
