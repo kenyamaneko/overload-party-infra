@@ -1,8 +1,3 @@
-# WIF pool / github-ci SA / Artifact Registry 本体は keyandnotes-platform リポで所有する。
-# このモジュールは overload-party スコープの CI/CD SA (terraform-deployer / github-deploy /
-# cloudsql-operator) と、github-ci への overload-party-{dev,stg,ops} プロジェクト横断の
-# IAM 付与だけを担当する。
-
 data "google_iam_workload_identity_pool" "github" {
   project                   = var.project_id
   workload_identity_pool_id = "github-actions"
@@ -12,8 +7,6 @@ data "google_service_account" "ci" {
   project    = var.project_id
   account_id = "github-ci"
 }
-
-# ---- github-ci への cross-project IAM（overload-party プロジェクト群への権限） ----
 
 resource "google_project_iam_member" "ci_analytics_deploy_cloudfunctions" {
   for_each = toset(var.analytics_deploy_projects)
@@ -57,8 +50,6 @@ resource "google_project_iam_member" "ci_cloudsql_lifecycle" {
   member   = "serviceAccount:${data.google_service_account.ci.email}"
 }
 
-# ---- Terraform デプロイ用サービスアカウント ----
-
 resource "google_service_account" "terraform" {
   project      = var.project_id
   account_id   = "terraform-deployer"
@@ -99,8 +90,6 @@ resource "google_project_iam_member" "terraform_secretmanager_admin" {
   member   = "serviceAccount:${google_service_account.terraform.email}"
 }
 
-# ---- デプロイ用サービスアカウント (GKE kubectl apply) ----
-
 resource "google_service_account" "deploy" {
   count        = length(var.deploy_authorized_repos) > 0 ? 1 : 0
   project      = var.project_id
@@ -122,17 +111,14 @@ resource "google_project_iam_member" "deploy_gke_kubectl_apply" {
   member  = "serviceAccount:${google_service_account.deploy[0].email}"
 }
 
+# PSC forwarding rule の create/delete に IAM 権限が必要だが、PSC 専用の粒度細かい
+# role が存在しないため networkAdmin で吸収する。
 resource "google_project_iam_member" "deploy_psc_forwarding_rule_manage" {
   count   = length(var.deploy_authorized_repos) > 0 ? 1 : 0
   project = var.project_id
   role    = "roles/compute.networkAdmin"
   member  = "serviceAccount:${google_service_account.deploy[0].email}"
 }
-
-# ---- Cloud SQL Operator サービスアカウント (cloudsql-activation workflow 用) ----
-# ADR「ノードプールスケーリング戦略とGKEの所有権」の延長で、Cloud SQL の
-# 起動/停止も overload-party-infra (DB オーナー) が担当する。
-# ops の nightly-shutdown や Slack コマンドから workflow_dispatch で呼ばれる。
 
 resource "google_service_account" "cloudsql_operator" {
   count        = length(var.cloudsql_operator_authorized_repos) > 0 ? 1 : 0
