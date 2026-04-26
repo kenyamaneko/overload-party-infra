@@ -16,7 +16,6 @@ locals {
       subscribers = {
         account = { sub_name = "faction-purchased-account-sub", sa_email = var.account_service_account_email }
         card    = { sub_name = "faction-purchased-card-sub", sa_email = var.card_service_account_email }
-        gateway = { sub_name = "faction-purchased-gateway-sub", sa_email = var.gateway_service_account_email }
       }
     }
     premium_updated = {
@@ -24,7 +23,6 @@ locals {
       publisher_sa = var.shop_service_account_email
       subscribers = {
         account = { sub_name = "premium-updated-account-sub", sa_email = var.account_service_account_email }
-        gateway = { sub_name = "premium-updated-gateway-sub", sa_email = var.gateway_service_account_email }
       }
     }
     player_onboarded = {
@@ -33,7 +31,20 @@ locals {
       subscribers = {
         account = { sub_name = "player-onboarded-account-sub", sa_email = var.account_service_account_email }
         card    = { sub_name = "player-onboarded-card-sub", sa_email = var.card_service_account_email }
-        gateway = { sub_name = "player-onboarded-gateway-sub", sa_email = var.gateway_service_account_email }
+      }
+    }
+    onboarding_name_set = {
+      topic_name   = "onboarding-name-set"
+      publisher_sa = var.scenario_service_account_email
+      subscribers = {
+        account = { sub_name = "onboarding-name-set-account-sub", sa_email = var.account_service_account_email }
+      }
+    }
+    onboarding_faction_set = {
+      topic_name   = "onboarding-faction-set"
+      publisher_sa = var.scenario_service_account_email
+      subscribers = {
+        account = { sub_name = "onboarding-faction-set-account-sub", sa_email = var.account_service_account_email }
       }
     }
     news_article_collected = {
