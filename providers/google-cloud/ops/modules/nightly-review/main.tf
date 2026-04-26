@@ -94,6 +94,14 @@ resource "google_cloud_run_v2_job" "nightly_review" {
       containers {
         image = var.image
 
+        # Cloud Run Jobs が自動注入するのは CLOUD_RUN_EXECUTION / CLOUD_RUN_JOB /
+        # CLOUD_RUN_TASK_* のみ。GOOGLE_CLOUD_PROJECT は注入されないため、
+        # review.py が Slack 通知に貼る Cloud Logging URL を組み立てる用に明示的に渡す。
+        env {
+          name  = "GOOGLE_CLOUD_PROJECT"
+          value = var.project_id
+        }
+
         dynamic "env" {
           for_each = local.env_to_secret
           content {
