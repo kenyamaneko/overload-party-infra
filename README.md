@@ -63,7 +63,8 @@ upstash_api_key = "..."
 ## CI/CD
 
 - **PR**: 変更された state root に対して `terraform plan`、結果を PR コメントに投稿
-- **main マージ**: 変更された state root に対して `terraform apply`
+- **apply**: GitHub Actions の `Terraform` workflow を `workflow_dispatch` で手動起動。
+  対象 state root を input で 1 つ選んで apply する (誤適用防止のため自動 apply は持たない)
 - `providers/<provider>/env/modules/` 配下の変更は同プロバイダの env 全 state root を対象
 - `providers/google-cloud/platform/` は直接変更時のみ (modules 含む)
 - `providers/cloudflare/` は直接変更時のみ

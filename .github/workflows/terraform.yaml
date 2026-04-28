@@ -5,10 +5,23 @@ on:
     branches: [main]
     paths:
       - "providers/**"
-  push:
-    branches: [main]
-    paths:
-      - "providers/**"
+  workflow_dispatch:
+    inputs:
+      path:
+        description: "State root path to apply (relative to providers/)"
+        required: true
+        type: choice
+        options:
+          - google-cloud/env/dev
+          - google-cloud/env/stg
+          - google-cloud/env/prod
+          - google-cloud/platform
+          - google-cloud/ops
+          - upstash/env/dev
+          - upstash/env/stg
+          - upstash/env/prod
+          - cloudflare
+          - cloudflare-workers
 
 permissions:
   contents: read
@@ -17,6 +30,7 @@ permissions:
 
 jobs:
   detect:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
@@ -29,7 +43,7 @@ jobs:
       - id: detect
         name: Detect changed environment paths
         env:
-          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: .github/scripts/terraform/detect-envs.sh
 
   plan:
@@ -77,14 +91,9 @@ jobs:
             await commentPlan({ github, context });
 
   apply:
-    needs: detect
-    if: github.event_name == 'push' && needs.detect.outputs.paths != '[]'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      max-parallel: 1
-      matrix:
-        path: ${{ fromJson(needs.detect.outputs.paths) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -99,11 +108,11 @@ jobs:
           service_account: ${{ vars.TF_SERVICE_ACCOUNT }}
 
       - name: Terraform Init
-        working-directory: providers/${{ matrix.path }}
+        working-directory: providers/${{ inputs.path }}
         run: terraform init
 
       - name: Terraform Apply
-        working-directory: providers/${{ matrix.path }}
+        working-directory: providers/${{ inputs.path }}
         run: terraform apply -auto-approve
         env:
           TF_VAR_cloudflare_cdn_api_token: ${{ secrets.CLOUDFLARE_CDN_API_TOKEN }}
