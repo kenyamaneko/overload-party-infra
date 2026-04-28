@@ -42,4 +42,7 @@ module "infra" {
   # stg は通常 PAUSED。prod リリース前検証時のみ `gcloud scheduler jobs resume` で
   # 一時的に有効化し、確認後に手動で pause に戻す運用。
   newsfeed_scheduler_paused = true
+
+  enable_e2e            = true
+  e2e_developer_members = ["user:kenya.m.amaoto@gmail.com"]
 }

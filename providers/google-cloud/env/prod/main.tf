@@ -41,4 +41,7 @@ module "infra" {
 
   # prod のみ Cloud Scheduler を有効化。2 時間周期で Cloud Run Job を起動する。
   newsfeed_scheduler_paused = false
+
+  enable_e2e            = false
+  e2e_developer_members = []
 }

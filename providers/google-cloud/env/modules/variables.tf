@@ -93,3 +93,17 @@ variable "newsfeed_scheduler_paused" {
   description = "Newsfeed の Cloud Scheduler を PAUSED 状態で作成するか。prod=false、dev/stg=true (手動 resume でリリース前検証)"
   type        = bool
 }
+
+# ──────────────────────────────────────────────
+# E2E テスト
+# ──────────────────────────────────────────────
+
+variable "enable_e2e" {
+  description = "E2E テスト用の SA / Secret Manager 枠を作成するか (dev/stg のみ true)"
+  type        = bool
+}
+
+variable "e2e_developer_members" {
+  description = "E2E secret への secretAccessor を付与する開発者 IAM member (例: user:foo@example.com)"
+  type        = list(string)
+}

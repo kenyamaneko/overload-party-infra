@@ -42,5 +42,8 @@ module "infra" {
   # dev は Cloud Scheduler を形式的に配置するのみ (cron は設定するが常時 PAUSED)。
   # 手動実行は `gcloud run jobs execute newsfeed-job` を使う。
   newsfeed_scheduler_paused = true
+
+  enable_e2e            = true
+  e2e_developer_members = ["user:kenya.m.amaoto@gmail.com"]
 }
 

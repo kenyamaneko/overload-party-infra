@@ -145,3 +145,11 @@ module "assets" {
   assets_bucket_name    = var.assets_bucket_name
   scenarios_bucket_name = var.scenarios_bucket_name
 }
+
+module "e2e" {
+  count  = var.enable_e2e ? 1 : 0
+  source = "./ops/e2e"
+
+  project_id        = var.project_id
+  developer_members = var.e2e_developer_members
+}
