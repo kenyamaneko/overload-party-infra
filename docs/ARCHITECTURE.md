@@ -1,0 +1,60 @@
+# インフラ設計
+
+本ドキュメントは **コードを読んでも一見しては分からない設計意図** だけを残す。各 `main.tf` / `variables.tf` の内容はファイル自体が一次情報。
+
+## State 分割の原則
+
+Terraform state は **変更ライフサイクルと権限境界** で分割している。
+
+| State root | 対象 Google Cloud プロジェクト | 分割理由 |
+|---|---|---|
+| `google-cloud/platform` | `keyandnotes-platform` | 複数 env をまたぐ CI/CD SA・WIF・PSC の永続基盤。env と独立して管理する |
+| `google-cloud/env/{dev,stg,prod}` | `overload-party-{dev,stg,prod}` | 環境ごとのワークロードリソース。env 単位で apply を局所化する |
+| `google-cloud/ops` | `overload-party-ops` | 運用ツール（drift-monitor / nightly-review / slack-commands / cost-monitor）は env を全 destroy しても残す必要があり、env のライフサイクルから独立させる |
+| `cloudflare` | — | DNS レコードは Google Cloud とライフサイクルが異なる |
+| `cloudflare-workers` | — | Worker スクリプトは `wrangler` が管理するコードを持ち、TF は枠だけ管理 |
+| `upstash/env/{dev,stg,prod}` | — | Upstash は Google Cloud provider と独立しており、env ごとに apply を局所化する |
+
+`env/{dev,stg,prod}/main.tf` はそれぞれ `env/modules` を呼ぶ薄い composition で、全環境が同一モジュールセットを使う。環境差異を呼び出し側の変数だけに閉じ込めることで、module 内に環境分岐を持たせず、環境間で実装が乖離して再現できないバグが起きるのを防ぐ。
+
+## keyandnotes-platform と overload-party-* の関係
+
+`keyandnotes-platform` は overload-party サービス群が相乗りするプラットフォームプロジェクト。所有境界は **「リソースが書き込まれる Google Cloud プロジェクトと、管理する Terraform リポを一対一に対応させる」** という原則で決める。Terraform リソースの `project = ...` を見れば管理リポが分かる、という形にすることで、境界が一意に決まり、SA や IAM の変更時に複数リポを横断する必要がなくなる。
+
+具体例: `google_service_account` (project = `keyandnotes-platform`) は `keyandnotes-platform` リポが管理する。`google_project_iam_member` で SA に IAM を付与する場合、`project = overload-party-dev` ならこのリポ、`project = keyandnotes-platform` なら `keyandnotes-platform` リポ。SA がどのプロジェクトに属するかは関係なく、IAM binding が書き込まれる側のプロジェクトで決まる。
+
+例外: PSC エンドポイントは consumer 側ネットワーク制約で物理的に `keyandnotes-platform` VPC に置く必要があるが、state 所有は将来 `env/` 側に移す想定（`platform/main.tf` のコメント参照）。
+
+## Cloud SQL アクセス経路 (PSC)
+
+各環境の Cloud SQL (`overload-party-{dev,stg,prod}`) は **PSC (Private Service Connect)** で `keyandnotes-platform` の VPC に接続する。
+
+```
+GKE Pod (keyandnotes-platform VPC)
+  └─ PSC forwarding rule → PSC endpoint IP (platform VPC)
+       └─ Cloud SQL instance (overload-party-{env} project)
+```
+
+PSC を選んだ理由: forwarding rule の作成・削除だけで接続を on/off でき、env 未使用時のコスト（$0.025/時間）を `env-up/down` で動的に落としやすいため。
+
+## CI/CD SA の集約
+
+overload-party 系全リポの GitHub Actions CI は `keyandnotes-platform` の `github-ci` SA を共用する。env や repo ごとに分けると、apply で権限不足が出るたびに複数の権限定義を横断する必要が生じるため、`platform/modules/ci-cd` の一箇所に権限マトリクスを集約している。
+
+## overload-party-infra と overload-party-k8s の責務分担
+
+k8s manifest と Terraform はデプロイ頻度・更新ライフサイクルが異なるためリポを分けている。
+
+例外として prod の Reserved global IP は infra (`env/prod/main.tf`) が直接保持する。Cloudflare DNS が prod IP に pin されており、k8s 側の env-lifecycle が down のたびに IP を消すと DNS 不整合で外部から到達不能になるため。
+
+## Cloud SQL ライフサイクルの所有権
+
+Cloud SQL インスタンスは `env/` の Terraform が所有している。起動・停止（`activation_policy` 切替）も、リソースの所有者と操作の所有者を一致させるため、このリポの `cloudsql-activation.yaml` が担当する。`overload-party-ops` から `/db-start` `/db-stop` を呼ぶ場合も、最終的には infra の `workflow_dispatch` を呼び出す。
+
+## Cloudflare Workers (slack-commands-proxy)
+
+Slack の Slash Command は 3 秒以内に HTTP 200 を返す必要がある。Cloud Run はコールドスタートでこれを超えることがある。Cloudflare Worker をエッジで即座に 200 を返し非同期で Cloud Run に転送するプロキシとして挟むことで解決している。Worker スクリプトの実体は `wrangler deploy` が管理し、Terraform は枠とバインディングのみを持つ（`lifecycle.ignore_changes = [content]`）。
+
+## apply は手動トリガー
+
+PR 時は `terraform plan` を自動実行してコメントに結果を貼る。`terraform apply` は `workflow_dispatch` のみ（main ブランチ限定）。PR マージが即 apply にならないのは、インフラ変更は人間が apply タイミングを判断すべきであるため。
