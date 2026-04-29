@@ -101,13 +101,6 @@ resource "google_project_iam_member" "ci_cloudrun_deploy_sa_user" {
   member   = "serviceAccount:${google_service_account.ci.email}"
 }
 
-resource "google_project_iam_member" "ci_cloudsql_lifecycle" {
-  for_each = toset(var.cloudsql_lifecycle_projects)
-  project  = each.value
-  role     = "roles/cloudsql.admin"
-  member   = "serviceAccount:${google_service_account.ci.email}"
-}
-
 resource "google_project_iam_member" "terraform_editor" {
   for_each = toset(var.terraform_managed_projects)
   project  = each.value
