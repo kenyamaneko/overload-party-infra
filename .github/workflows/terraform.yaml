@@ -15,7 +15,6 @@ on:
           - google-cloud/env/dev
           - google-cloud/env/stg
           - google-cloud/env/prod
-          - google-cloud/platform
           - google-cloud/ops
           - upstash/env/dev
           - upstash/env/stg

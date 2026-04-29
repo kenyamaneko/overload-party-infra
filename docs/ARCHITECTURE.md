@@ -8,7 +8,6 @@ Terraform state は **変更ライフサイクルと権限境界** で分割し�
 
 | State root | 対象 Google Cloud プロジェクト | 分割理由 |
 |---|---|---|
-| `google-cloud/platform` | `keyandnotes-platform` | 現状空 (PSC は env/ に移管済み)。将来 keyandnotes-platform プロジェクト全体に関わる overload-party 固有のリソースが出たときの受け皿 |
 | `google-cloud/env/{dev,stg,prod}` | `overload-party-{dev,stg,prod}` | 環境ごとのワークロードリソース。env 単位で apply を局所化する |
 | `google-cloud/ops` | `overload-party-ops` | 運用ツール（drift-monitor / nightly-review / slack-commands / cost-monitor）は env を全 destroy しても残す必要があり、env のライフサイクルから独立させる |
 | `cloudflare` | — | DNS レコードは Google Cloud とライフサイクルが異なる |

@@ -9,11 +9,10 @@ set -euo pipefail
 : "${HEAD_SHA:=HEAD}"
 
 GOOGLE_CLOUD_ENV_PATHS=("google-cloud/env/dev" "google-cloud/env/stg" "google-cloud/env/prod")
-GOOGLE_CLOUD_PLATFORM_PATHS=("google-cloud/platform")
 GOOGLE_CLOUD_OPS_PATHS=("google-cloud/ops")
 UPSTASH_ENV_PATHS=("upstash/env/dev" "upstash/env/stg" "upstash/env/prod")
 CLOUDFLARE_PATHS=("cloudflare" "cloudflare-workers")
-ALL_PATHS=("${GOOGLE_CLOUD_ENV_PATHS[@]}" "${GOOGLE_CLOUD_PLATFORM_PATHS[@]}" "${GOOGLE_CLOUD_OPS_PATHS[@]}" "${UPSTASH_ENV_PATHS[@]}" "${CLOUDFLARE_PATHS[@]}")
+ALL_PATHS=("${GOOGLE_CLOUD_ENV_PATHS[@]}" "${GOOGLE_CLOUD_OPS_PATHS[@]}" "${UPSTASH_ENV_PATHS[@]}" "${CLOUDFLARE_PATHS[@]}")
 
 CHANGED=$(git diff --name-only "${BASE_SHA}" "${HEAD_SHA}")
 
@@ -35,7 +34,6 @@ if echo "${CHANGED}" | grep -q '^providers/upstash/env/modules/'; then
 fi
 # google-cloud/ops/modules/ は ops/ から呼ばれる (state root は ops 単一) ため
 # 下のループで providers/google-cloud/ops/ の直接変更として拾う。
-# platform/modules/ も同じ扱い (platform/ が単一 state root)。
 
 for p in "${ALL_PATHS[@]}"; do
   if echo "${CHANGED}" | grep -q "^providers/${p}/"; then
