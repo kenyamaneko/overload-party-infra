@@ -9,20 +9,12 @@ locals {
     github_token      = "github-pat-nightly-review"
   }
 
-  # slack-webhook-url は shared module が枠を所有する「真の共有 Secret」。
-  # ここでは accessor IAM を nightly_reviewer SA に付与するためだけに参照する。
   env_to_secret = {
     ANTHROPIC_API_KEY = local.module_owned_secret_ids.anthropic_api_key
     GITHUB_TOKEN      = local.module_owned_secret_ids.github_token
     SLACK_WEBHOOK_URL = var.shared_slack_webhook_secret_id
   }
 }
-
-# ──────────────────────────────────────────────
-# 自モジュール所有 Secret (枠のみ、バージョンは手動投入)
-# API 有効化 (secretmanager / run) は ops/modules/shared が一元管理し、
-# composition 側の module depends_on で先行実行を保証している。
-# ──────────────────────────────────────────────
 
 resource "google_secret_manager_secret" "nightly_review" {
   for_each = local.module_owned_secret_ids
@@ -34,10 +26,6 @@ resource "google_secret_manager_secret" "nightly_review" {
     auto {}
   }
 }
-
-# ──────────────────────────────────────────────
-# Cloud Run Job 用サービスアカウント
-# ──────────────────────────────────────────────
 
 resource "google_service_account" "nightly_reviewer" {
   project      = var.project_id
@@ -56,8 +44,6 @@ resource "google_secret_manager_secret_iam_member" "nightly_reviewer_accessor" {
   member    = "serviceAccount:${google_service_account.nightly_reviewer.email}"
 }
 
-# shared module 所有の slack-webhook-url への accessor。shared 側で枠を持つ ID を
-# var 経由で受け取り、nightly_reviewer SA 単体に限定して付与する。
 resource "google_secret_manager_secret_iam_member" "shared_slack_webhook_accessor" {
   project   = var.project_id
   secret_id = var.shared_slack_webhook_secret_id
@@ -65,13 +51,8 @@ resource "google_secret_manager_secret_iam_member" "shared_slack_webhook_accesso
   member    = "serviceAccount:${google_service_account.nightly_reviewer.email}"
 }
 
-# ──────────────────────────────────────────────
-# Cloud Run v2 ジョブ
-# nightly-review は github.com / api.anthropic.com / hooks.slack.com への外部 HTTPS
-# しか叩かないため VPC アクセスは不要。max_retries = 0 は Python 側が 429 を自前で
-# リトライするため Cloud Run のリトライと二重にならないようにするのが目的。
-# ──────────────────────────────────────────────
-
+# 外部 HTTPS のみ（github.com / api.anthropic.com / hooks.slack.com）なので VPC アクセス不要。
+# max_retries = 0 は Python 側が 429 を自前でリトライするため Cloud Run のリトライと二重にならないようにする。
 resource "google_cloud_run_v2_job" "nightly_review" {
   name                = local.job_name
   project             = var.project_id
@@ -123,10 +104,6 @@ resource "google_cloud_run_v2_job" "nightly_review" {
     google_secret_manager_secret_iam_member.shared_slack_webhook_accessor,
   ]
 }
-
-# ──────────────────────────────────────────────
-# デプロイ SA にジョブ更新・実行権限、およびジョブ SA への actAs 権限を付与
-# ──────────────────────────────────────────────
 
 resource "google_cloud_run_v2_job_iam_member" "deploy_job_updater" {
   project  = var.project_id

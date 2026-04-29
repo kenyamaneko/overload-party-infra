@@ -16,10 +16,6 @@ locals {
   sa_accessible_secret_keys = ["dispatch_secret", "github_token"]
 }
 
-# ──────────────────────────────────────────────
-# 自モジュール所有 Secret (枠のみ、バージョンは手動投入)
-# ──────────────────────────────────────────────
-
 resource "google_secret_manager_secret" "slack_commands" {
   for_each = local.module_owned_secret_ids
 
@@ -30,10 +26,6 @@ resource "google_secret_manager_secret" "slack_commands" {
     auto {}
   }
 }
-
-# ──────────────────────────────────────────────
-# Cloud Run Service 用サービスアカウント
-# ──────────────────────────────────────────────
 
 resource "google_service_account" "slack_commands" {
   project      = var.project_id
@@ -50,7 +42,6 @@ resource "google_secret_manager_secret_iam_member" "slack_commands_accessor" {
   member    = "serviceAccount:${google_service_account.slack_commands.email}"
 }
 
-# shared module 所有の slack-webhook-url への accessor。slack-commands SA 単体に限定。
 resource "google_secret_manager_secret_iam_member" "shared_slack_webhook_accessor" {
   project   = var.project_id
   secret_id = var.shared_slack_webhook_secret_id
@@ -67,10 +58,6 @@ resource "google_project_iam_member" "slack_commands_cloudsql_admin" {
   role    = "roles/cloudsql.admin"
   member  = "serviceAccount:${google_service_account.slack_commands.email}"
 }
-
-# ──────────────────────────────────────────────
-# Cloud Run v2 Service
-# ──────────────────────────────────────────────
 
 resource "google_cloud_run_v2_service" "slack_commands" {
   name     = local.service_name

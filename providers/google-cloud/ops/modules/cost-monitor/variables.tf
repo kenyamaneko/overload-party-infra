@@ -12,8 +12,3 @@ variable "monitored_projects" {
   description = "Cloud SQL / Compute の稼働状態を監視するプロジェクト ID のリスト"
   type        = list(string)
 }
-
-variable "gke_project" {
-  description = "GKE の Deployment / Ingress を監視するプロジェクト ID"
-  type        = string
-}
