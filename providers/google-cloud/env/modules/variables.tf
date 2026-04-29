@@ -79,15 +79,6 @@ variable "newsfeed_bucket_name" {
 # コンテナイメージ
 # ──────────────────────────────────────────────
 
-variable "migration_image" {
-  description = "db-migrate コンテナイメージ。空文字なら db_migration モジュール無効"
-  type        = string
-}
-
-variable "newsfeed_image" {
-  description = "Newsfeed コンテナイメージ"
-  type        = string
-}
 
 variable "newsfeed_scheduler_paused" {
   description = "Newsfeed の Cloud Scheduler を PAUSED 状態で作成するか。prod=false、dev/stg=true (手動 resume でリリース前検証)"

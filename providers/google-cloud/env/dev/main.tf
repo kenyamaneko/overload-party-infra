@@ -14,7 +14,7 @@ provider "google" {
   region  = "asia-northeast1"
 }
 
-module "infra" {
+module "env" {
   source = "../modules"
 
   project_id    = "overload-party-dev"
@@ -35,9 +35,6 @@ module "infra" {
   assets_bucket_name    = "overload-party-assets-dev.keyandnotes.com"
   scenarios_bucket_name = "overload-party-dev-scenarios"
   newsfeed_bucket_name  = "overload-party-dev-newsfeed"
-
-  migration_image = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/db-migrate:latest"
-  newsfeed_image  = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/newsfeed:latest"
 
   # dev は Cloud Scheduler を形式的に配置するのみ (cron は設定するが常時 PAUSED)。
   # 手動実行は `gcloud run jobs execute newsfeed-job` を使う。

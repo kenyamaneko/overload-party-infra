@@ -18,11 +18,6 @@ variable "k8s_namespace" {
   type        = string
 }
 
-variable "db_services" {
-  description = "Cloud SQL IAM 認証が必要なサービス。キーは k8s_services または non_k8s_services のキーと一致させる"
-  type        = map(string)
-}
-
 locals {
   gke_project_id = "keyandnotes-platform"
   all_services   = merge(var.k8s_services, var.non_k8s_services)

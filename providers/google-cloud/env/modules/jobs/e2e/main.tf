@@ -1,15 +1,5 @@
-# SA は Firebase Admin SDK が createCustomToken の JWT 署名で impersonate する対象。
-# 開発者 ADC は signBlob を SA に対して呼ぶため tokenCreator が必要。
-
-variable "project_id" {
-  description = "Google Cloud project ID"
-  type        = string
-}
-
-variable "developer_members" {
-  description = "tokenCreator を付与する開発者 IAM member 一覧 (例: user:foo@example.com)"
-  type        = list(string)
-}
+# E2E テスト時に Firebase Custom Token を発行するには、ローカルの ADC がこの SA に
+# なりすまして JWT 署名を行う必要があるため、開発者に tokenCreator を付与する。
 
 resource "google_service_account" "test_runner" {
   project      = var.project_id

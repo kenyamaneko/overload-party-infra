@@ -1,4 +1,7 @@
 locals {
+  migration_image = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/db-migrate:latest"
+  newsfeed_image  = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/newsfeed:latest"
+
   k8s_services = {
     gateway     = "overload-party-gateway"
     matchmaking = "overload-party-matchmaking"
@@ -46,7 +49,6 @@ module "service_accounts" {
   k8s_namespace    = var.k8s_namespace
   k8s_services     = local.k8s_services
   non_k8s_services = local.non_k8s_services
-  db_services      = local.db_services
 }
 
 module "database" {
@@ -68,7 +70,7 @@ module "database" {
 }
 
 module "pubsub" {
-  source = "./data/pubsub"
+  source = "./messaging/pubsub"
 
   project_id                        = var.project_id
   matchmaking_service_account_email = module.service_accounts.accounts["matchmaking"].email
@@ -97,12 +99,11 @@ module "firestore" {
 }
 
 module "db_migration" {
-  count  = var.migration_image != "" ? 1 : 0
-  source = "./ops/db-migration"
+  source = "./jobs/db-migration"
 
   project_id          = var.project_id
   region              = var.region
-  migration_image     = var.migration_image
+  migration_image     = local.migration_image
   network             = module.network.network_name
   subnetwork          = module.network.subnetwork_name
   cloudsql_private_ip = module.database.private_ip_address
@@ -117,7 +118,7 @@ module "newsfeed" {
 
   project_id            = var.project_id
   region                = var.region
-  newsfeed_image        = var.newsfeed_image
+  newsfeed_image        = local.newsfeed_image
   network               = module.network.network_name
   subnetwork            = module.network.subnetwork_name
   cloudsql_private_ip   = module.database.private_ip_address
@@ -131,7 +132,7 @@ module "newsfeed" {
 }
 
 module "shop_secrets" {
-  source = "./data/shop-secrets"
+  source = "./app/shop/shop-secrets"
 
   project_id                 = var.project_id
   shop_service_account_email = module.service_accounts.accounts["shop"].email
@@ -148,7 +149,7 @@ module "assets" {
 
 module "e2e" {
   count  = var.enable_e2e ? 1 : 0
-  source = "./ops/e2e"
+  source = "./jobs/e2e"
 
   project_id        = var.project_id
   developer_members = var.e2e_developer_members

@@ -1,13 +1,3 @@
-variable "project_id" {
-  description = "Google Cloud プロジェクト ID"
-  type        = string
-}
-
-variable "region" {
-  description = "Google Cloud リージョン"
-  type        = string
-}
-
 locals {
   network_name = "overload-party-network"
   subnet_name  = "overload-party-subnet"
@@ -55,21 +45,4 @@ resource "google_service_networking_connection" "private" {
   network                 = google_compute_network.main.id
   service                 = "servicenetworking.googleapis.com"
   reserved_peering_ranges = [google_compute_global_address.private_ip.name]
-}
-
-output "network_self_link" {
-  value = google_compute_network.main.self_link
-}
-
-output "network_name" {
-  value = google_compute_network.main.name
-}
-
-output "subnetwork_name" {
-  value = google_compute_subnetwork.main.name
-}
-
-output "service_networking_connection" {
-  description = "Service networking connection (use in depends_on)"
-  value       = google_service_networking_connection.private
 }

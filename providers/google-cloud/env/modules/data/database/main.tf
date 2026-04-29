@@ -71,7 +71,18 @@ resource "google_sql_user" "db_users" {
   type     = "CLOUD_IAM_SERVICE_ACCOUNT"
 }
 
-output "private_ip_address" {
-  description = "Cloud SQL インスタンスの private IP。newsfeed / db-migration から参照"
-  value       = google_sql_database_instance.main.private_ip_address
+resource "google_project_iam_member" "cloudsql_client" {
+  for_each = var.db_users
+
+  project = var.project_id
+  role    = "roles/cloudsql.client"
+  member  = "serviceAccount:${each.value}"
+}
+
+resource "google_project_iam_member" "cloudsql_instance_user" {
+  for_each = var.db_users
+
+  project = var.project_id
+  role    = "roles/cloudsql.instanceUser"
+  member  = "serviceAccount:${each.value}"
 }

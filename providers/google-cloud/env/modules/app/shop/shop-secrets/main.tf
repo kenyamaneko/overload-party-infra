@@ -5,16 +5,6 @@
 # シークレット *バージョン* (実際のクレデンシャル値) は手動で追加する:
 #   gcloud secrets versions add shop-apple-key-id --data-file=- <<< "KEY_ID_VALUE"
 
-variable "project_id" {
-  description = "Google Cloud project ID"
-  type        = string
-}
-
-variable "shop_service_account_email" {
-  description = "Shop GSA email to grant secretmanager.secretAccessor"
-  type        = string
-}
-
 resource "google_project_service" "secretmanager" {
   project            = var.project_id
   service            = "secretmanager.googleapis.com"

@@ -14,7 +14,7 @@ provider "google" {
   region  = "asia-northeast1"
 }
 
-module "infra" {
+module "env" {
   source = "../modules"
 
   project_id    = "overload-party-stg"
@@ -35,9 +35,6 @@ module "infra" {
   assets_bucket_name    = "overload-party-assets-stg.keyandnotes.com"
   scenarios_bucket_name = "overload-party-stg-scenarios"
   newsfeed_bucket_name  = "overload-party-stg-newsfeed"
-
-  migration_image = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/db-migrate:latest"
-  newsfeed_image  = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/newsfeed:latest"
 
   # stg は通常 PAUSED。prod リリース前検証時のみ `gcloud scheduler jobs resume` で
   # 一時的に有効化し、確認後に手動で pause に戻す運用。

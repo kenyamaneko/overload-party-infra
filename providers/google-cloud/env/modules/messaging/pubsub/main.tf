@@ -1,7 +1,4 @@
 locals {
-  # 各トピックの publisher / subscribers をまとめたマップ。
-  # 新規トピック追加時はこのマップに 1 エントリ足すだけで topic / DLQ /
-  # subscriptions / IAM 一式が生成される。
   topics = {
     matchmaking_events = {
       topic_name   = "matchmaking-events"
@@ -56,8 +53,6 @@ locals {
     }
   }
 
-  # subscription 単位の for_each 用フラットマップ。キーは "<topic>.<sub>" で
-  # 一意化し、subscription / subscriber IAM / DLQ SA subscriber IAM から参照する。
   subscriptions = merge([
     for topic_key, topic in local.topics : {
       for sub_key, sub in topic.subscribers :
@@ -148,7 +143,9 @@ resource "google_pubsub_subscription_iam_member" "subscriber" {
   member       = "serviceAccount:${each.value.sa_email}"
 }
 
-# DLQ 転送用: Pub/Sub サービスエージェントに DLQ へ publisher + 元 sub への subscriber を付与
+# dead_letter_policy を使った DLQ 転送は Pub/Sub サービスエージェントが行うため、
+# ユーザー SA とは別にサービスエージェントへの IAM 付与が必要。これがないと DLQ に転送されず
+# max_delivery_attempts に達したメッセージがサイレントに消える。
 resource "google_pubsub_topic_iam_member" "dlq_sa_publisher" {
   for_each = local.topics
 

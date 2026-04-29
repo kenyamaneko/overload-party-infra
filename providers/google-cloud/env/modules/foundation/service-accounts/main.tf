@@ -14,18 +14,3 @@ resource "google_service_account_iam_member" "workload_identity" {
   member             = "serviceAccount:${local.gke_project_id}.svc.id.goog[${var.k8s_namespace}/${each.key}]"
 }
 
-resource "google_project_iam_member" "cloudsql_client" {
-  for_each = var.db_services
-
-  project = var.project_id
-  role    = "roles/cloudsql.client"
-  member  = "serviceAccount:${google_service_account.accounts[each.key].email}"
-}
-
-resource "google_project_iam_member" "cloudsql_instance_user" {
-  for_each = var.db_services
-
-  project = var.project_id
-  role    = "roles/cloudsql.instanceUser"
-  member  = "serviceAccount:${google_service_account.accounts[each.key].email}"
-}
