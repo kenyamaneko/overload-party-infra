@@ -9,19 +9,9 @@ terraform {
   }
 }
 
-variable "cloudflare_cdn_api_token" {
-  description = "Cloudflare API token (DNS Edit)"
-  type        = string
-  sensitive   = true
-}
-
 provider "cloudflare" {
   api_token = var.cloudflare_cdn_api_token
 }
-
-# ──────────────────────────────────────────────
-# ローカル変数
-# ──────────────────────────────────────────────
 
 locals {
   zone_id = "9b3593693b647e917a656ecf7e49e056" # keyandnotes.com
@@ -41,6 +31,7 @@ locals {
 
 # ──────────────────────────────────────────────
 # DNS -- CNAME レコード (アセット CDN)
+# GCS は IP を固定していないため A レコードは使えない。CNAME で c.storage.googleapis.com に向ける必要がある。
 # ──────────────────────────────────────────────
 
 resource "cloudflare_record" "assets" {
@@ -54,7 +45,7 @@ resource "cloudflare_record" "assets" {
 }
 
 # ──────────────────────────────────────────────
-# DNS -- A レコード (API サーバー、k8s リポから移管)
+# DNS -- A レコード (API サーバー)
 # ──────────────────────────────────────────────
 
 resource "cloudflare_record" "api" {

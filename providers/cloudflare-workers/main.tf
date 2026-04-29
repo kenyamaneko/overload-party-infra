@@ -1,8 +1,6 @@
-# Cloudflare Workers Scripts を管理する composition。
-# providers/cloudflare/ が DNS (cloudflare_cdn_api_token: DNS Edit) を担当するのに対し、
-# Workers Scripts edit 権限の token は別スコープで扱うため composition を分ける。
-# Worker のコードデプロイは引き続き wrangler (CI) で行い、Terraform は Worker の枠と
-# binding 設定のみ管理する (content は lifecycle.ignore_changes で drift 許容)。
+# Slack の Slash Command は 3 秒以内に HTTP 200 を返さないと Slack 側でエラー表示になる。
+# Cloud Run はコールドスタートでこの制限を超えることがあるため、
+# エッジで即座に 200 を返して非同期で Cloud Run に転送する proxy として Workers を挟んでいる。
 
 terraform {
   required_version = ">= 1.5"
@@ -13,12 +11,6 @@ terraform {
       version = "~> 4.0"
     }
   }
-}
-
-variable "cloudflare_workers_api_token" {
-  description = "Cloudflare API token (Workers Scripts edit)"
-  type        = string
-  sensitive   = true
 }
 
 locals {
@@ -53,6 +45,7 @@ resource "cloudflare_workers_script" "slack_commands_proxy" {
   }
 
   lifecycle {
+    # content は wrangler (CI) でデプロイするため Terraform の管理対象外
     ignore_changes = [content]
   }
 }

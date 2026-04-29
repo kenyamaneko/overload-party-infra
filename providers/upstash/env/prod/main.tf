@@ -13,18 +13,6 @@ terraform {
   }
 }
 
-variable "upstash_email" {
-  description = "Upstash アカウントのメールアドレス"
-  type        = string
-  sensitive   = true
-}
-
-variable "upstash_api_key" {
-  description = "Upstash API key (management API 用)"
-  type        = string
-  sensitive   = true
-}
-
 provider "upstash" {
   email   = var.upstash_email
   api_key = var.upstash_api_key
@@ -35,6 +23,9 @@ provider "google" {
   region  = "asia-northeast1"
 }
 
+# eviction = true: matchmaking:queue の実データは playerID:deckID の数十バイト×待機人数で、
+# eviction が発動するほどメモリが埋まることはない。万一メモリ上限に達した場合も
+# OOM エラーで書き込みを止めるより LRU で縮退する方が可用性を優先できるため true にしている。
 module "matchmaking_redis" {
   source = "../modules/matchmaking"
 
