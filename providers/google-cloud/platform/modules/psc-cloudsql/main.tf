@@ -29,10 +29,6 @@ data "google_compute_subnetwork" "default" {
   region  = var.region
 }
 
-# ──────────────────────────────────────────────
-# 内部 IP (予約済み、env-up/down サイクルで再利用)
-# ──────────────────────────────────────────────
-
 resource "google_compute_address" "psc" {
   name         = "cloudsql-psc-${var.env_name}"
   project      = var.project_id
@@ -41,17 +37,12 @@ resource "google_compute_address" "psc" {
   subnetwork   = data.google_compute_subnetwork.default.id
 }
 
-# ──────────────────────────────────────────────
-# Cloud DNS (PSC SQL 名前解決用プライベートゾーン)
-# ──────────────────────────────────────────────
-
 locals {
   # dns_name 形式: "{instance_uid}.{project_uid}.{region}.sql.goog."
   # DNS ゾーンはインスタンス UID 以降の全パートをカバーする必要がある。
   dns_name  = data.google_sql_database_instance.target.dns_name
   dns_parts = split(".", local.dns_name)
-  # 先頭 (instance_uid) 以降の全パートを結合してゾーンを構成
-  dns_zone = join(".", slice(local.dns_parts, 1, length(local.dns_parts)))
+  dns_zone  = join(".", slice(local.dns_parts, 1, length(local.dns_parts)))
 }
 
 resource "google_dns_managed_zone" "psc" {
