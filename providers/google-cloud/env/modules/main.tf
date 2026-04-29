@@ -30,9 +30,9 @@ locals {
     support  = "overload-party-support"
   }
 
-  # GitHub Actions の CI/CD は keyandnotes-platform プロジェクトの github-ci SA に集約しており
+  # GitHub Actions の CI/CD は overload-party-ops プロジェクトの github-ci SA に集約しており
   # env ごとに切り替えない。db-migration / newsfeed の Cloud Run Job invoker 等に付与する。
-  deploy_sa_member = "serviceAccount:github-ci@keyandnotes-platform.iam.gserviceaccount.com"
+  deploy_sa_member = "serviceAccount:github-ci@overload-party-ops.iam.gserviceaccount.com"
 }
 
 module "network" {

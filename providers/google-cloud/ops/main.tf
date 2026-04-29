@@ -12,10 +12,7 @@ locals {
   project_id = "overload-party-ops"
   region     = "asia-northeast1"
 
-  # GitHub Actions の CI/CD は keyandnotes-platform の github-ci SA に集約している。
-  # overload-party-ops への cross-project IAM は platform/modules/ci-cd 側で
-  # cloudrun_job_deploy_projects に "overload-party-ops" を含めることで付与済み。
-  deploy_sa_member = "serviceAccount:github-ci@keyandnotes-platform.iam.gserviceaccount.com"
+  deploy_sa_member = "serviceAccount:github-ci@overload-party-ops.iam.gserviceaccount.com"
 
   cost_monitored_projects = [
     "overload-party-dev",
