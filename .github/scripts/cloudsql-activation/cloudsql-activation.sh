@@ -27,7 +27,6 @@ write_result() {
   echo "result=$1" >> "${GITHUB_OUTPUT}"
 }
 
-# ─── インスタンス存在確認 ───
 CURRENT=$(gcloud sql instances describe "${CLOUDSQL_INSTANCE}" \
   --project="${PROJECT}" \
   --format="value(settings.activationPolicy)" 2>&1) || {
@@ -40,14 +39,12 @@ CURRENT=$(gcloud sql instances describe "${CLOUDSQL_INSTANCE}" \
   exit 1
 }
 
-# ─── 既に目的状態なら何もしない ───
 if [ "${CURRENT}" = "${POLICY}" ]; then
   echo "Cloud SQL ${CLOUDSQL_INSTANCE} is already ${POLICY}"
   write_result "noop"
   exit 0
 fi
 
-# ─── 別オペレーション進行中チェック ───
 # 進行中の操作があるまま patch すると gcloud 側で conflict エラーになるので、
 # 事前に検知してユーザーに「進行中」と返した方が UX が良い。
 PENDING=$(gcloud sql operations list \
@@ -62,7 +59,6 @@ if [ -n "${PENDING}" ]; then
   exit 0
 fi
 
-# ─── 実施 ───
 echo "Patching Cloud SQL ${CLOUDSQL_INSTANCE}: ${CURRENT} -> ${POLICY}"
 gcloud sql instances patch "${CLOUDSQL_INSTANCE}" \
   --activation-policy="${POLICY}" \

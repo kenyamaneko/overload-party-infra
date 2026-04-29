@@ -23,11 +23,6 @@ on:
         options:
           - up
           - down
-      slack_notification:
-        description: "完了時に Slack 通知する"
-        required: false
-        type: boolean
-        default: true
 
 permissions:
   contents: read
@@ -40,26 +35,28 @@ jobs:
     env:
       CLOUDSQL_INSTANCE: overload-party-db
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - id: auth
+      - name: Authenticate to Google Cloud
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.WIF_PROVIDER }}
           service_account: ${{ vars.CLOUDSQL_OPERATOR_SERVICE_ACCOUNT }}
 
-      - uses: google-github-actions/setup-gcloud@v2
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
       - name: Activate Cloud SQL
         id: activate
         env:
           ENV: ${{ inputs.environment }}
           POLICY: ${{ inputs.action == 'up' && 'ALWAYS' || 'NEVER' }}
-          CLOUDSQL_INSTANCE: ${{ env.CLOUDSQL_INSTANCE }}
         run: ./.github/scripts/cloudsql-activation/cloudsql-activation.sh
 
       - name: Notify Slack
-        if: always() && inputs.slack_notification
+        if: always()
         env:
           ACTION: ${{ inputs.action }}
           ENV: ${{ inputs.environment }}

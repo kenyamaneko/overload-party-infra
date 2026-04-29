@@ -43,12 +43,11 @@ else
       MSG=":warning: \`${ENV}\` の Cloud SQL インスタンスが存在しません (スキップ)"
       ;;
     *)
-      # RESULT 未設定 / 想定外値 → 成功扱いだが詳細不明
       MSG=":white_check_mark: \`${ENV}\` の Cloud SQL ${ACTION_JP}が完了しました"
       ;;
   esac
 fi
 
-curl -s -X POST "${SLACK_WEBHOOK_URL}" \
+curl -sf -X POST "${SLACK_WEBHOOK_URL}" \
   -H 'Content-type: application/json' \
-  --data "{\"text\": \"${MSG}\"}"
+  --data "$(jq -cn --arg text "${MSG}" '{text: $text}')"
