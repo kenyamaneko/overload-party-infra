@@ -8,11 +8,11 @@ Terraform state は **変更ライフサイクルと権限境界** で分割し�
 
 | State root | 対象 Google Cloud プロジェクト | 分割理由 |
 |---|---|---|
-| `google-cloud/env/{dev,stg,prod}` | `overload-party-{dev,stg,prod}` | 環境ごとのワークロードリソース。env 単位で apply を局所化する |
+| `google-cloud/env/{dev,stg,prod}` | `overload-party-{dev,stg,prod}` | 環境ごとのワークロードリソース。state を分けて env ごとに独立に apply できるようにする |
 | `google-cloud/ops` | `overload-party-ops` | 運用ツール（drift-monitor / nightly-review / slack-commands / cost-monitor）は env を全 destroy しても残す必要があり、env のライフサイクルから独立させる |
 | `cloudflare` | — | DNS レコードは Google Cloud とライフサイクルが異なる |
 | `cloudflare-workers` | — | Worker スクリプトは `wrangler` が管理するコードを持ち、TF は枠だけ管理 |
-| `upstash/env/{dev,stg,prod}` | — | Upstash は Google Cloud provider と独立しており、env ごとに apply を局所化する |
+| `upstash/env/{dev,stg,prod}` | — | Upstash は Google Cloud provider と独立しており、env ごとに state を分けて独立に apply できるようにする |
 
 `env/{dev,stg,prod}/main.tf` はそれぞれ `env/modules` を呼ぶ薄い composition で、全環境が同一モジュールセットを使う。環境差異を呼び出し側の変数だけに閉じ込めることで、module 内に環境分岐を持たせず、環境間で実装が乖離して再現できないバグが起きるのを防ぐ。
 
@@ -22,24 +22,14 @@ Terraform state は **変更ライフサイクルと権限境界** で分割し�
 
 具体例: `google_service_account` (project = `overload-party-ops`) は overload-party-infra (`ops/modules/ci-cd`) が管理。`google_project_iam_member` で SA に IAM を付与する場合、`project = overload-party-dev` ならこのリポ、`project = keyandnotes-platform` なら `keyandnotes-platform` リポ。SA がどのプロジェクトに属するかは関係なく、IAM binding が書き込まれる側のプロジェクトで決まる。
 
-例外: PSC エンドポイント (`env/modules/data/psc-cloudsql/`) は **物理的な配置** と **state 所有** が一致しない。
+例外: PSC エンドポイント (`env/modules/data/psc-cloudsql/`) は **書き込まれるプロジェクトが `keyandnotes-platform`、所有リポが `overload-party-infra` の env state** で、原則の対応関係が崩れている。
 
-- 物理配置: 内部 IP は接続元 VPC の subnet からしか払い出せず別 VPC から経路が無いため、GKE Pod が走る `keyandnotes-platform` の VPC に置くしかない。
-- state 所有: PSC は機能的に overload-party 専用 (overload-party-{env} の Cloud SQL に接続するためだけに存在) で、env 単位で 1 つずつ増減し、env-up/down で forwarding rule を動的に作成削除する。**機能オーナーである overload-party-infra の env state** に置くことで env apply 一発で配線が完結し、env 追加時に `keyandnotes-platform` リポを触らずに済む。
-
-実装上は env/{dev,stg,prod}/main.tf で `provider "google" { alias = "platform" ... }` を declare し、モジュール側のリソースが `provider = google.platform` で keyandnotes-platform プロジェクトに書き込む。
+- なぜ keyandnotes-platform プロジェクトに書くか: 内部 IP は接続元 VPC の subnet からしか払い出せず別 VPC から経路が無いため、GKE Pod が走る `keyandnotes-platform` VPC に置くしかない。
+- なぜ overload-party-infra の env state が所有するか: PSC は機能的に overload-party 専用 (overload-party-{env} の Cloud SQL に接続するためだけに存在) で、env 単位で 1 つずつ増減し、env-up/down で forwarding rule を動的に作成削除する。機能オーナーが所有することで env apply 一発で配線が完結し、env 追加時に `keyandnotes-platform` リポを触らずに済む。
 
 ## Cloud SQL アクセス経路 (PSC)
 
-各環境の Cloud SQL (`overload-party-{dev,stg,prod}`) は **PSC (Private Service Connect)** で `keyandnotes-platform` の VPC に接続する。
-
-```
-GKE Pod (keyandnotes-platform VPC)
-  └─ PSC forwarding rule → PSC endpoint IP (platform VPC)
-       └─ Cloud SQL instance (overload-party-{env} project)
-```
-
-PSC を選んだ理由: forwarding rule の作成・削除だけで接続を on/off でき、env 未使用時のコスト（$0.025/時間）を `env-up/down` で動的に落としやすいため。
+各環境の Cloud SQL (`overload-party-{dev,stg,prod}`) は **PSC (Private Service Connect)** で `keyandnotes-platform` の VPC に接続する。PSC を選んだ理由: forwarding rule の作成・削除だけで接続を on/off でき、env 未使用時のコスト ($0.025/時間) を `env-up/down` で動的に落としやすいため。
 
 PSC エンドポイントの永続リソース (IP / DNS) は env state (`env/modules/data/psc-cloudsql/`) で管理する。詳細は上の節「keyandnotes-platform と overload-party-* の関係」の例外項参照。forwarding rule は overload-party-k8s 側が `env-up/down` で動的に管理する。
 
@@ -47,7 +37,7 @@ PSC エンドポイントの永続リソース (IP / DNS) は env state (`env/mo
 
 overload-party 系全リポの GitHub Actions CI は `overload-party-ops` の `github-ci` SA を共用する。env や repo ごとに分けると、apply で権限不足が出るたびに複数の権限定義を横断する必要が生じるため、`ops/modules/ci-cd` の一箇所に権限マトリクスを集約している。
 
-SA を `keyandnotes-platform` ではなく `overload-party-ops` に置く理由は、プロジェクト境界を権限境界として機能させるため。`keyandnotes-platform` owner が overload-party 系 CI 認証情報を直接いじれない構成にする。
+SA を `overload-party-ops` プロジェクトに置くのは、プロジェクト境界 = 権限境界として機能させるため。`overload-party-ops` の owner だけが overload-party CI 認証情報を管理できる状態にする。
 
 ## overload-party-infra と overload-party-k8s の責務分担
 
