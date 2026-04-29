@@ -1,9 +1,3 @@
-# Cloud SQL 用 PSC エンドポイント (プロジェクト横断)。
-#
-# 永続リソース (IP, DNS ゾーン, DNS レコード) はここで管理する。
-# フォワーディングルールは一時的 -- env-up.sh / env-down.sh で作成/削除し、
-# 環境未使用時の $0.025/時間の固定コストを回避する。
-
 resource "google_project_service" "dns" {
   project            = var.project_id
   service            = "dns.googleapis.com"
