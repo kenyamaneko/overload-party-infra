@@ -66,6 +66,21 @@ resource "google_service_account_iam_member" "cloudsql_operator_wif" {
   member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${each.value}"
 }
 
+# DB マイグレーション専用 SA。github-ci と分けるのは、汎用 CI に DB 起動停止権限
+# (cloudsql.admin) が漏れ出さないようにするため。
+resource "google_service_account" "db_migrator" {
+  project      = var.project_id
+  account_id   = "gh-db-migrator"
+  display_name = "GitHub Actions DB Migrator"
+}
+
+resource "google_service_account_iam_member" "db_migrator_wif" {
+  for_each           = toset(var.db_migrator_wif_repositories)
+  service_account_id = google_service_account.db_migrator.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${each.value}"
+}
+
 resource "google_project_iam_member" "ci_analytics_deploy_cloudfunctions" {
   for_each = toset(var.analytics_deploy_projects)
   project  = each.value
@@ -149,4 +164,28 @@ resource "google_project_iam_member" "cloudsql_operator_lifecycle" {
   project  = each.value
   role     = "roles/cloudsql.admin"
   member   = "serviceAccount:${google_service_account.cloudsql_operator.email}"
+}
+
+# db-migrate workflow が実行する 3 操作: 停止中 dev/stg を起動 (cloudsql.admin) +
+# Cloud Run Job db-migrate の image 更新と実行 (run.developer) + Job 実行時の
+# runtime SA バインド (iam.serviceAccountUser)。
+resource "google_project_iam_member" "db_migrator_cloudsql_admin" {
+  for_each = toset(var.db_migrator_target_projects)
+  project  = each.value
+  role     = "roles/cloudsql.admin"
+  member   = "serviceAccount:${google_service_account.db_migrator.email}"
+}
+
+resource "google_project_iam_member" "db_migrator_run_developer" {
+  for_each = toset(var.db_migrator_target_projects)
+  project  = each.value
+  role     = "roles/run.developer"
+  member   = "serviceAccount:${google_service_account.db_migrator.email}"
+}
+
+resource "google_project_iam_member" "db_migrator_sa_user" {
+  for_each = toset(var.db_migrator_target_projects)
+  project  = each.value
+  role     = "roles/iam.serviceAccountUser"
+  member   = "serviceAccount:${google_service_account.db_migrator.email}"
 }

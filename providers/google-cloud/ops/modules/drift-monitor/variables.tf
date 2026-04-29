@@ -13,7 +13,3 @@ variable "monitored_projects" {
   type        = list(string)
 }
 
-variable "tf_state_bucket" {
-  description = "Terraform state が保存されている GCS バケット名。drift-monitor が plan の backend init で読み取る"
-  type        = string
-}

@@ -94,7 +94,6 @@ module "drift_monitor" {
   ops_project_id     = local.project_id
   deploy_sa_member   = local.deploy_sa_member
   monitored_projects = local.drift_monitored_projects
-  tf_state_bucket    = "keyandnotes-tf-state"
 }
 
 module "ci_cd" {
@@ -132,6 +131,15 @@ module "ci_cd" {
 
   cloudsql_operator_wif_repositories = [
     "overload-party-infra",
+  ]
+
+  db_migrator_wif_repositories = [
+    "overload-party-ops",
+  ]
+
+  db_migrator_target_projects = [
+    "overload-party-dev",
+    "overload-party-stg",
   ]
 
   analytics_deploy_projects    = ["overload-party-dev"]

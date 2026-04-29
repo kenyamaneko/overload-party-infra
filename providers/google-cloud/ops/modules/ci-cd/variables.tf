@@ -33,6 +33,16 @@ variable "cloudsql_operator_wif_repositories" {
   type        = list(string)
 }
 
+variable "db_migrator_wif_repositories" {
+  description = "gh-db-migrator SA (db-migrate workflow 用) を impersonate できる GitHub リポジトリ一覧"
+  type        = list(string)
+}
+
+variable "db_migrator_target_projects" {
+  description = "db-migrate workflow が DB 起動・Cloud Run Job 実行を行う対象プロジェクト一覧 (prod は db-migrate workflow の対象外なので含めない)"
+  type        = list(string)
+}
+
 variable "analytics_deploy_projects" {
   description = "analytics リポの Cloud Functions デプロイ先プロジェクト一覧。github-ci に cloudfunctions.developer / cloudbuild.builds.editor / iam.serviceAccountUser を付与"
   type        = list(string)

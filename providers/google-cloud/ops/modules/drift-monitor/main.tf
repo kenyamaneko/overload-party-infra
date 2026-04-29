@@ -15,12 +15,6 @@ resource "google_project_iam_member" "security_reviewer" {
   member  = var.deploy_sa_member
 }
 
-resource "google_storage_bucket_iam_member" "tf_state_reader" {
-  bucket = var.tf_state_bucket
-  role   = "roles/storage.objectViewer"
-  member = var.deploy_sa_member
-}
-
 # drift-monitor が infra リポの plan を走らせる際に必要 (providers/google-cloud/env が叩く)
 resource "google_project_service" "firebase" {
   project            = var.ops_project_id

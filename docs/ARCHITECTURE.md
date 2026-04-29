@@ -29,7 +29,7 @@ Terraform state は **変更ライフサイクルと権限境界** で分割し�
 
 ## Cloud SQL アクセス経路 (PSC)
 
-各環境の Cloud SQL (`overload-party-{dev,stg,prod}`) は **PSC (Private Service Connect)** で `keyandnotes-platform` の VPC に接続する。PSC を選んだ理由: forwarding rule の作成・削除だけで接続を on/off でき、env 未使用時のコスト ($0.025/時間) を `env-up/down` で動的に落としやすいため。
+各環境の Cloud SQL (`overload-party-{dev,stg,prod}`) は **PSC (Private Service Connect)** で `keyandnotes-platform` の VPC に接続する。DB 接続の手段として PSC を選んだ理由: forwarding rule の作成・削除だけで接続を on/off でき、env 未使用時のコスト ($0.025/時間) を `env-up/down` で動的に落としやすいため。
 
 PSC エンドポイントの永続リソース (IP / DNS) は env state (`env/modules/data/psc-cloudsql/`) で管理する。詳細は上の節「keyandnotes-platform と overload-party-* の関係」の例外項参照。forwarding rule は overload-party-k8s 側が `env-up/down` で動的に管理する。
 
