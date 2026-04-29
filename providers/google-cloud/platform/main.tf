@@ -18,26 +18,6 @@ provider "google" {
   region  = local.region
 }
 
-module "ci_cd" {
-  source = "./modules/ci-cd"
-
-  project_id = local.project_id
-
-  analytics_deploy_projects    = ["overload-party-dev"]
-  cloudrun_job_deploy_projects = ["overload-party-dev", "overload-party-ops"]
-
-  terraform_managed_projects = [
-    "overload-party-dev",
-    "overload-party-stg",
-    "overload-party-prod",
-    "overload-party-ops",
-  ]
-  cloudsql_lifecycle_projects = [
-    "overload-party-dev",
-    "overload-party-stg",
-  ]
-}
-
 # PSC エンドポイントは物理的に consumer 側 VPC (keyandnotes-platform) にしか置けないが、
 # state 所有権は env/ 側に寄せる方が一貫性があり、env apply だけで配線が完結する。
 # state mv を伴うため全 env が安定稼働してから移行する。それまでは platform/ 所有を維持する。

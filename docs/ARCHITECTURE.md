@@ -8,7 +8,7 @@ Terraform state は **変更ライフサイクルと権限境界** で分割し�
 
 | State root | 対象 Google Cloud プロジェクト | 分割理由 |
 |---|---|---|
-| `google-cloud/platform` | `keyandnotes-platform` | 複数 env をまたぐ CI/CD SA・WIF・PSC の永続基盤。env と独立して管理する |
+| `google-cloud/platform` | `keyandnotes-platform` | env をまたぐ PSC エンドポイントの永続基盤 (forwarding rule は env-up/down で動的) |
 | `google-cloud/env/{dev,stg,prod}` | `overload-party-{dev,stg,prod}` | 環境ごとのワークロードリソース。env 単位で apply を局所化する |
 | `google-cloud/ops` | `overload-party-ops` | 運用ツール（drift-monitor / nightly-review / slack-commands / cost-monitor）は env を全 destroy しても残す必要があり、env のライフサイクルから独立させる |
 | `cloudflare` | — | DNS レコードは Google Cloud とライフサイクルが異なる |
@@ -21,7 +21,7 @@ Terraform state は **変更ライフサイクルと権限境界** で分割し�
 
 `keyandnotes-platform` は overload-party サービス群が相乗りするプラットフォームプロジェクト。所有境界は **「リソースが書き込まれる Google Cloud プロジェクトと、管理する Terraform リポを一対一に対応させる」** という原則で決める。Terraform リソースの `project = ...` を見れば管理リポが分かる、という形にすることで、境界が一意に決まり、SA や IAM の変更時に複数リポを横断する必要がなくなる。
 
-具体例: `google_service_account` (project = `keyandnotes-platform`) は `keyandnotes-platform` リポが管理する。`google_project_iam_member` で SA に IAM を付与する場合、`project = overload-party-dev` ならこのリポ、`project = keyandnotes-platform` なら `keyandnotes-platform` リポ。SA がどのプロジェクトに属するかは関係なく、IAM binding が書き込まれる側のプロジェクトで決まる。
+具体例: `google_service_account` (project = `overload-party-ops`) は overload-party-infra (`ops/modules/ci-cd`) が管理。`google_project_iam_member` で SA に IAM を付与する場合、`project = overload-party-dev` ならこのリポ、`project = keyandnotes-platform` なら `keyandnotes-platform` リポ。SA がどのプロジェクトに属するかは関係なく、IAM binding が書き込まれる側のプロジェクトで決まる。
 
 例外: PSC エンドポイントは consumer 側ネットワーク制約で物理的に `keyandnotes-platform` VPC に置く必要があるが、state 所有は将来 `env/` 側に移す想定（`platform/main.tf` のコメント参照）。
 
@@ -39,7 +39,9 @@ PSC を選んだ理由: forwarding rule の作成・削除だけで接続を on/
 
 ## CI/CD SA の集約
 
-overload-party 系全リポの GitHub Actions CI は `keyandnotes-platform` の `github-ci` SA を共用する。env や repo ごとに分けると、apply で権限不足が出るたびに複数の権限定義を横断する必要が生じるため、`platform/modules/ci-cd` の一箇所に権限マトリクスを集約している。
+overload-party 系全リポの GitHub Actions CI は `overload-party-ops` の `github-ci` SA を共用する。env や repo ごとに分けると、apply で権限不足が出るたびに複数の権限定義を横断する必要が生じるため、`ops/modules/ci-cd` の一箇所に権限マトリクスを集約している。
+
+SA を `keyandnotes-platform` ではなく `overload-party-ops` に置く理由は、プロジェクト境界を権限境界として機能させるため。`keyandnotes-platform` owner が overload-party 系 CI 認証情報を直接いじれない構成にする。
 
 ## overload-party-infra と overload-party-k8s の責務分担
 
