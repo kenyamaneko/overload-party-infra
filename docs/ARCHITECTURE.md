@@ -8,7 +8,7 @@ Terraform state は **変更ライフサイクルと権限境界** で分割し�
 
 | State root | 対象 Google Cloud プロジェクト | 分割理由 |
 |---|---|---|
-| `google-cloud/platform` | `keyandnotes-platform` | env をまたぐ PSC エンドポイントの永続基盤 (forwarding rule は env-up/down で動的) |
+| `google-cloud/platform` | `keyandnotes-platform` | 現状空 (PSC は env/ に移管済み)。将来 keyandnotes-platform プロジェクト全体に関わる overload-party 固有のリソースが出たときの受け皿 |
 | `google-cloud/env/{dev,stg,prod}` | `overload-party-{dev,stg,prod}` | 環境ごとのワークロードリソース。env 単位で apply を局所化する |
 | `google-cloud/ops` | `overload-party-ops` | 運用ツール（drift-monitor / nightly-review / slack-commands / cost-monitor）は env を全 destroy しても残す必要があり、env のライフサイクルから独立させる |
 | `cloudflare` | — | DNS レコードは Google Cloud とライフサイクルが異なる |
@@ -23,7 +23,12 @@ Terraform state は **変更ライフサイクルと権限境界** で分割し�
 
 具体例: `google_service_account` (project = `overload-party-ops`) は overload-party-infra (`ops/modules/ci-cd`) が管理。`google_project_iam_member` で SA に IAM を付与する場合、`project = overload-party-dev` ならこのリポ、`project = keyandnotes-platform` なら `keyandnotes-platform` リポ。SA がどのプロジェクトに属するかは関係なく、IAM binding が書き込まれる側のプロジェクトで決まる。
 
-例外: PSC エンドポイントは consumer 側ネットワーク制約で物理的に `keyandnotes-platform` VPC に置く必要があるが、state 所有は将来 `env/` 側に移す想定（`platform/main.tf` のコメント参照）。
+例外: PSC エンドポイント (`env/modules/data/psc-cloudsql/`) は **物理的な配置** と **state 所有** が一致しない。
+
+- 物理配置: 内部 IP は接続元 VPC の subnet からしか払い出せず別 VPC から経路が無いため、GKE Pod が走る `keyandnotes-platform` の VPC に置くしかない。
+- state 所有: PSC は機能的に overload-party 専用 (overload-party-{env} の Cloud SQL に接続するためだけに存在) で、env 単位で 1 つずつ増減し、env-up/down で forwarding rule を動的に作成削除する。**機能オーナーである overload-party-infra の env state** に置くことで env apply 一発で配線が完結し、env 追加時に `keyandnotes-platform` リポを触らずに済む。
+
+実装上は env/{dev,stg,prod}/main.tf で `provider "google" { alias = "platform" ... }` を declare し、モジュール側のリソースが `provider = google.platform` で keyandnotes-platform プロジェクトに書き込む。
 
 ## Cloud SQL アクセス経路 (PSC)
 
@@ -36,6 +41,8 @@ GKE Pod (keyandnotes-platform VPC)
 ```
 
 PSC を選んだ理由: forwarding rule の作成・削除だけで接続を on/off でき、env 未使用時のコスト（$0.025/時間）を `env-up/down` で動的に落としやすいため。
+
+PSC エンドポイントの永続リソース (IP / DNS) は env state (`env/modules/data/psc-cloudsql/`) で管理する。詳細は上の節「keyandnotes-platform と overload-party-* の関係」の例外項参照。forwarding rule は overload-party-k8s 側が `env-up/down` で動的に管理する。
 
 ## CI/CD SA の集約
 

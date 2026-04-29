@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    google = {
+      source                = "hashicorp/google"
+      configuration_aliases = [google.platform]
+    }
+  }
+}
+
 locals {
   migration_image = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/db-migrate:latest"
   newsfeed_image  = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/newsfeed:latest"
@@ -67,6 +76,23 @@ module "database" {
   db_users = { for svc, _ in local.db_services : svc => module.service_accounts.accounts[svc].email }
 
   depends_on = [module.network.service_networking_connection]
+}
+
+module "psc_cloudsql" {
+  source = "./data/psc-cloudsql"
+
+  providers = {
+    google.platform = google.platform
+  }
+
+  project_id             = var.psc_consumer_project_id
+  region                 = var.region
+  network                = var.psc_consumer_network
+  env_name               = var.env_name
+  cloudsql_project_id    = var.project_id
+  cloudsql_instance_name = var.cloudsql_instance_name
+
+  depends_on = [module.database]
 }
 
 module "pubsub" {

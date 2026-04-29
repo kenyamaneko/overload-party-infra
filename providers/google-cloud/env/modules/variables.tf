@@ -47,6 +47,21 @@ variable "psc_allowed_consumer_projects" {
   type        = list(string)
 }
 
+variable "env_name" {
+  description = "環境名（dev / stg / prod）。PSC エンドポイントの命名等で使う"
+  type        = string
+}
+
+variable "psc_consumer_project_id" {
+  description = "PSC エンドポイント (IP / DNS) を置く consumer 側プロジェクト ID。GKE が動く側 (keyandnotes-platform)"
+  type        = string
+}
+
+variable "psc_consumer_network" {
+  description = "PSC エンドポイントを置く consumer 側 VPC ネットワーク名"
+  type        = string
+}
+
 # ──────────────────────────────────────────────
 # Firestore
 # ──────────────────────────────────────────────
