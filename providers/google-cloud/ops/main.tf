@@ -54,19 +54,6 @@ module "shared" {
   project_id = local.project_id
 }
 
-module "nightly_review" {
-  source = "./modules/nightly-review"
-
-  project_id                     = local.project_id
-  region                         = local.region
-  deploy_sa_member               = local.deploy_sa_member
-  shared_slack_webhook_secret_id = module.shared.slack_webhook_url_secret_id
-
-  # CI (overload-party-ops リポ) が gcloud run jobs update で毎回差し替えるため、
-  # TF は初回 create 用のプレースホルダのみ渡す (lifecycle.ignore_changes で drift 許容)。
-  image = "gcr.io/cloudrun/placeholder"
-}
-
 module "slack_commands" {
   source = "./modules/slack-commands"
 
