@@ -12,7 +12,7 @@ resource "google_project_service" "run" {
   disable_on_destroy = false
 }
 
-# accessor IAM は各 consumer module (slack-commands / nightly-review) が自分の SA に対して直接付与する。
+# accessor IAM は各 consumer module (slack-commands 等) が自分の SA に対して直接付与する。
 # shared で accessor をまとめると consumer module の output を引く必要があり、
 # consumer は shared の API 有効化に depends_on するため循環依存になる。
 # 実値は手動で投入:
