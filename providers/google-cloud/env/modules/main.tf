@@ -171,6 +171,7 @@ module "assets" {
   region                = var.region
   assets_bucket_name    = var.assets_bucket_name
   scenarios_bucket_name = var.scenarios_bucket_name
+  deploy_sa_member      = local.deploy_sa_member
 }
 
 module "e2e" {

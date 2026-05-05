@@ -17,3 +17,8 @@ variable "scenarios_bucket_name" {
   description = "非公開シナリオスクリプトバケット名（グローバル一意）"
   type        = string
 }
+
+variable "deploy_sa_member" {
+  description = "アセットを upload する CI 用 SA の IAM member 文字列 (例: serviceAccount:github-ci@...)"
+  type        = string
+}

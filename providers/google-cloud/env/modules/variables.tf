@@ -91,9 +91,8 @@ variable "newsfeed_bucket_name" {
 }
 
 # ──────────────────────────────────────────────
-# コンテナイメージ
+# Newsfeed
 # ──────────────────────────────────────────────
-
 
 variable "newsfeed_scheduler_paused" {
   description = "Newsfeed の Cloud Scheduler を PAUSED 状態で作成するか。prod=false、dev/stg=true (手動 resume でリリース前検証)"

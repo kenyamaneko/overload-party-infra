@@ -20,7 +20,7 @@ resource "google_storage_bucket_iam_member" "assets_public" {
 resource "google_storage_bucket_iam_member" "assets_ci_writer" {
   bucket = google_storage_bucket.assets.name
   role   = "roles/storage.objectAdmin"
-  member = "serviceAccount:github-ci@overload-party-ops.iam.gserviceaccount.com"
+  member = var.deploy_sa_member
 }
 
 # ──────────────────────────────────────────────
@@ -38,5 +38,5 @@ resource "google_storage_bucket" "scenarios" {
 resource "google_storage_bucket_iam_member" "scenarios_ci_writer" {
   bucket = google_storage_bucket.scenarios.name
   role   = "roles/storage.objectAdmin"
-  member = "serviceAccount:github-ci@overload-party-ops.iam.gserviceaccount.com"
+  member = var.deploy_sa_member
 }

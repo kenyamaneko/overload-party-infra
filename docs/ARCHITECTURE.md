@@ -26,6 +26,7 @@ Terraform state は **変更ライフサイクルと権限境界** で分割し�
 
 - なぜ keyandnotes-platform プロジェクトに書くか: 内部 IP は接続元 VPC の subnet からしか払い出せず別 VPC から経路が無いため、GKE Pod が走る `keyandnotes-platform` VPC に置くしかない。
 - なぜ overload-party-infra の env state が所有するか: PSC は機能的に overload-party 専用 (overload-party-{env} の Cloud SQL に接続するためだけに存在) で、env 単位で 1 つずつ増減し、env-up/down で forwarding rule を動的に作成削除する。機能オーナーが所有することで env apply 一発で配線が完結し、env 追加時に `keyandnotes-platform` リポを触らずに済む。
+- 書き込み権限の付与 (`terraform-deployer` SA への `keyandnotes-platform` の IAM) は keyandnotes-platform リポ側の責務。本リポの `ops/modules/ci-cd` の `terraform_managed_projects` には含めない (原則どおり「IAM binding が書き込まれる側のプロジェクト = 管理リポ」)。
 
 ## Cloud SQL アクセス経路 (PSC)
 
