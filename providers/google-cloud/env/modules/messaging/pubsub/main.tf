@@ -7,12 +7,20 @@ locals {
         gateway = { sub_name = "matchmaking-events-gateway", sa_email = var.gateway_service_account_email }
       }
     }
-    faction_purchased = {
-      topic_name   = "faction-purchased"
+    faction_acquired = {
+      topic_name   = "faction-acquired"
       publisher_sa = var.shop_service_account_email
       subscribers = {
-        account = { sub_name = "faction-purchased-account-sub", sa_email = var.account_service_account_email }
-        card    = { sub_name = "faction-purchased-card-sub", sa_email = var.card_service_account_email }
+        account = { sub_name = "faction-acquired-account-sub", sa_email = var.account_service_account_email }
+        gateway = { sub_name = "faction-acquired-gateway-sub", sa_email = var.gateway_service_account_email }
+      }
+    }
+    card_pack_purchased = {
+      topic_name   = "card-pack-purchased"
+      publisher_sa = var.shop_service_account_email
+      subscribers = {
+        card    = { sub_name = "card-pack-purchased-card-sub", sa_email = var.card_service_account_email }
+        gateway = { sub_name = "card-pack-purchased-gateway-sub", sa_email = var.gateway_service_account_email }
       }
     }
     premium_updated = {
