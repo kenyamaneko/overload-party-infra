@@ -29,18 +29,6 @@ locals {
     "overload-party-dev",
     "overload-party-stg",
   ]
-
-  slack_commands_repos = [
-    "overload-party-common",
-    "overload-party-client",
-    "overload-party-battle",
-    "overload-party-gateway",
-    "overload-party-infra",
-    "overload-party-k8s",
-    "overload-party-newsfeed",
-    "overload-party-analytics",
-    "overload-party-ops",
-  ]
 }
 
 provider "google" {
@@ -52,19 +40,6 @@ module "shared" {
   source = "./modules/shared"
 
   project_id = local.project_id
-}
-
-module "slack_commands" {
-  source = "./modules/slack-commands"
-
-  project_id                     = local.project_id
-  region                         = local.region
-  shared_slack_webhook_secret_id = module.shared.slack_webhook_url_secret_id
-  cloudsql_admin_projects        = local.cloudsql_admin_projects
-  repos                          = local.slack_commands_repos
-
-  # 初回プレースホルダ。CI の build-deploy-service.yaml が差し替える。
-  image = "gcr.io/cloudrun/placeholder"
 }
 
 module "cost_monitor" {

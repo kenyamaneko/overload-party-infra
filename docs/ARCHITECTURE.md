@@ -9,9 +9,8 @@ Terraform state は **変更ライフサイクルと権限境界** で分割し�
 | State root | 対象 Google Cloud プロジェクト | 分割理由 |
 |---|---|---|
 | `google-cloud/env/{dev,stg,prod}` | `overload-party-{dev,stg,prod}` | 環境ごとのワークロードリソース。state を分けて env ごとに独立に apply できるようにする |
-| `google-cloud/ops` | `overload-party-ops` | 運用ツール（drift-monitor / slack-commands / cost-monitor）は env を全 destroy しても残す必要があり、env のライフサイクルから独立させる |
+| `google-cloud/ops` | `overload-party-ops` | 運用ツール（drift-monitor / cost-monitor）は env を全 destroy しても残す必要があり、env のライフサイクルから独立させる |
 | `cloudflare` | — | DNS レコードは Google Cloud とライフサイクルが異なる |
-| `cloudflare-workers` | — | Worker スクリプトは `wrangler` が管理するコードを持ち、TF は枠だけ管理 |
 | `upstash/env/{dev,stg,prod}` | — | Upstash は Google Cloud provider と独立しており、env ごとに state を分けて独立に apply できるようにする |
 
 `env/{dev,stg,prod}/main.tf` はそれぞれ `env/modules` を呼ぶ薄い composition で、全環境が同一モジュールセットを使う。環境差異を呼び出し側の変数だけに閉じ込めることで、module 内に環境分岐を持たせず、環境間で実装が乖離して再現できないバグが起きるのを防ぐ。
@@ -47,11 +46,7 @@ k8s manifest と Terraform はデプロイ頻度・更新ライフサイクル�
 
 ## Cloud SQL ライフサイクルの所有権
 
-Cloud SQL インスタンスは `env/` の Terraform が所有している。起動・停止（`activation_policy` 切替）も、リソースの所有者と操作の所有者を一致させるため、このリポの `cloudsql-activation.yaml` が担当する。`overload-party-ops` から `/db-start` `/db-stop` を呼ぶ場合も、最終的には infra の `workflow_dispatch` を呼び出す。
-
-## Cloudflare Workers (slack-commands-proxy)
-
-Slack の Slash Command は 3 秒以内に HTTP 200 を返す必要がある。Cloud Run はコールドスタートでこれを超えることがある。Cloudflare Worker をエッジで即座に 200 を返し非同期で Cloud Run に転送するプロキシとして挟むことで解決している。Worker スクリプトの実体は `wrangler deploy` が管理し、Terraform は枠とバインディングのみを持つ（`lifecycle.ignore_changes = [content]`）。
+Cloud SQL インスタンスは `env/` の Terraform が所有している。起動・停止（`activation_policy` 切替）も、リソースの所有者と操作の所有者を一致させるため、このリポの `cloudsql-activation.yaml` が担当する。手動で起動・停止する場合は `cloudsql-activation.yaml` を `workflow_dispatch` で叩く。
 
 ## apply は手動トリガー
 
