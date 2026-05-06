@@ -11,7 +11,7 @@ set -euo pipefail
 GOOGLE_CLOUD_ENV_PATHS=("google-cloud/env/dev" "google-cloud/env/stg" "google-cloud/env/prod")
 GOOGLE_CLOUD_OPS_PATHS=("google-cloud/ops")
 UPSTASH_ENV_PATHS=("upstash/env/dev" "upstash/env/stg" "upstash/env/prod")
-CLOUDFLARE_PATHS=("cloudflare" "cloudflare-workers")
+CLOUDFLARE_PATHS=("cloudflare")
 ALL_PATHS=("${GOOGLE_CLOUD_ENV_PATHS[@]}" "${GOOGLE_CLOUD_OPS_PATHS[@]}" "${UPSTASH_ENV_PATHS[@]}" "${CLOUDFLARE_PATHS[@]}")
 
 CHANGED=$(git diff --name-only "${BASE_SHA}" "${HEAD_SHA}")

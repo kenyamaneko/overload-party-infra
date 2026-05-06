@@ -11,7 +11,6 @@ Terraform state は **変更ライフサイクルと権限境界** で分割し�
 | `google-cloud/env/{dev,stg,prod}` | `overload-party-{dev,stg,prod}` | 環境ごとのワークロードリソース。state を分けて env ごとに独立に apply できるようにする |
 | `google-cloud/ops` | `overload-party-ops` | 運用ツール（drift-monitor / cost-monitor）は env を全 destroy しても残す必要があり、env のライフサイクルから独立させる |
 | `cloudflare` | — | DNS レコードは Google Cloud とライフサイクルが異なる |
-| `cloudflare-workers` | — | Worker スクリプト用の state root（現状は枠のみ。Worker を新設する場合に使用） |
 | `upstash/env/{dev,stg,prod}` | — | Upstash は Google Cloud provider と独立しており、env ごとに state を分けて独立に apply できるようにする |
 
 `env/{dev,stg,prod}/main.tf` はそれぞれ `env/modules` を呼ぶ薄い composition で、全環境が同一モジュールセットを使う。環境差異を呼び出し側の変数だけに閉じ込めることで、module 内に環境分岐を持たせず、環境間で実装が乖離して再現できないバグが起きるのを防ぐ。
