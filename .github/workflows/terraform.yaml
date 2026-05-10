@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "providers/**"
+      - "!**/*.md"
   workflow_dispatch:
     inputs:
       path:
@@ -20,6 +21,10 @@ on:
           - upstash/env/stg
           - upstash/env/prod
           - cloudflare
+
+concurrency:
+  group: terraform-${{ github.event_name }}-${{ github.ref }}-${{ inputs.path || 'pr' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read

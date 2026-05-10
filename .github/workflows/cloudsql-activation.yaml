@@ -24,6 +24,10 @@ on:
           - up
           - down
 
+concurrency:
+  group: cloudsql-activation-${{ inputs.environment }}
+  cancel-in-progress: false
+
 permissions:
   contents: read
   id-token: write
