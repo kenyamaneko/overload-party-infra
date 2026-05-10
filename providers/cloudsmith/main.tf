@@ -25,6 +25,7 @@ locals {
   publisher_repos = [
     "overload-party-common",
     "overload-party-battle",
+    "overload-party-card",
     "overload-party-shop",
   ]
 
