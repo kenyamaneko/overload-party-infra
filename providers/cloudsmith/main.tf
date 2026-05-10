@@ -23,10 +23,17 @@ locals {
   }
 
   publisher_repos = [
-    "overload-party-common",
+    "overload-party-account",
     "overload-party-battle",
     "overload-party-card",
+    "overload-party-common",
+    "overload-party-gateway",
+    "overload-party-matchmaking",
+    "overload-party-news",
+    "overload-party-newsfeed",
+    "overload-party-scenario",
     "overload-party-shop",
+    "overload-party-support",
   ]
 
   # ops/modules/ci-cd の ci_wif_repositories と同じ集合を使う
