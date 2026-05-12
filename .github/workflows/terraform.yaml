@@ -34,7 +34,7 @@ permissions:
 jobs:
   detect:
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubicloud-standard-2
     timeout-minutes: 30
     outputs:
       paths: ${{ steps.detect.outputs.paths }}
@@ -53,7 +53,7 @@ jobs:
   plan:
     needs: detect
     if: github.event_name == 'pull_request' && needs.detect.outputs.paths != '[]'
-    runs-on: ubuntu-latest
+    runs-on: ubicloud-standard-2
     timeout-minutes: 30
     strategy:
       matrix:
@@ -98,7 +98,7 @@ jobs:
 
   apply:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubicloud-standard-2
     timeout-minutes: 30
     steps:
       - name: Checkout
