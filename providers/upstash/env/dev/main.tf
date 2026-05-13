@@ -38,11 +38,3 @@ module "newsfeed_redis" {
   primary_region = "asia-northeast1"
   eviction       = true
 }
-
-module "gateway_redis" {
-  source = "../modules/gateway"
-
-  env            = "dev"
-  primary_region = "asia-northeast1"
-  eviction       = true
-}
