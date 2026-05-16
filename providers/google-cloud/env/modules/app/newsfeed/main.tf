@@ -97,6 +97,7 @@ resource "google_cloud_run_v2_job" "newsfeed" {
       timeout         = "1800s" # 30 min max
 
       containers {
+        # 初回作成時のみ使う値。以降の実イメージは ignore_changes 対象で CI が所有する
         image = var.newsfeed_image
 
         env {
