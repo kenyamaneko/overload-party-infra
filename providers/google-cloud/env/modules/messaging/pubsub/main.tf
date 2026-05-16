@@ -123,6 +123,11 @@ resource "google_pubsub_subscription" "main" {
   enable_exactly_once_delivery = true
   ack_deadline_seconds         = 10
 
+  # terraform がライフサイクルを所有するため、非アクティブによる自動失効を無効化する
+  expiration_policy {
+    ttl = ""
+  }
+
   dead_letter_policy {
     dead_letter_topic     = google_pubsub_topic.dlq[each.value.topic_key].id
     max_delivery_attempts = 5
