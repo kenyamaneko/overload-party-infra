@@ -79,7 +79,7 @@ resource "google_cloud_run_v2_job" "newsfeed" {
   location            = var.region
   deletion_protection = false
 
-  # CI/CD が gcloud でデプロイするため、image と gcloud が付随して刻む client / client_version の drift を許容
+  # CI/CD が gcloud でデプロイするたび image と client / client_version が書き換わるため drift を許容
   lifecycle {
     ignore_changes = [
       template[0].template[0].containers[0].image,

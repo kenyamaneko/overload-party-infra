@@ -123,7 +123,7 @@ resource "google_pubsub_subscription" "main" {
   enable_exactly_once_delivery = true
   ack_deadline_seconds         = 10
 
-  # terraform がライフサイクルを所有するため、非アクティブによる自動失効を無効化する
+  # Pub/Sub はトラフィックの無い subscription を一定期間後に自動削除する。terraform がライフサイクル所有者のためこれを無効化する
   expiration_policy {
     ttl = ""
   }
