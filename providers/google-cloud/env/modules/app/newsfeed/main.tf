@@ -79,9 +79,13 @@ resource "google_cloud_run_v2_job" "newsfeed" {
   location            = var.region
   deletion_protection = false
 
-  # CI/CD がイメージタグを直接更新するため drift を許容
+  # CI/CD が gcloud でデプロイするたび image と client / client_version が書き換わるため drift を許容
   lifecycle {
-    ignore_changes = [template[0].template[0].containers[0].image]
+    ignore_changes = [
+      template[0].template[0].containers[0].image,
+      client,
+      client_version,
+    ]
   }
 
   template {
@@ -93,6 +97,7 @@ resource "google_cloud_run_v2_job" "newsfeed" {
       timeout         = "1800s" # 30 min max
 
       containers {
+        # 初回作成時のみ使う値。以降の実イメージは ignore_changes 対象で CI が所有する
         image = var.newsfeed_image
 
         env {
