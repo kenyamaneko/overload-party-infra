@@ -58,6 +58,55 @@ module "drift_monitor" {
   monitored_projects = local.drift_monitored_projects
 }
 
+# env nodepool (dev/stg/prod) を declare する。物理 GCE VM は keyandnotes-platform
+# プロジェクトに作られるが論理所有は app。brand 側 app-window の W1 grant
+# (terraform-deployer → clusterAdmin) が前提。ADR-045 を参照。
+module "gke_nodepools" {
+  source = "./modules/gke-nodepools"
+
+  cluster_host_project = "keyandnotes-platform"
+  cluster_name         = "keyandnotes-main"
+  cluster_location     = "asia-northeast1-a"
+
+  # stg は prod と同スペックで本番再現性を確保、dev は割り切って e2 系。
+  # dev/stg は node-pool-scale workflow で 0 ノード起点に動的 resize、
+  # prod は Terraform で常時起動を強制 (ignore_node_count = false)。
+  node_pools = {
+    dev = {
+      machine_type      = "e2-standard-2"
+      node_count        = 0
+      ignore_node_count = true
+      labels            = {}
+      taints            = []
+    }
+    stg = {
+      machine_type      = "n2-standard-2"
+      node_count        = 0
+      ignore_node_count = true
+      labels            = {}
+      taints            = []
+    }
+    prod = {
+      machine_type      = "n2-standard-2"
+      node_count        = 1
+      ignore_node_count = false
+      labels            = {}
+      taints            = []
+    }
+  }
+}
+
+# nightly-shutdown → env-lifecycle → node-pool-scale workflow が impersonate する SA。
+module "node_pool_scaler" {
+  source = "./modules/node-pool-scaler"
+
+  ops_project_id              = local.project_id
+  cluster_host_project        = "keyandnotes-platform"
+  github_owner                = "kenyamaneko"
+  github_repository           = "overload-party-infra"
+  workload_identity_pool_name = "projects/248288258659/locations/global/workloadIdentityPools/github-actions"
+}
+
 module "ci_cd" {
   source = "./modules/ci-cd"
 
@@ -117,4 +166,10 @@ module "ci_cd" {
     "overload-party-dev",
     "overload-party-stg",
   ]
+}
+
+# node-pool-scale workflow が impersonate する SA。GitHub Actions repo variable
+# (NODE_POOL_SCALER_SERVICE_ACCOUNT) に手動投入する用途で expose する。
+output "node_pool_scaler_sa_email" {
+  value = module.node_pool_scaler.service_account_email
 }

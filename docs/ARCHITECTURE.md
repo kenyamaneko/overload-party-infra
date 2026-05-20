@@ -26,6 +26,11 @@ Terraform state は **変更ライフサイクルと権限境界** で分割し�
 - なぜ keyandnotes-platform プロジェクトに書くか: 内部 IP は接続元 VPC の subnet からしか払い出せず別 VPC から経路が無いため、GKE Pod が走る `keyandnotes-platform` VPC に置くしかない。
 - なぜ overload-party-infra の env state が所有するか: PSC は機能的に overload-party 専用 (overload-party-{env} の Cloud SQL に接続するためだけに存在) で、env 単位で 1 つずつ増減し、env-up/down で forwarding rule を動的に作成削除する。機能オーナーが所有することで env apply 一発で配線が完結し、env 追加時に `keyandnotes-platform` リポを触らずに済む。
 
+例外: env nodepool (`ops/modules/gke-nodepools/`) は **書き込まれるプロジェクトが `keyandnotes-platform`、所有リポが `overload-party-infra` の ops state** で、原則の対応関係が崩れている。
+
+- なぜ keyandnotes-platform プロジェクトに書くか: nodepool は cluster の子リソースで、cluster と同じプロジェクトに作るしかない。
+- なぜ overload-party-infra の ops state が所有するか: env nodepool の machine_type / count / labels は app のワークロード要件で決まる app の意思決定であり、所有を app に置くと app PR で完結する。所有境界の設計の根拠は overload-party-common ADR-045。grant policy (`modules/app-window/`) は brand 側に集約する。
+
 ## Cloud SQL アクセス経路 (PSC)
 
 各環境の Cloud SQL (`overload-party-{dev,stg,prod}`) は **PSC (Private Service Connect)** で `keyandnotes-platform` の VPC に接続する。DB 接続の手段として PSC を選んだ理由: forwarding rule の作成・削除だけで接続を on/off でき、env 未使用時のコスト ($0.025/時間) を `env-up/down` で動的に落としやすいため。
