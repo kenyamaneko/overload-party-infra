@@ -1,7 +1,5 @@
 name: Node Pool Scale
 
-# ADR-045 (overload-party-common) に基づく実装。env nodepool は overload-party-infra
-# 所有のリソースなので、所有 repo の本 workflow で resize を行う。
 # overload-party-k8s/env-lifecycle.yaml から workflow_dispatch で呼ばれる想定。
 # prod は常時起動でスケール対象外のため本 workflow は dev / stg のみ受け付ける。
 

@@ -58,9 +58,6 @@ module "drift_monitor" {
   monitored_projects = local.drift_monitored_projects
 }
 
-# env nodepool (dev/stg/prod) を declare する。物理 GCE VM は keyandnotes-platform
-# プロジェクトに作られるが論理所有は app。brand 側 app-window の W1 grant
-# (terraform-deployer → clusterAdmin) が前提。ADR-045 を参照。
 module "gke_nodepools" {
   source = "./modules/gke-nodepools"
 
@@ -68,9 +65,7 @@ module "gke_nodepools" {
   cluster_name         = "keyandnotes-main"
   cluster_location     = "asia-northeast1-a"
 
-  # stg は prod と同スペックで本番再現性を確保、dev は割り切って e2 系。
-  # dev/stg は node-pool-scale workflow で 0 ノード起点に動的 resize、
-  # prod は Terraform で常時起動を強制 (ignore_node_count = false)。
+  # stg は prod と同スペックで本番再現性を確保。
   node_pools = {
     dev = {
       machine_type      = "e2-standard-2"
@@ -96,7 +91,6 @@ module "gke_nodepools" {
   }
 }
 
-# nightly-shutdown → env-lifecycle → node-pool-scale workflow が impersonate する SA。
 module "node_pool_scaler" {
   source = "./modules/node-pool-scaler"
 
@@ -168,8 +162,7 @@ module "ci_cd" {
   ]
 }
 
-# node-pool-scale workflow が impersonate する SA。GitHub Actions repo variable
-# (NODE_POOL_SCALER_SERVICE_ACCOUNT) に手動投入する用途で expose する。
+# GitHub Actions repo variable NODE_POOL_SCALER_SERVICE_ACCOUNT に手動投入する用途。
 output "node_pool_scaler_sa_email" {
   value = module.node_pool_scaler.service_account_email
 }
