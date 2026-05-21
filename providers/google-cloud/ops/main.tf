@@ -95,7 +95,6 @@ module "node_pool_scaler" {
   source = "./modules/node-pool-scaler"
 
   ops_project_id              = local.project_id
-  cluster_host_project        = "keyandnotes-platform"
   github_owner                = "kenyamaneko"
   github_repository           = "overload-party-infra"
   workload_identity_pool_name = "projects/248288258659/locations/global/workloadIdentityPools/github-actions"

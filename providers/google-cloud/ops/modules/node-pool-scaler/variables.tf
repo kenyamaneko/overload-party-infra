@@ -3,11 +3,6 @@ variable "ops_project_id" {
   type        = string
 }
 
-variable "cluster_host_project" {
-  description = "resize 対象 GKE クラスタが属するプロジェクト (keyandnotes-platform)。IAM grant 先となる"
-  type        = string
-}
-
 variable "github_owner" {
   description = "Workflow を実行する GitHub の owner (user / org)"
   type        = string
