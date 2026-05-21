@@ -1,22 +1,11 @@
-# node-pool-scale workflow 用 SA と、resize 対象クラスタ (cluster_host_project) への cross-project grant。
+# node-pool-scale workflow 用 SA と WIF。
+# cluster_host_project 上の権限付与は brand 側 (keyandnotes-platform) の app-iam-grants module
+# に集約しているので本モジュールでは扱わない。
 
 resource "google_service_account" "node_pool_scaler" {
   project      = var.ops_project_id
   account_id   = "gh-node-pool-scaler"
   display_name = "GitHub Actions Node Pool Scaler"
-}
-
-resource "google_project_iam_member" "container_developer" {
-  project = var.cluster_host_project
-  role    = "roles/container.developer"
-  member  = "serviceAccount:${google_service_account.node_pool_scaler.email}"
-}
-
-# resize 後に kubectl wait でノード Ready を確認する get-gke-credentials のために必要。
-resource "google_project_iam_member" "container_cluster_viewer" {
-  project = var.cluster_host_project
-  role    = "roles/container.clusterViewer"
-  member  = "serviceAccount:${google_service_account.node_pool_scaler.email}"
 }
 
 resource "google_service_account_iam_member" "wif" {
