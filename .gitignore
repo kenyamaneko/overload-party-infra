@@ -2,9 +2,10 @@
 *.tfstate
 *.tfstate.*
 *.tfvars
-.terraform.lock.hcl
 tfplan
 *.tfplan
+# module 配下に残った lock は init を root 以外で叩いたときの local artifact なので追跡しない。
+providers/**/modules/**/.terraform.lock.hcl
 .DS_Store
 .claude/
 .vscode/
