@@ -68,14 +68,14 @@ module "gke_nodepools" {
   # stg は prod と同スペックで本番再現性を確保。
   node_pools = {
     dev = {
-      machine_type      = "e2-standard-2"
+      machine_type      = "e2-medium"
       node_count        = 0
       ignore_node_count = true
       labels            = {}
       taints            = []
     }
     stg = {
-      machine_type      = "n2-standard-2"
+      machine_type      = "e2-standard-2"
       node_count        = 0
       ignore_node_count = true
       labels            = {}
@@ -83,7 +83,7 @@ module "gke_nodepools" {
     }
     # 本稼働開始まで 0 ノードで運用。開始時に node_count = 1 に戻す。
     prod = {
-      machine_type      = "n2-standard-2"
+      machine_type      = "e2-standard-2"
       node_count        = 0
       ignore_node_count = false
       labels            = {}
