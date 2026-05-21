@@ -81,9 +81,10 @@ module "gke_nodepools" {
       labels            = {}
       taints            = []
     }
+    # 本稼働開始まで 0 ノードで運用。開始時に node_count = 1 に戻す。
     prod = {
       machine_type      = "n2-standard-2"
-      node_count        = 1
+      node_count        = 0
       ignore_node_count = false
       labels            = {}
       taints            = []
