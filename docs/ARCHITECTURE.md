@@ -29,7 +29,7 @@ Terraform state は **変更ライフサイクルと権限境界** で分割し�
 例外: env nodepool (`ops/modules/gke-nodepools/`) は **書き込まれるプロジェクトが `keyandnotes-platform`、所有リポが `overload-party-infra` の ops state** で、原則の対応関係が崩れている。
 
 - なぜ keyandnotes-platform プロジェクトに書くか: nodepool は cluster の子リソースで、cluster と同じプロジェクトに作るしかない。
-- なぜ overload-party-infra の ops state が所有するか: env nodepool の machine_type / count / labels は app のワークロード要件で決まる app の意思決定であり、所有を app に置くと app PR で完結する。所有境界の設計の根拠は overload-party-common ADR-045。grant policy (`modules/app-window/`) は brand 側に集約する。
+- なぜ overload-party-infra の ops state が所有するか: env nodepool の machine_type / count / labels はアプリのワークロード要件で決まるアプリの意思決定であり、所有をアプリに置くとアプリ PR で完結する。所有境界の設計の根拠は overload-party-common ADR-045。cross-project IAM 付与 (`modules/app-iam-grants/`) はブランド側に集約する。
 
 ## Cloud SQL アクセス経路 (PSC)
 
