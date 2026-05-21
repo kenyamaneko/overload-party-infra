@@ -58,6 +58,49 @@ module "drift_monitor" {
   monitored_projects = local.drift_monitored_projects
 }
 
+module "gke_nodepools" {
+  source = "./modules/gke-nodepools"
+
+  cluster_host_project = "keyandnotes-platform"
+  cluster_name         = "keyandnotes-main"
+  cluster_location     = "asia-northeast1-a"
+
+  # stg は prod と同スペックで本番再現性を確保。
+  node_pools = {
+    dev = {
+      machine_type      = "e2-standard-2"
+      node_count        = 0
+      ignore_node_count = true
+      labels            = {}
+      taints            = []
+    }
+    stg = {
+      machine_type      = "n2-standard-2"
+      node_count        = 0
+      ignore_node_count = true
+      labels            = {}
+      taints            = []
+    }
+    prod = {
+      machine_type      = "n2-standard-2"
+      node_count        = 1
+      ignore_node_count = false
+      labels            = {}
+      taints            = []
+    }
+  }
+}
+
+module "node_pool_scaler" {
+  source = "./modules/node-pool-scaler"
+
+  ops_project_id              = local.project_id
+  cluster_host_project        = "keyandnotes-platform"
+  github_owner                = "kenyamaneko"
+  github_repository           = "overload-party-infra"
+  workload_identity_pool_name = "projects/248288258659/locations/global/workloadIdentityPools/github-actions"
+}
+
 module "ci_cd" {
   source = "./modules/ci-cd"
 
@@ -117,4 +160,9 @@ module "ci_cd" {
     "overload-party-dev",
     "overload-party-stg",
   ]
+}
+
+# GitHub Actions repo variable NODE_POOL_SCALER_SERVICE_ACCOUNT に手動投入する用途。
+output "node_pool_scaler_sa_email" {
+  value = module.node_pool_scaler.service_account_email
 }

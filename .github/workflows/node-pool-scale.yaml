@@ -1,0 +1,83 @@
+name: Node Pool Scale
+
+# overload-party-k8s/env-lifecycle.yaml から workflow_dispatch で呼ばれる想定。
+# prod は常時起動でスケール対象外のため本 workflow は dev / stg のみ受け付ける。
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "対象環境 (dev または stg)"
+        required: true
+        type: choice
+        options:
+          - dev
+          - stg
+      action:
+        description: "up = ノードを起動 / down = 0 ノードに縮退"
+        required: true
+        type: choice
+        options:
+          - up
+          - down
+      node_count:
+        description: "up 時のノード数 (省略時 1)。down は常に 0"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: node-pool-scale-${{ inputs.environment }}
+  cancel-in-progress: false
+
+env:
+  GKE_CLUSTER: keyandnotes-main
+  GKE_ZONE: asia-northeast1-a
+  GKE_PROJECT: keyandnotes-platform
+
+jobs:
+  scale:
+    runs-on: ubicloud-standard-2
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.NODE_POOL_SCALER_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Resize node pool
+        env:
+          GKE_CLUSTER: ${{ env.GKE_CLUSTER }}
+          GKE_ZONE: ${{ env.GKE_ZONE }}
+          GKE_PROJECT: ${{ env.GKE_PROJECT }}
+          ENV: ${{ inputs.environment }}
+          ACTION: ${{ inputs.action }}
+          INPUT_COUNT: ${{ inputs.node_count }}
+        run: ./.github/scripts/node-pool-scale/resize-node-pool.sh
+
+      - name: Setup GKE credentials
+        if: inputs.action == 'up'
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ env.GKE_CLUSTER }}
+          location: ${{ env.GKE_ZONE }}
+          project_id: ${{ env.GKE_PROJECT }}
+
+      - name: Wait for node Ready
+        if: inputs.action == 'up'
+        env:
+          GKE_CLUSTER: ${{ env.GKE_CLUSTER }}
+          ENV: ${{ inputs.environment }}
+        run: ./.github/scripts/node-pool-scale/wait-node-ready.sh
