@@ -83,7 +83,7 @@ module "gke_nodepools" {
     }
     prod = {
       machine_type      = "n2-standard-2"
-      node_count        = 1
+      node_count        = 0
       ignore_node_count = false
       labels            = {}
       taints            = []
