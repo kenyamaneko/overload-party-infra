@@ -119,10 +119,12 @@ module "ci_cd" {
     "overload-party-gateway",
     "overload-party-infra",
     "overload-party-matchmaking",
+    "overload-party-news",
     "overload-party-newsfeed",
     "overload-party-ops",
     "overload-party-scenario",
     "overload-party-shop",
+    "overload-party-support",
   ]
 
   terraform_deployer_wif_repositories = [
