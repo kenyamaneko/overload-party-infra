@@ -58,9 +58,8 @@ module "env" {
   enable_e2e            = true
   e2e_developer_members = ["user:kenya.m.amaoto@gmail.com"]
 
-  # gateway (GCE MIG)。dev/stg は ephemeral IP、prod のみ静的 IP (infra#51)。
+  # gateway (GCE MIG)。dev/stg は ephemeral IP、prod のみ静的 IP。
   gateway_machine_type    = "e2-small"
-  gateway_zone            = "asia-northeast1-a"
   gateway_use_static_ip   = false
   gateway_allowed_origins = "https://overloadparty-stg.keyandnotes.com,capacitor://localhost,http://localhost"
 

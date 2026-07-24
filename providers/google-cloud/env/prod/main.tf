@@ -57,9 +57,8 @@ module "env" {
   enable_e2e            = false
   e2e_developer_members = []
 
-  # gateway (GCE MIG)。prod のみ静的 IP + autohealing (infra#51)。
+  # gateway (GCE MIG)。prod のみ静的 IP + autohealing。
   gateway_machine_type    = "e2-small"
-  gateway_zone            = "asia-northeast1-a"
   gateway_use_static_ip   = true
   gateway_allowed_origins = "https://overloadparty-prod.keyandnotes.com,capacitor://localhost,http://localhost"
 

@@ -204,10 +204,10 @@ resource "google_compute_health_check" "gateway" {
 # Managed Instance Group (単一インスタンス + autohealing)
 # ──────────────────────────────────────────────
 
-resource "google_compute_instance_group_manager" "gateway" {
+resource "google_compute_region_instance_group_manager" "gateway" {
   name               = "gateway-mig"
   project            = var.project_id
-  zone               = var.zone
+  region             = var.region
   base_instance_name = "gateway"
   target_size        = 1
 

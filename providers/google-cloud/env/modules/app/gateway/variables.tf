@@ -8,11 +8,6 @@ variable "region" {
   type        = string
 }
 
-variable "zone" {
-  description = "MIG を配置するゾーン"
-  type        = string
-}
-
 variable "env_name" {
   description = "環境識別子 (dev / stg / prod)。gateway の ENV 環境変数にそのまま渡す"
   type        = string

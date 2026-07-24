@@ -59,9 +59,10 @@ locals {
   # 現行運用同様、dev/stg は staging・prod のみ production とする。
   staging_or_production_env = var.env_name == "prod" ? "production" : "staging"
 
-  # Cloud Run 最大インスタンス数。Cloud SQL のコネクション枯渇を防ぐ暫定値 (infra#52)。
-  # DB 接続プールのサイジングに基づく正式なキャパシティプランニングは未実施のプレースホルダ。
-  cloud_run_max_instance_count = 10
+  # Cloud Run 最大インスタンス数。db-g1-small の上限コネクション数に対し安全側に倒した暫定値だが、
+  # 各サービスの実際の DB 接続プールサイズを掛け合わせた正式なキャパシティプランニングは未実施であり、
+  # この値だけでは枯渇しない保証にはならない。
+  cloud_run_max_instance_count = 3
 
   # k8s limits 相当 (dev は小さく、stg/prod は同値)。account/card/shop/scenario/matchmaking/
   # news/support の 7 サービスは k8s 上で全て同一の値を使っている。
@@ -433,7 +434,6 @@ module "gateway" {
 
   project_id               = var.project_id
   region                   = var.region
-  zone                     = var.gateway_zone
   env_name                 = var.env_name
   image                    = local.gateway_image
   machine_type             = var.gateway_machine_type

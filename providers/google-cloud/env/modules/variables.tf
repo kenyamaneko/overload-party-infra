@@ -123,11 +123,6 @@ variable "gateway_machine_type" {
   type        = string
 }
 
-variable "gateway_zone" {
-  description = "gateway MIG を配置するゾーン"
-  type        = string
-}
-
 variable "gateway_use_static_ip" {
   description = "gateway に外部静的 IP を割り当てるか (prod=true、dev/stg=false)"
   type        = bool
