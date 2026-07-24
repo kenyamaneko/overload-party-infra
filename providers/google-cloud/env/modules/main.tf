@@ -42,6 +42,39 @@ locals {
   # GitHub Actions の CI/CD は overload-party-ops プロジェクトの github-ci SA に集約しており
   # env ごとに切り替えない。db-migration / newsfeed の Cloud Run Job invoker 等に付与する。
   deploy_sa_member = "serviceAccount:github-ci@overload-party-ops.iam.gserviceaccount.com"
+
+  # gateway 専用デプロイ SA (instance template 作成 + MIG ローリング更新)。compute.instanceAdmin.v1
+  # という強い権限を持つため、他 7 サービスの汎用 CI (github-ci) とは分離する。
+  gateway_deploy_sa_member = "serviceAccount:gh-gateway-deploy@overload-party-ops.iam.gserviceaccount.com"
+
+  cloud_run_images = {
+    for svc, _ in local.k8s_services : svc => "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/${svc}:latest"
+    if svc != "gateway"
+  }
+  gateway_image = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/gateway:latest"
+
+  cloudsql_connection_name = "${var.project_id}:${var.region}:${var.cloudsql_instance_name}"
+
+  # news/support の config.go は "staging" | "production" の二値を要求する。k8s の
+  # 現行運用同様、dev/stg は staging・prod のみ production とする。
+  staging_or_production_env = var.env_name == "prod" ? "production" : "staging"
+
+  # Cloud Run 最大インスタンス数。Cloud SQL のコネクション枯渇を防ぐ暫定値 (infra#52)。
+  # DB 接続プールのサイジングに基づく正式なキャパシティプランニングは未実施のプレースホルダ。
+  cloud_run_max_instance_count = 10
+
+  # k8s limits 相当 (dev は小さく、stg/prod は同値)。account/card/shop/scenario/matchmaking/
+  # news/support の 7 サービスは k8s 上で全て同一の値を使っている。
+  standard_resources = {
+    dev  = { cpu = "100m", memory = "128Mi" }
+    stg  = { cpu = "200m", memory = "256Mi" }
+    prod = { cpu = "200m", memory = "256Mi" }
+  }
+  battle_resources = {
+    dev  = { cpu = "500m", memory = "512Mi" }
+    stg  = { cpu = "1", memory = "1Gi" }
+    prod = { cpu = "1", memory = "1Gi" }
+  }
 }
 
 module "network" {
@@ -179,4 +212,289 @@ module "e2e" {
 
   project_id        = var.project_id
   developer_members = var.e2e_developer_members
+}
+
+# ──────────────────────────────────────────────
+# Cloud Run / GCE 移行
+# ──────────────────────────────────────────────
+
+module "internal_auth_secret" {
+  source = "./foundation/internal-auth-secret"
+
+  project_id = var.project_id
+  accessor_service_account_emails = {
+    gateway     = module.service_accounts.accounts["gateway"].email
+    account     = module.service_accounts.accounts["account"].email
+    card        = module.service_accounts.accounts["card"].email
+    shop        = module.service_accounts.accounts["shop"].email
+    scenario    = module.service_accounts.accounts["scenario"].email
+    matchmaking = module.service_accounts.accounts["matchmaking"].email
+    news        = module.service_accounts.accounts["news"].email
+    support     = module.service_accounts.accounts["support"].email
+    # battle は対象外 (プレイヤー identity を持たず IAM 到達制御のみを受ける設計のため)
+  }
+}
+
+module "support_secrets" {
+  source = "./app/support/support-secrets"
+
+  project_id                    = var.project_id
+  support_service_account_email = module.service_accounts.accounts["support"].email
+}
+
+module "account" {
+  source = "./app/account"
+
+  project_id               = var.project_id
+  region                   = var.region
+  image                    = local.cloud_run_images["account"]
+  service_account_email    = module.service_accounts.accounts["account"].email
+  network                  = module.network.network_name
+  subnetwork               = module.network.subnetwork_name
+  cloudsql_connection_name = local.cloudsql_connection_name
+  database_name            = var.database_name
+  max_instance_count       = local.cloud_run_max_instance_count
+  resources_limit_cpu      = local.standard_resources[var.env_name].cpu
+  resources_limit_memory   = local.standard_resources[var.env_name].memory
+  internal_auth_secret_id  = module.internal_auth_secret.secret_id
+
+  faction_acquired_subscription       = "faction-acquired-account-sub"
+  premium_updated_subscription        = "premium-updated-account-sub"
+  player_onboarded_subscription       = "player-onboarded-account-sub"
+  onboarding_name_set_subscription    = "onboarding-name-set-account-sub"
+  onboarding_faction_set_subscription = "onboarding-faction-set-account-sub"
+
+  depends_on = [module.network.service_networking_connection]
+}
+
+module "card" {
+  source = "./app/card"
+
+  project_id               = var.project_id
+  region                   = var.region
+  env_name                 = var.env_name
+  image                    = local.cloud_run_images["card"]
+  service_account_email    = module.service_accounts.accounts["card"].email
+  network                  = module.network.network_name
+  subnetwork               = module.network.subnetwork_name
+  cloudsql_connection_name = local.cloudsql_connection_name
+  database_name            = var.database_name
+  max_instance_count       = local.cloud_run_max_instance_count
+  resources_limit_cpu      = local.standard_resources[var.env_name].cpu
+  resources_limit_memory   = local.standard_resources[var.env_name].memory
+  internal_auth_secret_id  = module.internal_auth_secret.secret_id
+
+  card_pack_purchased_subscription = "card-pack-purchased-card-sub"
+  player_onboarded_subscription    = "player-onboarded-card-sub"
+  account_service_url              = module.account.uri
+
+  depends_on = [module.network.service_networking_connection]
+}
+
+module "shop" {
+  source = "./app/shop"
+
+  project_id               = var.project_id
+  region                   = var.region
+  image                    = local.cloud_run_images["shop"]
+  service_account_email    = module.service_accounts.accounts["shop"].email
+  network                  = module.network.network_name
+  subnetwork               = module.network.subnetwork_name
+  cloudsql_connection_name = local.cloudsql_connection_name
+  database_name            = var.database_name
+  max_instance_count       = local.cloud_run_max_instance_count
+  resources_limit_cpu      = local.standard_resources[var.env_name].cpu
+  resources_limit_memory   = local.standard_resources[var.env_name].memory
+  internal_auth_secret_id  = module.internal_auth_secret.secret_id
+
+  faction_acquired_topic    = "faction-acquired"
+  card_pack_purchased_topic = "card-pack-purchased"
+  premium_updated_topic     = "premium-updated"
+  apple_environment         = var.shop_apple_environment
+
+  depends_on = [module.network.service_networking_connection]
+}
+
+module "scenario" {
+  source = "./app/scenario"
+
+  project_id               = var.project_id
+  region                   = var.region
+  env_name                 = var.env_name
+  image                    = local.cloud_run_images["scenario"]
+  service_account_email    = module.service_accounts.accounts["scenario"].email
+  network                  = module.network.network_name
+  subnetwork               = module.network.subnetwork_name
+  cloudsql_connection_name = local.cloudsql_connection_name
+  database_name            = var.database_name
+  max_instance_count       = local.cloud_run_max_instance_count
+  resources_limit_cpu      = local.standard_resources[var.env_name].cpu
+  resources_limit_memory   = local.standard_resources[var.env_name].memory
+  internal_auth_secret_id  = module.internal_auth_secret.secret_id
+
+  story_bucket                 = "overload-party-${var.env_name}-story"
+  player_onboarded_topic       = "player-onboarded"
+  onboarding_name_set_topic    = "onboarding-name-set"
+  onboarding_faction_set_topic = "onboarding-faction-set"
+  account_base_url             = module.account.uri
+
+  depends_on = [module.network.service_networking_connection]
+}
+
+module "matchmaking" {
+  source = "./app/matchmaking"
+
+  project_id              = var.project_id
+  region                  = var.region
+  image                   = local.cloud_run_images["matchmaking"]
+  service_account_email   = module.service_accounts.accounts["matchmaking"].email
+  max_instance_count      = local.cloud_run_max_instance_count
+  resources_limit_cpu     = local.standard_resources[var.env_name].cpu
+  resources_limit_memory  = local.standard_resources[var.env_name].memory
+  internal_auth_secret_id = module.internal_auth_secret.secret_id
+  match_made_topic        = "matchmaking-events"
+}
+
+module "news" {
+  source = "./app/news"
+
+  project_id               = var.project_id
+  region                   = var.region
+  env_name                 = local.staging_or_production_env
+  image                    = local.cloud_run_images["news"]
+  service_account_email    = module.service_accounts.accounts["news"].email
+  network                  = module.network.network_name
+  subnetwork               = module.network.subnetwork_name
+  cloudsql_connection_name = local.cloudsql_connection_name
+  database_name            = var.database_name
+  max_instance_count       = local.cloud_run_max_instance_count
+  resources_limit_cpu      = local.standard_resources[var.env_name].cpu
+  resources_limit_memory   = local.standard_resources[var.env_name].memory
+  internal_auth_secret_id  = module.internal_auth_secret.secret_id
+
+  news_article_collected_subscription = "news-article-collected-news-sub"
+
+  depends_on = [module.network.service_networking_connection]
+}
+
+module "support" {
+  source = "./app/support"
+
+  project_id               = var.project_id
+  region                   = var.region
+  env_name                 = local.staging_or_production_env
+  image                    = local.cloud_run_images["support"]
+  service_account_email    = module.service_accounts.accounts["support"].email
+  network                  = module.network.network_name
+  subnetwork               = module.network.subnetwork_name
+  cloudsql_connection_name = local.cloudsql_connection_name
+  database_name            = var.database_name
+  max_instance_count       = local.cloud_run_max_instance_count
+  resources_limit_cpu      = local.standard_resources[var.env_name].cpu
+  resources_limit_memory   = local.standard_resources[var.env_name].memory
+  internal_auth_secret_id  = module.internal_auth_secret.secret_id
+
+  cors_allowed_origins       = var.support_cors_allowed_origins
+  slack_channel_id           = var.support_slack_channel_id
+  sendgrid_from_address      = var.support_sendgrid_from_address
+  sendgrid_from_name         = var.support_sendgrid_from_name
+  slack_bot_token_secret_id  = module.support_secrets.slack_bot_token_secret_id
+  sendgrid_api_key_secret_id = module.support_secrets.sendgrid_api_key_secret_id
+
+  depends_on = [module.network.service_networking_connection]
+}
+
+module "battle" {
+  source = "./app/battle"
+
+  project_id               = var.project_id
+  region                   = var.region
+  image                    = local.cloud_run_images["battle"]
+  service_account_email    = module.service_accounts.accounts["battle"].email
+  network                  = module.network.network_name
+  subnetwork               = module.network.subnetwork_name
+  cloudsql_connection_name = local.cloudsql_connection_name
+  database_name            = var.database_name
+  max_instance_count       = local.cloud_run_max_instance_count
+  resources_limit_cpu      = local.battle_resources[var.env_name].cpu
+  resources_limit_memory   = local.battle_resources[var.env_name].memory
+
+  card_service_url = module.card.uri
+
+  depends_on = [module.network.service_networking_connection]
+}
+
+module "gateway" {
+  source = "./app/gateway"
+
+  providers = {
+    google.platform = google.platform
+  }
+
+  project_id               = var.project_id
+  region                   = var.region
+  zone                     = var.gateway_zone
+  env_name                 = var.env_name
+  image                    = local.gateway_image
+  machine_type             = var.gateway_machine_type
+  use_static_ip            = var.gateway_use_static_ip
+  container_port           = 9090
+  service_account_email    = module.service_accounts.accounts["gateway"].email
+  network                  = module.network.network_name
+  subnetwork               = module.network.subnetwork_name
+  cloudsql_connection_name = local.cloudsql_connection_name
+  database_name            = var.database_name
+
+  allowed_origins         = var.gateway_allowed_origins
+  battle_service_url      = module.battle.uri
+  card_service_url        = module.card.uri
+  matchmaking_service_url = module.matchmaking.uri
+  account_service_url     = module.account.uri
+  shop_service_url        = module.shop.uri
+  scenario_service_url    = module.scenario.uri
+  news_service_url        = module.news.uri
+  support_service_url     = module.support.uri
+
+  matchmaking_subscription = "matchmaking-events-gateway"
+  matchmaking_timeout_sec  = 60
+
+  artifact_registry_project_id    = var.artifact_registry_project_id
+  artifact_registry_location      = var.artifact_registry_location
+  artifact_registry_repository_id = var.artifact_registry_repository_id
+
+  depends_on = [module.network.service_networking_connection]
+}
+
+module "iam_grants" {
+  source = "./foundation/iam-grants"
+
+  project_id = var.project_id
+  region     = var.region
+
+  cloud_run_service_names = {
+    account     = "account"
+    card        = "card"
+    shop        = "shop"
+    scenario    = "scenario"
+    matchmaking = "matchmaking"
+    news        = "news"
+    support     = "support"
+    battle      = "battle"
+  }
+  gateway_service_account_email = module.service_accounts.accounts["gateway"].email
+
+  ci_deploy_sa_member = local.deploy_sa_member
+  cloud_run_runtime_service_account_names = {
+    account     = module.service_accounts.accounts["account"].name
+    card        = module.service_accounts.accounts["card"].name
+    shop        = module.service_accounts.accounts["shop"].name
+    scenario    = module.service_accounts.accounts["scenario"].name
+    matchmaking = module.service_accounts.accounts["matchmaking"].name
+    news        = module.service_accounts.accounts["news"].name
+    support     = module.service_accounts.accounts["support"].name
+    battle      = module.service_accounts.accounts["battle"].name
+  }
+
+  gateway_deploy_sa_member             = local.gateway_deploy_sa_member
+  gateway_runtime_service_account_name = module.service_accounts.accounts["gateway"].name
 }

@@ -28,6 +28,11 @@ variable "gke_deployer_wif_repositories" {
   type        = list(string)
 }
 
+variable "gateway_deployer_wif_repositories" {
+  description = "gh-gateway-deploy SA (gateway instance template 作成 / MIG ローリング更新用) を impersonate できる GitHub リポジトリ一覧"
+  type        = list(string)
+}
+
 variable "cloudsql_operator_wif_repositories" {
   description = "gh-cloudsql-operator SA (Cloud SQL start/stop 用) を impersonate できる GitHub リポジトリ一覧"
   type        = list(string)
