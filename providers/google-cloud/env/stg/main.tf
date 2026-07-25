@@ -14,34 +14,19 @@ provider "google" {
   region  = "asia-northeast1"
 }
 
-# PSC エンドポイント (IP / DNS) は consumer 側 VPC (keyandnotes-platform) に書き込む必要があるため alias で参照する
-provider "google" {
-  alias   = "platform"
-  project = "keyandnotes-platform"
-  region  = "asia-northeast1"
-}
-
 module "env" {
   source = "../modules"
-
-  providers = {
-    google.platform = google.platform
-  }
 
   env_name      = "stg"
   project_id    = "overload-party-stg"
   region        = "asia-northeast1"
   k8s_namespace = "overload-party-stg"
 
-  psc_consumer_project_id = "keyandnotes-platform"
-  psc_consumer_network    = "default"
-
-  cloudsql_instance_name        = "overload-party-db"
-  cloudsql_tier                 = "db-g1-small"
-  database_name                 = "overload_party"
-  deletion_protection           = false
-  ipv4_enabled                  = false
-  psc_allowed_consumer_projects = ["keyandnotes-platform"]
+  cloudsql_instance_name = "overload-party-db"
+  cloudsql_tier          = "db-g1-small"
+  database_name          = "overload_party"
+  deletion_protection    = false
+  ipv4_enabled           = false
 
   firestore_location = "asia-northeast1"
 
