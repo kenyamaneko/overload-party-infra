@@ -66,24 +66,6 @@ resource "google_service_account_iam_member" "cloudsql_operator_wif" {
   member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${each.value}"
 }
 
-# gateway デプロイ専用 SA。github-ci と分けるのは、gateway の instance template 作成 +
-# MIG ローリング更新に必要な compute.instanceAdmin.v1 (env project 内の全 compute
-# リソースを操作できる強い権限) を、他 7 サービスの汎用 CI (github-ci) に漏らさないため。
-resource "google_service_account" "gateway_deployer" {
-  project      = var.project_id
-  account_id   = "gh-gateway-deploy"
-  display_name = "GitHub Actions Gateway Deploy"
-
-  depends_on = [google_project_service.iam]
-}
-
-resource "google_service_account_iam_member" "gateway_deployer_wif" {
-  for_each           = toset(var.gateway_deployer_wif_repositories)
-  service_account_id = google_service_account.gateway_deployer.name
-  role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${each.value}"
-}
-
 # DB マイグレーション専用 SA。github-ci と分けるのは、汎用 CI に DB 起動停止権限
 # (cloudsql.admin) が漏れ出さないようにするため。
 resource "google_service_account" "db_migrator" {

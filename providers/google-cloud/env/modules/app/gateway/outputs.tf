@@ -1,4 +1,4 @@
-output "static_ip_address" {
-  description = "gateway の外部静的 IP (use_static_ip=false の場合は null)。DNS / Cloudflare 設定に使用"
-  value       = var.use_static_ip ? google_compute_address.gateway_static[0].address : null
+output "uri" {
+  description = "gateway Cloud Run サービスの URL。Cloudflare からの向き先に使用"
+  value       = google_cloud_run_v2_service.gateway.uri
 }

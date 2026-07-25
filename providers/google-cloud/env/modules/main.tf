@@ -43,15 +43,9 @@ locals {
   # env ごとに切り替えない。db-migration / newsfeed の Cloud Run Job invoker 等に付与する。
   deploy_sa_member = "serviceAccount:github-ci@overload-party-ops.iam.gserviceaccount.com"
 
-  # gateway 専用デプロイ SA (instance template 作成 + MIG ローリング更新)。compute.instanceAdmin.v1
-  # という強い権限を持つため、他 7 サービスの汎用 CI (github-ci) とは分離する。
-  gateway_deploy_sa_member = "serviceAccount:gh-gateway-deploy@overload-party-ops.iam.gserviceaccount.com"
-
   cloud_run_images = {
     for svc, _ in local.k8s_services : svc => "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/${svc}:latest"
-    if svc != "gateway"
   }
-  gateway_image = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/gateway:latest"
 
   cloudsql_connection_name = "${var.project_id}:${var.region}:${var.cloudsql_instance_name}"
 
@@ -71,6 +65,9 @@ locals {
     stg  = { cpu = "1", memory = "1Gi" }
     prod = { cpu = "1", memory = "1Gi" }
   }
+  gateway_resources                  = { cpu = "1", memory = "512Mi" }
+  gateway_max_concurrent_connections = 250
+  gateway_request_timeout_sec        = 3600
 }
 
 module "network" {
@@ -419,22 +416,21 @@ module "battle" {
 module "gateway" {
   source = "./app/gateway"
 
-  providers = {
-    google.platform = google.platform
-  }
-
-  project_id               = var.project_id
-  region                   = var.region
-  env_name                 = var.env_name
-  image                    = local.gateway_image
-  machine_type             = var.gateway_machine_type
-  use_static_ip            = var.gateway_use_static_ip
-  container_port           = 9090
-  service_account_email    = module.service_accounts.accounts["gateway"].email
-  network                  = module.network.network_name
-  subnetwork               = module.network.subnetwork_name
-  cloudsql_connection_name = local.cloudsql_connection_name
-  database_name            = var.database_name
+  project_id                 = var.project_id
+  region                     = var.region
+  env_name                   = var.env_name
+  image                      = local.cloud_run_images["gateway"]
+  container_port             = 9090
+  max_concurrent_connections = local.gateway_max_concurrent_connections
+  request_timeout_sec        = local.gateway_request_timeout_sec
+  resources_limit_cpu        = local.gateway_resources.cpu
+  resources_limit_memory     = local.gateway_resources.memory
+  service_account_email      = module.service_accounts.accounts["gateway"].email
+  network                    = module.network.network_name
+  subnetwork                 = module.network.subnetwork_name
+  cloudsql_connection_name   = local.cloudsql_connection_name
+  database_name              = var.database_name
+  internal_auth_secret_id    = module.internal_auth_secret.secret_id
 
   allowed_origins         = var.gateway_allowed_origins
   battle_service_url      = module.battle.uri
@@ -448,10 +444,6 @@ module "gateway" {
 
   matchmaking_subscription = "matchmaking-events-gateway"
   matchmaking_timeout_sec  = 60
-
-  artifact_registry_project_id    = var.artifact_registry_project_id
-  artifact_registry_location      = var.artifact_registry_location
-  artifact_registry_repository_id = var.artifact_registry_repository_id
 
   depends_on = [module.network.service_networking_connection]
 }
@@ -476,6 +468,7 @@ module "iam_grants" {
 
   ci_deploy_sa_member = local.deploy_sa_member
   cloud_run_runtime_service_account_names = {
+    gateway     = module.service_accounts.accounts["gateway"].name
     account     = module.service_accounts.accounts["account"].name
     card        = module.service_accounts.accounts["card"].name
     shop        = module.service_accounts.accounts["shop"].name
@@ -485,7 +478,4 @@ module "iam_grants" {
     support     = module.service_accounts.accounts["support"].name
     battle      = module.service_accounts.accounts["battle"].name
   }
-
-  gateway_deploy_sa_member             = local.gateway_deploy_sa_member
-  gateway_runtime_service_account_name = module.service_accounts.accounts["gateway"].name
 }

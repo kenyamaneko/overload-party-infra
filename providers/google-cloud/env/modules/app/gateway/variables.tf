@@ -14,18 +14,8 @@ variable "env_name" {
 }
 
 variable "image" {
-  description = "gateway の初期コンテナイメージ (以降の実イメージは CI/CD が新しい instance template を作成して切り替える)"
+  description = "gateway の初期コンテナイメージ (以降の実イメージは CI/CD が revision を作成して切り替える)"
   type        = string
-}
-
-variable "machine_type" {
-  description = "GCE マシンタイプ"
-  type        = string
-}
-
-variable "use_static_ip" {
-  description = "外部静的 IP を予約するか (prod=true、dev/stg=false で ephemeral IP)"
-  type        = bool
 }
 
 variable "container_port" {
@@ -33,8 +23,28 @@ variable "container_port" {
   type        = number
 }
 
+variable "max_concurrent_connections" {
+  description = "1 インスタンスが同時に受ける WebSocket 接続数の上限"
+  type        = number
+}
+
+variable "request_timeout_sec" {
+  description = "リクエストの最大実行時間 (秒)。WebSocket 接続はこの時間で切れる"
+  type        = number
+}
+
+variable "resources_limit_cpu" {
+  description = "コンテナの CPU 上限 (Cloud Run の cpu 表記)"
+  type        = string
+}
+
+variable "resources_limit_memory" {
+  description = "コンテナのメモリ上限 (Cloud Run の memory 表記)"
+  type        = string
+}
+
 variable "service_account_email" {
-  description = "gateway VM 実行用 GSA email"
+  description = "gateway の runtime GSA email"
   type        = string
 }
 
@@ -49,12 +59,17 @@ variable "subnetwork" {
 }
 
 variable "cloudsql_connection_name" {
-  description = "Cloud SQL インスタンスの接続名 (project:region:instance)。cloud-sql-proxy サイドカーに渡す"
+  description = "Cloud SQL インスタンスの接続名 (project:region:instance)"
   type        = string
 }
 
 variable "database_name" {
   description = "接続先 PostgreSQL データベース名"
+  type        = string
+}
+
+variable "internal_auth_secret_id" {
+  description = "内部認証トークンの署名鍵を保持する Secret Manager シークレット ID"
   type        = string
 }
 
@@ -104,26 +119,11 @@ variable "support_service_url" {
 }
 
 variable "matchmaking_subscription" {
-  description = "matchmaking-events の gateway 向け pull subscription 名"
+  description = "matchmaking-events の gateway 向け subscription 名"
   type        = string
 }
 
 variable "matchmaking_timeout_sec" {
   description = "マッチング待機タイムアウト (秒)"
   type        = number
-}
-
-variable "artifact_registry_project_id" {
-  description = "中央 Artifact Registry を保持するプロジェクト ID (keyandnotes-platform)"
-  type        = string
-}
-
-variable "artifact_registry_location" {
-  description = "中央 Artifact Registry のロケーション"
-  type        = string
-}
-
-variable "artifact_registry_repository_id" {
-  description = "中央 Artifact Registry のリポジトリ ID"
-  type        = string
 }

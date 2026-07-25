@@ -10,7 +10,6 @@ resource "google_cloud_run_v2_service" "scenario" {
   location            = var.region
   deletion_protection = false
 
-  # 到達制御は呼び出し IAM (run.invoker) が担うため ingress は公開のままにする。
   ingress = "INGRESS_TRAFFIC_ALL"
 
   lifecycle {
