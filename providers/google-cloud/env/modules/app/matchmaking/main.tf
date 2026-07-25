@@ -44,6 +44,8 @@ resource "google_cloud_run_v2_service" "matchmaking" {
           cpu    = var.resources_limit_cpu
           memory = var.resources_limit_memory
         }
+
+        cpu_idle = true
       }
 
       env {
