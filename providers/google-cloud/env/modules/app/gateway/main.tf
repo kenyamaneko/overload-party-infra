@@ -115,10 +115,6 @@ resource "google_cloud_run_v2_service" "gateway" {
         value = var.project_id
       }
       env {
-        name  = "MATCHMAKING_SUBSCRIPTION"
-        value = var.matchmaking_subscription
-      }
-      env {
         name  = "MATCHMAKING_TIMEOUT_SEC"
         value = tostring(var.matchmaking_timeout_sec)
       }

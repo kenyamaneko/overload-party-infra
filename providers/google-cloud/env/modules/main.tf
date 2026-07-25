@@ -129,10 +129,12 @@ module "pubsub" {
   gateway_service_account_email     = module.service_accounts.accounts["gateway"].email
   scenario_service_account_email    = module.service_accounts.accounts["scenario"].email
   shop_service_account_email        = module.service_accounts.accounts["shop"].email
-  account_service_account_email     = module.service_accounts.accounts["account"].email
-  card_service_account_email        = module.service_accounts.accounts["card"].email
   newsfeed_service_account_email    = module.service_accounts.accounts["newsfeed"].email
-  news_service_account_email        = module.service_accounts.accounts["news"].email
+
+  gateway_service_url = module.gateway.uri
+  account_service_url = module.account.uri
+  card_service_url    = module.card.uri
+  news_service_url    = module.news.uri
 }
 
 module "firestore" {
@@ -247,12 +249,6 @@ module "account" {
   resources_limit_memory   = local.standard_resources[var.env_name].memory
   internal_auth_secret_id  = module.internal_auth_secret.secret_id
 
-  faction_acquired_subscription       = "faction-acquired-account-sub"
-  premium_updated_subscription        = "premium-updated-account-sub"
-  player_onboarded_subscription       = "player-onboarded-account-sub"
-  onboarding_name_set_subscription    = "onboarding-name-set-account-sub"
-  onboarding_faction_set_subscription = "onboarding-faction-set-account-sub"
-
   depends_on = [module.network.service_networking_connection]
 }
 
@@ -273,9 +269,7 @@ module "card" {
   resources_limit_memory   = local.standard_resources[var.env_name].memory
   internal_auth_secret_id  = module.internal_auth_secret.secret_id
 
-  card_pack_purchased_subscription = "card-pack-purchased-card-sub"
-  player_onboarded_subscription    = "player-onboarded-card-sub"
-  account_service_url              = module.account.uri
+  account_service_url = module.account.uri
 
   depends_on = [module.network.service_networking_connection]
 }
@@ -361,8 +355,6 @@ module "news" {
   resources_limit_memory   = local.standard_resources[var.env_name].memory
   internal_auth_secret_id  = module.internal_auth_secret.secret_id
 
-  news_article_collected_subscription = "news-article-collected-news-sub"
-
   depends_on = [module.network.service_networking_connection]
 }
 
@@ -442,8 +434,7 @@ module "gateway" {
   news_service_url        = module.news.uri
   support_service_url     = module.support.uri
 
-  matchmaking_subscription = "matchmaking-events-gateway"
-  matchmaking_timeout_sec  = 60
+  matchmaking_timeout_sec = 60
 
   depends_on = [module.network.service_networking_connection]
 }

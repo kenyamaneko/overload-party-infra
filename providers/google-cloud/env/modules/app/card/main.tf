@@ -74,14 +74,6 @@ resource "google_cloud_run_v2_service" "card" {
         value = var.env_name
       }
       env {
-        name  = "CARD_PACK_PURCHASED_SUBSCRIPTION"
-        value = var.card_pack_purchased_subscription
-      }
-      env {
-        name  = "PLAYER_ONBOARDED_SUBSCRIPTION"
-        value = var.player_onboarded_subscription
-      }
-      env {
         name  = "ACCOUNT_SERVICE_URL"
         value = var.account_service_url
       }

@@ -118,11 +118,6 @@ variable "support_service_url" {
   type        = string
 }
 
-variable "matchmaking_subscription" {
-  description = "matchmaking-events の gateway 向け subscription 名"
-  type        = string
-}
-
 variable "matchmaking_timeout_sec" {
   description = "マッチング待機タイムアウト (秒)"
   type        = number

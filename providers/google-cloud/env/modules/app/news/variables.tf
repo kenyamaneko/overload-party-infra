@@ -63,7 +63,3 @@ variable "internal_auth_secret_id" {
   type        = string
 }
 
-variable "news_article_collected_subscription" {
-  description = "news-article-collected の news 向け pull subscription 名"
-  type        = string
-}

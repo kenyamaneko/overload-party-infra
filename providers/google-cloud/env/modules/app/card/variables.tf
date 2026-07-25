@@ -63,16 +63,6 @@ variable "internal_auth_secret_id" {
   type        = string
 }
 
-variable "card_pack_purchased_subscription" {
-  description = "card-pack-purchased の card 向け pull subscription 名"
-  type        = string
-}
-
-variable "player_onboarded_subscription" {
-  description = "player-onboarded の card 向け pull subscription 名"
-  type        = string
-}
-
 variable "account_service_url" {
   description = "account Cloud Run サービスの URL (デッキのファクション所有検証に使用)"
   type        = string
