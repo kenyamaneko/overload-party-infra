@@ -1,11 +1,5 @@
-# support は internal (9009, gateway 向け) / admin (9109, 運用 UI) / external (9209, 公開問い合わせ
-# フォーム) の 3 ポートを listen するが、Cloud Run が公開ルーティングできるコンテナポートは 1 つのみ。
-# gateway から到達が必要な internal ポートのみを container_port として公開する。
-#
-# admin UI と external フォームは現行 k8s Ingress ではそれぞれ IAP (未導入) / CORS 限定の
-# 別経路で到達可能だが、本 Cloud Run 化ではその到達経路を代替しない (呼び出し IAM は
-# サービス単位でしかスコープできず、フォームだけを未認証で公開する分割ができないため)。
-# 到達経路の再設計は本 Terraform の範囲外の意思決定として別途必要。
+# support は internal (9009, gateway 向け) / admin (9109) / external (9209) の 3 ポートを待ち受けるが、
+# Cloud Run が公開できるコンテナポートは 1 つのみのため、gateway が使う internal のみを公開する。
 
 resource "google_project_service" "run" {
   project            = var.project_id

@@ -1,7 +1,5 @@
-# battle はプレイヤー identity を持たず、到達制御の呼び出し IAM のみを受ける設計のため
-# INTERNAL_AUTH_SECRET を要求しない (実装 (Program.cs) にも参照が無いことを確認済み)。
-# NPC_AI_CONFIG_DIR はイメージの Dockerfile に ENV として焼き込まれているため、ここでは
-# 上書きしない。
+# battle はプレイヤー identity を持たず到達制御の呼び出し IAM のみを受けるため、INTERNAL_AUTH_SECRET を要求しない。
+# NPC_AI_CONFIG_DIR はイメージの Dockerfile に ENV として焼き込まれているため、ここでは上書きしない。
 
 resource "google_project_service" "run" {
   project            = var.project_id

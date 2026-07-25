@@ -1,16 +1,8 @@
-# ──────────────────────────────────────────────
-# API 有効化
-# ──────────────────────────────────────────────
-
 resource "google_project_service" "run" {
   project            = var.project_id
   service            = "run.googleapis.com"
   disable_on_destroy = false
 }
-
-# ──────────────────────────────────────────────
-# Cloud Run v2 サービス
-# ──────────────────────────────────────────────
 
 resource "google_cloud_run_v2_service" "account" {
   name                = "account"
@@ -99,8 +91,7 @@ resource "google_cloud_run_v2_service" "account" {
         name  = "ONBOARDING_FACTION_SET_SUBSCRIPTION"
         value = var.onboarding_faction_set_subscription
       }
-      # account の config.go は "production" | "local" の二値のみを許容する。dev/stg/prod は
-      # いずれもクラウド上の実行のため "production" を用いる ("local" はローカル開発機のみ)。
+      # config.go は "production" | "local" のみ許容するため、クラウド実行では "production" を渡す。
       env {
         name  = "LOG_MODE"
         value = "production"

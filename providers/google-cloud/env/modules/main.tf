@@ -55,17 +55,12 @@ locals {
 
   cloudsql_connection_name = "${var.project_id}:${var.region}:${var.cloudsql_instance_name}"
 
-  # news/support の config.go は "staging" | "production" の二値を要求する。k8s の
-  # 現行運用同様、dev/stg は staging・prod のみ production とする。
+  # news/support の config.go は "staging" | "production" のみ要求するため、dev/stg は staging、prod のみ production とする。
   staging_or_production_env = var.env_name == "prod" ? "production" : "staging"
 
-  # Cloud Run 最大インスタンス数。db-g1-small の上限コネクション数に対し安全側に倒した暫定値だが、
-  # 各サービスの実際の DB 接続プールサイズを掛け合わせた正式なキャパシティプランニングは未実施であり、
-  # この値だけでは枯渇しない保証にはならない。
+  # db-g1-small のコネクション上限に対する安全側の暫定値。実接続数に基づく正式なサイジングではない。
   cloud_run_max_instance_count = 3
 
-  # k8s limits 相当 (dev は小さく、stg/prod は同値)。account/card/shop/scenario/matchmaking/
-  # news/support の 7 サービスは k8s 上で全て同一の値を使っている。
   standard_resources = {
     dev  = { cpu = "100m", memory = "128Mi" }
     stg  = { cpu = "200m", memory = "256Mi" }
@@ -214,10 +209,6 @@ module "e2e" {
   project_id        = var.project_id
   developer_members = var.e2e_developer_members
 }
-
-# ──────────────────────────────────────────────
-# Cloud Run / GCE 移行
-# ──────────────────────────────────────────────
 
 module "internal_auth_secret" {
   source = "./foundation/internal-auth-secret"

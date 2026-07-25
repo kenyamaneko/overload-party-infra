@@ -1,8 +1,4 @@
-# ──────────────────────────────────────────────
-# Support 通知シークレット (Secret Manager)
-# ──────────────────────────────────────────────
-# Secret Manager のシークレット *リソース* のみ作成する。
-# シークレット *バージョン* (実際のクレデンシャル値) は手動で追加する:
+# Secret Manager のシークレットリソースのみ作成する。実値のバージョンは手動で追加する:
 #   gcloud secrets versions add support-slack-bot-token --data-file=- <<< "TOKEN_VALUE"
 
 resource "google_project_service" "secretmanager" {

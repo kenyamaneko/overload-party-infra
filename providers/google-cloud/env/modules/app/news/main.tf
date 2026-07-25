@@ -1,8 +1,5 @@
-# news は internal (9008, gateway 向け) / admin (9108, 運用 UI 向け、IAP 未導入) の
-# 2 ポートを listen するが、Cloud Run が公開ルーティングできるコンテナポートは 1 つのみ。
-# gateway から到達が必要な internal ポートのみを container_port として公開し、admin ポートは
-# Cloud Run の URL からは到達不能のまま (k8s Ingress の IAP 未導入と同じく、運用 UI 経路は
-# 別途の設計判断が必要)。
+# news は internal (9008, gateway 向け) と admin (9108, 運用 UI) の 2 ポートを待ち受けるが、
+# Cloud Run が公開できるコンテナポートは 1 つのみのため、gateway が使う internal のみを公開する。
 
 resource "google_project_service" "run" {
   project            = var.project_id

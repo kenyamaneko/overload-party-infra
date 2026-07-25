@@ -57,7 +57,6 @@ module "env" {
   enable_e2e            = false
   e2e_developer_members = []
 
-  # gateway (GCE MIG)。prod のみ静的 IP + autohealing。
   gateway_machine_type    = "e2-small"
   gateway_use_static_ip   = true
   gateway_allowed_origins = "https://overloadparty-prod.keyandnotes.com,capacitor://localhost,http://localhost"
@@ -69,7 +68,6 @@ module "env" {
   support_sendgrid_from_address = "support@keyandnotes.com"
   support_sendgrid_from_name    = "Overload Party Support"
 
-  # 中央 Artifact Registry (keyandnotes-platform)。全 env 共通。
   artifact_registry_project_id    = "keyandnotes-platform"
   artifact_registry_location      = "asia-northeast1"
   artifact_registry_repository_id = "overload-party"

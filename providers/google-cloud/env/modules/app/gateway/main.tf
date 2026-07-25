@@ -1,11 +1,8 @@
 # gateway は WebSocket 接続とゲーム進行のインメモリ状態を持つ唯一のコンポーネントのため、
 # Cloud Run ではなく GCE の Managed Instance Group で常時起動する。
-#
-# Cloud SQL 接続は Cloud Run の built-in connector に相当する機構が GCE には無いため、
-# k8s の cloud-sql-proxy サイドカーと同じ構成 (--auto-iam-authn でこのサービス自身の
-# runtime SA を使う) を、konlet のマルチコンテナ宣言でそのまま再現する。gateway の VM は
-# Cloud SQL と同一プロジェクトの VPC 上で稼働するため、GKE 側で必要だった PSC 越しの接続は
-# 不要 (同一 VPC の private IP に直接到達できる)。
+# GCE には Cloud Run の built-in Cloud SQL connector が無いため、cloud-sql-proxy を konlet の
+# マルチコンテナ宣言で併走させる (--auto-iam-authn で自身の runtime SA を使う)。VM は Cloud SQL と
+# 同一 VPC 上で稼働するため private IP に直接到達でき、PSC 越しの接続は要らない。
 
 terraform {
   required_providers {
@@ -22,10 +19,6 @@ resource "google_project_service" "compute" {
   disable_on_destroy = false
 }
 
-# ──────────────────────────────────────────────
-# 静的 IP (prod のみ)
-# ──────────────────────────────────────────────
-
 resource "google_compute_address" "gateway_static" {
   count = var.use_static_ip ? 1 : 0
 
@@ -34,10 +27,6 @@ resource "google_compute_address" "gateway_static" {
   region       = var.region
   address_type = "EXTERNAL"
 }
-
-# ──────────────────────────────────────────────
-# ファイアウォール
-# ──────────────────────────────────────────────
 
 resource "google_compute_firewall" "gateway_health_check" {
   name    = "gateway-allow-health-check"
@@ -69,10 +58,6 @@ resource "google_compute_firewall" "gateway_public" {
   }
 }
 
-# ──────────────────────────────────────────────
-# コンテナ宣言 (COS + konlet, マルチコンテナ)
-# ──────────────────────────────────────────────
-
 locals {
   gateway_env = [
     { name = "PORT", value = tostring(var.container_port) },
@@ -90,8 +75,6 @@ locals {
     { name = "GOOGLE_CLOUD_PROJECT_ID", value = var.project_id },
     { name = "MATCHMAKING_SUBSCRIPTION", value = var.matchmaking_subscription },
     { name = "MATCHMAKING_TIMEOUT_SEC", value = tostring(var.matchmaking_timeout_sec) },
-    # INTERNAL_AUTH_SECRET は未設定 (open question として報告: 静的な konlet コンテナ宣言には
-    # Cloud Run の secret_key_ref に相当する動的注入手段が無い)。
   ]
 
   container_declaration = {
@@ -125,9 +108,6 @@ locals {
   }
 }
 
-# ──────────────────────────────────────────────
-# ベース instance template
-# ──────────────────────────────────────────────
 # CI の create-versioner がこの template を describe → 複製し、image タグだけ差し替えた
 # 新しい template を作成した上で MIG のバージョンをローリング更新する (このリソース自体は
 # CI からミューテートされない)。
@@ -179,10 +159,6 @@ resource "google_compute_instance_template" "gateway" {
   }
 }
 
-# ──────────────────────────────────────────────
-# ヘルスチェック (autohealing)
-# ──────────────────────────────────────────────
-
 resource "google_compute_health_check" "gateway" {
   name    = "gateway-autoheal"
   project = var.project_id
@@ -199,10 +175,6 @@ resource "google_compute_health_check" "gateway" {
     request_path = "/health"
   }
 }
-
-# ──────────────────────────────────────────────
-# Managed Instance Group (単一インスタンス + autohealing)
-# ──────────────────────────────────────────────
 
 resource "google_compute_region_instance_group_manager" "gateway" {
   name               = "gateway-mig"
@@ -233,9 +205,6 @@ resource "google_compute_region_instance_group_manager" "gateway" {
   }
 }
 
-# ──────────────────────────────────────────────
-# 中央 Artifact Registry からの image pull 権限
-# ──────────────────────────────────────────────
 # Cloud Run 8 サービス分は keyandnotes-platform 側の cloudrun_consumer_project_numbers
 # (Cloud Run service agent 経由) で既に付与済みだが、GCE VM のイメージ pull は VM 自身の
 # runtime SA の資格情報で行われるため、gateway の runtime SA に対して個別に付与する。

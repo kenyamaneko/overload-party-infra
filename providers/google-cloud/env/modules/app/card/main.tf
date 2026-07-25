@@ -69,8 +69,7 @@ resource "google_cloud_run_v2_service" "card" {
         name  = "GOOGLE_CLOUD_PROJECT_ID"
         value = var.project_id
       }
-      # k8s では metadata.namespace (例: overload-party-dev) を fieldRef で渡していたが、
-      # card の config.go は "dev" | "stg" | "prod" の短い値しか許容しないため env_name をそのまま渡す。
+      # config.go は "dev" | "stg" | "prod" の短い値のみ許容するため、env_name をそのまま渡す。
       env {
         name  = "ENV"
         value = var.env_name

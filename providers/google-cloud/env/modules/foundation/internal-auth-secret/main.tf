@@ -1,11 +1,5 @@
-# ──────────────────────────────────────────────
-# 内部認証共有鍵 (HS256) の Secret Manager シークレット
-# ──────────────────────────────────────────────
-# Terraform が作るのは 枠 のみ。バージョン (実値) は手動で追加する:
+# Terraform はシークレットのリソースのみ作成する。実値のバージョンは手動で追加する:
 #   gcloud secrets versions add internal-auth-secret --project <project_id> --data-file=- <<< "<secret>"
-#
-# 利用者 identity 伝播は引き続きこの共有鍵で行う。署名方式を非対称鍵へ置き換える再設計は
-# 別ワークストリームで進行中のため、本 module は既存 HS256 鍵を Secret Manager 化するに留める。
 
 resource "google_project_service" "secretmanager" {
   project            = var.project_id

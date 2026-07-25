@@ -58,7 +58,6 @@ module "env" {
   enable_e2e            = true
   e2e_developer_members = ["user:kenya.m.amaoto@gmail.com"]
 
-  # gateway (GCE MIG)。dev/stg は ephemeral IP、prod のみ静的 IP。
   gateway_machine_type    = "e2-small"
   gateway_use_static_ip   = false
   gateway_allowed_origins = "https://overloadparty-stg.keyandnotes.com,capacitor://localhost,http://localhost"
@@ -70,7 +69,6 @@ module "env" {
   support_sendgrid_from_address = "support-stg@keyandnotes.com"
   support_sendgrid_from_name    = "Overload Party Support (stg)"
 
-  # 中央 Artifact Registry (keyandnotes-platform)。全 env 共通。
   artifact_registry_project_id    = "keyandnotes-platform"
   artifact_registry_location      = "asia-northeast1"
   artifact_registry_repository_id = "overload-party"

@@ -1,15 +1,7 @@
-# ──────────────────────────────────────────────
-# 到達制御: Cloud Run 呼び出し IAM
-# ──────────────────────────────────────────────
 # スター型トポロジ (gateway → 各サービス) のため付与は線形。battle も対象に含む。
-# 同期のサービス間呼び出し (battle→card, card→account) は各サービス自身の runtime SA
-# ではなく HTTP 経由なので、呼び出し先の invoker 対象は gateway に限定する
-# (card→account, battle→card は当面 IAM 保護の対象外 = 同一トラストゾーン内の直接呼び出しとして扱う。
-# 呼び出し元を絞る場合は該当サービスの runtime SA にも invoker を追加する)。
-#
-# Pub/Sub の pull→push 化は別ワークストリームで未着手のため、push 購読が実在しない現時点では
-# push 用 SA への invoker 付与を行わない。push_config 追加時にその
-# oidc_token.service_account_email へ同様の run.invoker を付与すること。
+# サービス間の同期呼び出し (battle→card, card→account) は HTTP 経由で各サービスの runtime SA を
+# 使わないため、invoker 対象は gateway に限定する (card→account, battle→card は同一トラストゾーン内の
+# 直接呼び出しのため IAM 保護の対象外)。
 
 resource "google_cloud_run_v2_service_iam_member" "gateway_invoker" {
   for_each = var.cloud_run_service_names
@@ -21,11 +13,7 @@ resource "google_cloud_run_v2_service_iam_member" "gateway_invoker" {
   member   = "serviceAccount:${var.gateway_service_account_email}"
 }
 
-# ──────────────────────────────────────────────
-# CI デプロイ SA: Cloud Run へのイメージ更新権限。config は Terraform が所有し、
-# CI は image のみ更新する。
-# ──────────────────────────────────────────────
-
+# config は Terraform が所有し、CI は image のみ更新する。
 resource "google_project_iam_member" "ci_cloudrun_developer" {
   project = var.project_id
   role    = "roles/run.developer"
@@ -39,10 +27,6 @@ resource "google_service_account_iam_member" "ci_cloudrun_runtime_sa_user" {
   role               = "roles/iam.serviceAccountUser"
   member             = var.ci_deploy_sa_member
 }
-
-# ──────────────────────────────────────────────
-# gateway デプロイ SA: instance template 作成 + MIG ローリング更新権限
-# ──────────────────────────────────────────────
 
 resource "google_project_iam_member" "gateway_deploy_compute_admin" {
   project = var.project_id
