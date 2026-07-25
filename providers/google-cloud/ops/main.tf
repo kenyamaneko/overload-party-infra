@@ -136,6 +136,10 @@ module "ci_cd" {
     "overload-party-k8s",
   ]
 
+  gateway_deployer_wif_repositories = [
+    "overload-party-gateway",
+  ]
+
   cloudsql_operator_wif_repositories = [
     "overload-party-infra",
   ]

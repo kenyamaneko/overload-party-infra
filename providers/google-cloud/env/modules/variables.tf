@@ -113,3 +113,62 @@ variable "e2e_developer_members" {
   description = "E2E secret への secretAccessor を付与する開発者 IAM member (例: user:foo@example.com)"
   type        = list(string)
 }
+
+# ──────────────────────────────────────────────
+# Cloud Run / GCE 移行
+# ──────────────────────────────────────────────
+
+variable "gateway_machine_type" {
+  description = "gateway GCE インスタンスのマシンタイプ"
+  type        = string
+}
+
+variable "gateway_use_static_ip" {
+  description = "gateway に外部静的 IP を割り当てるか (prod=true、dev/stg=false)"
+  type        = bool
+}
+
+variable "gateway_allowed_origins" {
+  description = "gateway の CORS 許可オリジン (カンマ区切り)"
+  type        = string
+}
+
+variable "shop_apple_environment" {
+  description = "shop の Apple IAP 検証環境 (\"Sandbox\" | \"Production\")。prod のみ Production"
+  type        = string
+}
+
+variable "support_cors_allowed_origins" {
+  description = "support 外部問い合わせフォームの CORS 許可オリジン"
+  type        = string
+}
+
+variable "support_slack_channel_id" {
+  description = "support の問い合わせ通知先 Slack チャンネル ID"
+  type        = string
+}
+
+variable "support_sendgrid_from_address" {
+  description = "support の問い合わせ返信メール送信元アドレス"
+  type        = string
+}
+
+variable "support_sendgrid_from_name" {
+  description = "support の問い合わせ返信メール送信者表示名"
+  type        = string
+}
+
+variable "artifact_registry_project_id" {
+  description = "中央 Artifact Registry を保持するプロジェクト ID"
+  type        = string
+}
+
+variable "artifact_registry_location" {
+  description = "中央 Artifact Registry のロケーション"
+  type        = string
+}
+
+variable "artifact_registry_repository_id" {
+  description = "中央 Artifact Registry のリポジトリ ID"
+  type        = string
+}
