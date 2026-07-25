@@ -1,7 +1,3 @@
-# WebSocket 接続は実行中のリクエストとして扱われ、接続を持つインスタンスは回収されないため
-# 最小インスタンス数 0 で運用できる。接続レジストリ・再接続猶予・対戦ごとのタイマーは単一プロセスに
-# 閉じており、Cloud Run には接続を特定のインスタンスへ寄せる手段が無いため最大インスタンス数を 1 に固定する。
-
 resource "google_project_service" "run" {
   project            = var.project_id
   service            = "run.googleapis.com"
@@ -14,7 +10,6 @@ resource "google_cloud_run_v2_service" "gateway" {
   location            = var.region
   deletion_protection = false
 
-  # 外部からの唯一の入口として Cloudflare から直接受けるため公開 ingress にする。
   ingress = "INGRESS_TRAFFIC_ALL"
 
   lifecycle {
@@ -31,10 +26,8 @@ resource "google_cloud_run_v2_service" "gateway" {
       max_instance_count = 1
     }
 
-    # WebSocket 接続 1 本が同時実行数を 1 消費する。
     max_instance_request_concurrency = var.max_concurrent_connections
 
-    # 接続はこの時間で切れ、クライアントの自動再接続と対戦への復帰で回復する。
     timeout = "${var.request_timeout_sec}s"
 
     vpc_access {
@@ -65,7 +58,6 @@ resource "google_cloud_run_v2_service" "gateway" {
           memory = var.resources_limit_memory
         }
 
-        # CPU を常時割り当てるとゼロスケールの利点が消えるため、リクエスト処理中のみ割り当てる。
         cpu_idle = true
       }
 
@@ -140,7 +132,6 @@ resource "google_cloud_run_v2_service" "gateway" {
         }
       }
 
-      # 起動時に DB プールの確立と Firestore の game_config 読み込みを行うため、他サービスより長い猶予を取る。
       startup_probe {
         http_get {
           path = "/health"
@@ -148,7 +139,7 @@ resource "google_cloud_run_v2_service" "gateway" {
         }
         initial_delay_seconds = 5
         period_seconds        = 10
-        failure_threshold     = 6
+        failure_threshold     = 3
       }
 
       liveness_probe {
