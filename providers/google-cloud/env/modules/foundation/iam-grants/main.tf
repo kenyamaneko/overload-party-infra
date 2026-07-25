@@ -27,15 +27,3 @@ resource "google_service_account_iam_member" "ci_cloudrun_runtime_sa_user" {
   role               = "roles/iam.serviceAccountUser"
   member             = var.ci_deploy_sa_member
 }
-
-resource "google_project_iam_member" "gateway_deploy_compute_admin" {
-  project = var.project_id
-  role    = "roles/compute.instanceAdmin.v1"
-  member  = var.gateway_deploy_sa_member
-}
-
-resource "google_service_account_iam_member" "gateway_deploy_runtime_sa_user" {
-  service_account_id = var.gateway_runtime_service_account_name
-  role               = "roles/iam.serviceAccountUser"
-  member             = var.gateway_deploy_sa_member
-}

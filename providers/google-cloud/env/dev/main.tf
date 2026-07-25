@@ -58,8 +58,6 @@ module "env" {
   enable_e2e            = true
   e2e_developer_members = ["user:kenya.m.amaoto@gmail.com"]
 
-  gateway_machine_type    = "e2-small"
-  gateway_use_static_ip   = false
   gateway_allowed_origins = "http://localhost:3000,capacitor://localhost,http://localhost"
 
   shop_apple_environment = "Sandbox"
@@ -68,9 +66,5 @@ module "env" {
   support_slack_channel_id      = "CHANGEME_DEV_SUPPORT_CHANNEL"
   support_sendgrid_from_address = "support-dev@keyandnotes.com"
   support_sendgrid_from_name    = "Overload Party Support (dev)"
-
-  artifact_registry_project_id    = "keyandnotes-platform"
-  artifact_registry_location      = "asia-northeast1"
-  artifact_registry_repository_id = "overload-party"
 }
 
