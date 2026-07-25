@@ -56,6 +56,8 @@ resource "google_cloud_run_v2_service" "support" {
           cpu    = var.resources_limit_cpu
           memory = var.resources_limit_memory
         }
+
+        cpu_idle = true
       }
 
       volume_mounts {
