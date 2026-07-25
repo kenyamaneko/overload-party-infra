@@ -457,6 +457,16 @@ module "iam_grants" {
   }
   gateway_service_account_email = module.service_accounts.accounts["gateway"].email
 
+  gateway_cloud_run_service_name = "gateway"
+
+  push_service_account_email = module.pubsub.push_service_account_email
+  push_target_cloud_run_service_names = {
+    account = "account"
+    card    = "card"
+    news    = "news"
+    gateway = "gateway"
+  }
+
   ci_deploy_sa_member = local.deploy_sa_member
   cloud_run_runtime_service_account_names = {
     gateway     = module.service_accounts.accounts["gateway"].name
