@@ -76,12 +76,13 @@ jobs:
 
       - name: Terraform Init
         working-directory: providers/${{ matrix.path }}
-        run: terraform init
+        run: terraform init -input=false
 
       - name: Terraform Plan
         id: plan
         working-directory: providers/${{ matrix.path }}
-        run: terraform plan -no-color -out=tfplan 2>&1 | tee plan.txt
+        shell: bash
+        run: terraform plan -input=false -no-color -out=tfplan 2>&1 | tee plan.txt
         env:
           TF_VAR_cloudflare_cdn_api_token: ${{ secrets.CLOUDFLARE_CDN_API_TOKEN }}
           TF_VAR_upstash_email: ${{ vars.UPSTASH_EMAIL }}
@@ -118,11 +119,11 @@ jobs:
 
       - name: Terraform Init
         working-directory: providers/${{ inputs.path }}
-        run: terraform init
+        run: terraform init -input=false
 
       - name: Terraform Apply
         working-directory: providers/${{ inputs.path }}
-        run: terraform apply -auto-approve
+        run: terraform apply -input=false -auto-approve
         env:
           TF_VAR_cloudflare_cdn_api_token: ${{ secrets.CLOUDFLARE_CDN_API_TOKEN }}
           TF_VAR_upstash_email: ${{ vars.UPSTASH_EMAIL }}
