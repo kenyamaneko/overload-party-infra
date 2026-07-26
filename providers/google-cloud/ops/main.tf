@@ -37,6 +37,9 @@ locals {
     "overload-party-dev",
     "overload-party-stg",
   ]
+
+  workload_identity_pool_name     = "projects/248288258659/locations/global/workloadIdentityPools/github-actions"
+  workload_identity_pool_name_new = "projects/1017837997433/locations/global/workloadIdentityPools/github-actions"
 }
 
 provider "google" {
@@ -118,18 +121,20 @@ module "gke_nodepools" {
 module "node_pool_scaler" {
   source = "./modules/node-pool-scaler"
 
-  ops_project_id              = local.project_id
-  github_owner                = "kenyamaneko"
-  github_repository           = "overload-party-infra"
-  workload_identity_pool_name = "projects/248288258659/locations/global/workloadIdentityPools/github-actions"
+  ops_project_id                  = local.project_id
+  github_owner                    = "kenyamaneko"
+  github_repository               = "overload-party-infra"
+  workload_identity_pool_name     = local.workload_identity_pool_name
+  workload_identity_pool_name_new = local.workload_identity_pool_name_new
 }
 
 module "ci_cd" {
   source = "./modules/ci-cd"
 
-  project_id                  = local.project_id
-  github_owner                = "kenyamaneko"
-  workload_identity_pool_name = "projects/248288258659/locations/global/workloadIdentityPools/github-actions"
+  project_id                      = local.project_id
+  github_owner                    = "kenyamaneko"
+  workload_identity_pool_name     = local.workload_identity_pool_name
+  workload_identity_pool_name_new = local.workload_identity_pool_name_new
 
   ci_wif_repositories = [
     "overload-party-account",

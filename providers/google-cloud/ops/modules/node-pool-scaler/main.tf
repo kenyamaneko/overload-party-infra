@@ -13,3 +13,9 @@ resource "google_service_account_iam_member" "wif" {
   role               = "roles/iam.workloadIdentityUser"
   member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${var.github_repository}"
 }
+
+resource "google_service_account_iam_member" "wif_new" {
+  service_account_id = google_service_account.node_pool_scaler.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name_new}/attribute.repository/${var.github_owner}/${var.github_repository}"
+}

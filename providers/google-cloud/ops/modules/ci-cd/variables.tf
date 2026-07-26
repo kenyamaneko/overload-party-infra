@@ -9,7 +9,12 @@ variable "github_owner" {
 }
 
 variable "workload_identity_pool_name" {
-  description = "Workload Identity Pool のフル名（projects/<num>/locations/global/workloadIdentityPools/<id>）。pool 自体は keyandnotes-platform が所有するため cross-project で参照する"
+  description = "旧 Workload Identity Pool のフル名（projects/<num>/locations/global/workloadIdentityPools/<id>）。keyandnotes-platform が所有するため cross-project で参照する"
+  type        = string
+}
+
+variable "workload_identity_pool_name_new" {
+  description = "新 Workload Identity Pool のフル名（projects/<num>/locations/global/workloadIdentityPools/<id>）。overload-party-ops が所有する"
   type        = string
 }
 

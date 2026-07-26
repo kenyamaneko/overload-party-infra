@@ -27,6 +27,13 @@ resource "google_service_account_iam_member" "ci_wif" {
   member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${each.value}"
 }
 
+resource "google_service_account_iam_member" "ci_wif_new" {
+  for_each           = toset(var.ci_wif_repositories)
+  service_account_id = google_service_account.ci.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name_new}/attribute.repository/${var.github_owner}/${each.value}"
+}
+
 resource "google_service_account" "terraform_deployer" {
   project      = var.project_id
   account_id   = "terraform-deployer"
@@ -38,6 +45,13 @@ resource "google_service_account_iam_member" "terraform_deployer_wif" {
   service_account_id = google_service_account.terraform_deployer.name
   role               = "roles/iam.workloadIdentityUser"
   member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${each.value}"
+}
+
+resource "google_service_account_iam_member" "terraform_deployer_wif_new" {
+  for_each           = toset(var.terraform_deployer_wif_repositories)
+  service_account_id = google_service_account.terraform_deployer.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name_new}/attribute.repository/${var.github_owner}/${each.value}"
 }
 
 resource "google_service_account" "gke_deployer" {
@@ -53,6 +67,13 @@ resource "google_service_account_iam_member" "gke_deployer_wif" {
   member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${each.value}"
 }
 
+resource "google_service_account_iam_member" "gke_deployer_wif_new" {
+  for_each           = toset(var.gke_deployer_wif_repositories)
+  service_account_id = google_service_account.gke_deployer.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name_new}/attribute.repository/${var.github_owner}/${each.value}"
+}
+
 resource "google_service_account" "cloudsql_operator" {
   project      = var.project_id
   account_id   = "gh-cloudsql-operator"
@@ -64,6 +85,13 @@ resource "google_service_account_iam_member" "cloudsql_operator_wif" {
   service_account_id = google_service_account.cloudsql_operator.name
   role               = "roles/iam.workloadIdentityUser"
   member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${each.value}"
+}
+
+resource "google_service_account_iam_member" "cloudsql_operator_wif_new" {
+  for_each           = toset(var.cloudsql_operator_wif_repositories)
+  service_account_id = google_service_account.cloudsql_operator.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name_new}/attribute.repository/${var.github_owner}/${each.value}"
 }
 
 # DB マイグレーション専用 SA。github-ci と分けるのは、汎用 CI に DB 起動停止権限
@@ -79,6 +107,13 @@ resource "google_service_account_iam_member" "db_migrator_wif" {
   service_account_id = google_service_account.db_migrator.name
   role               = "roles/iam.workloadIdentityUser"
   member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${each.value}"
+}
+
+resource "google_service_account_iam_member" "db_migrator_wif_new" {
+  for_each           = toset(var.db_migrator_wif_repositories)
+  service_account_id = google_service_account.db_migrator.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name_new}/attribute.repository/${var.github_owner}/${each.value}"
 }
 
 resource "google_project_iam_member" "ci_analytics_deploy_cloudfunctions" {
@@ -155,6 +190,14 @@ resource "google_project_iam_member" "terraform_project_iam_admin" {
 resource "google_project_iam_member" "terraform_service_account_admin" {
   project = var.project_id
   role    = "roles/iam.serviceAccountAdmin"
+  member  = "serviceAccount:${google_service_account.terraform_deployer.email}"
+}
+
+# roles/editor は artifactregistry の repository に対する setIamPolicy を含まないため、
+# Artifact Registry リソースの IAM binding を terraform が書き込めない (pubsub / secretmanager と同じ制約)。
+resource "google_project_iam_member" "terraform_artifactregistry_admin" {
+  project = var.project_id
+  role    = "roles/artifactregistry.admin"
   member  = "serviceAccount:${google_service_account.terraform_deployer.email}"
 }
 
