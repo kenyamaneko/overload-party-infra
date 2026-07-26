@@ -1,5 +1,5 @@
 locals {
-  # push_endpoint を持つ購読は Cloud Run の受け口へ push 配信する。持たない購読は購読プロセスが存在しないため pull のまま残す。
+  # 購読プロセスを常駐させずに済ませるため、購読は Cloud Run の受け口への push 配信にする。
   topics = {
     matchmaking_events = {
       topic_name   = "matchmaking-events"
@@ -21,7 +21,6 @@ locals {
           sa_email      = null
           push_endpoint = "${var.account_service_url}/internal/v1/pubsub/faction-acquired"
         }
-        gateway = { sub_name = "faction-acquired-gateway-sub", sa_email = var.gateway_service_account_email, push_endpoint = null }
       }
     }
     card_pack_purchased = {
@@ -33,7 +32,6 @@ locals {
           sa_email      = null
           push_endpoint = "${var.card_service_url}/internal/v1/pubsub/card-pack-purchased"
         }
-        gateway = { sub_name = "card-pack-purchased-gateway-sub", sa_email = var.gateway_service_account_email, push_endpoint = null }
       }
     }
     premium_updated = {
