@@ -22,15 +22,21 @@ locals {
     prod = { subdomain = "overload-party-assets-prod" }
   }
 
-  api_records = {
-    dev  = { name = "overloadparty-dev" }
-    stg  = { name = "overloadparty-stg" }
-    prod = { name = "overloadparty-prod" }
+  # 利用者に見えるレコードの役割で識別できるようにするため、キーはサービス名でなく役割で付ける。
+  app_records = {
+    "api-dev"      = { name = "overloadparty-dev", target = var.app_hostnames["gateway"]["dev"] }
+    "api-stg"      = { name = "overloadparty-stg", target = var.app_hostnames["gateway"]["stg"] }
+    "api-prod"     = { name = "overloadparty-prod", target = var.app_hostnames["gateway"]["prod"] }
+    "admin-dev"    = { name = "overloadparty-admin-dev", target = var.app_hostnames["news"]["dev"] }
+    "admin-stg"    = { name = "overloadparty-admin-stg", target = var.app_hostnames["news"]["stg"] }
+    "admin-prod"   = { name = "overloadparty-admin-prod", target = var.app_hostnames["news"]["prod"] }
+    "support-dev"  = { name = "overloadparty-support-dev", target = var.app_hostnames["support"]["dev"] }
+    "support-stg"  = { name = "overloadparty-support-stg", target = var.app_hostnames["support"]["stg"] }
+    "support-prod" = { name = "overloadparty-support-prod", target = var.app_hostnames["support"]["prod"] }
   }
 }
 
 # ──────────────────────────────────────────────
-# DNS -- CNAME レコード (アセット CDN)
 # GCS は IP を固定していないため A レコードは使えない。CNAME で c.storage.googleapis.com に向ける必要がある。
 # ──────────────────────────────────────────────
 
@@ -45,22 +51,30 @@ resource "cloudflare_record" "assets" {
 }
 
 # ──────────────────────────────────────────────
-# DNS -- A レコード (API サーバー)
+# Cloud Run はホスト名で公開されるため、CNAME で参照する。
 # ──────────────────────────────────────────────
 
-resource "cloudflare_record" "api" {
-  for_each = local.api_records
+resource "cloudflare_record" "app" {
+  for_each = local.app_records
 
   zone_id = local.zone_id
   name    = each.value.name
-  content = "127.0.0.1"
-  type    = "A"
-  # Cloudflare は proxied=true に対して 127.0.0.1 のような非 proxiable な IP を拒否する (API error 9003) ため、
-  # 初期値は false。env-lifecycle.yaml の up 時に実 IP + proxied=true に書き換えられる。
-  proxied = false
+  content = each.value.target
+  type    = "CNAME"
+  proxied = true
+}
 
-  # CI (env-lifecycle.yaml) が Ingress IP / proxied を動的に書き換えるため lifecycle を無視する
-  lifecycle {
-    ignore_changes = [content, proxied]
-  }
+moved {
+  from = cloudflare_record.api["dev"]
+  to   = cloudflare_record.app["api-dev"]
+}
+
+moved {
+  from = cloudflare_record.api["stg"]
+  to   = cloudflare_record.app["api-stg"]
+}
+
+moved {
+  from = cloudflare_record.api["prod"]
+  to   = cloudflare_record.app["api-prod"]
 }
