@@ -24,7 +24,9 @@ on:
 
 concurrency:
   group: terraform-${{ github.event_name }}-${{ github.ref }}-${{ inputs.path || 'pr' }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  # 実行中の terraform をキャンセルすると state ロックを掴んだまま停止し、以降の plan が
+  # すべてロック競合で失敗するため、完了を待つ
+  cancel-in-progress: false
 
 permissions:
   contents: read
