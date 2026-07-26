@@ -60,7 +60,7 @@ module "env" {
 
   gateway_allowed_origins = "https://overloadparty-stg.keyandnotes.com,capacitor://localhost,http://localhost"
 
-  # 通知チャンネルの作成手順は infra#79 を参照する (state に秘密情報を持ち込まないため Terraform ではなく Cloud Monitoring 上で作る)
+  # state に秘密情報を持ち込まないため、通知チャンネルは Terraform でなく Cloud Monitoring 上で作る (infra#79)
   gateway_alert_notification_channel_ids = []
 
   shop_apple_environment = "Sandbox"
