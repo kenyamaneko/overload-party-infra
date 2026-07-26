@@ -12,7 +12,15 @@ locals {
   project_id = "overload-party-ops"
   region     = "asia-northeast1"
 
-  deploy_sa_member = "serviceAccount:github-ci@overload-party-ops.iam.gserviceaccount.com"
+  deploy_sa_member      = "serviceAccount:github-ci@overload-party-ops.iam.gserviceaccount.com"
+  db_migrator_sa_member = "serviceAccount:gh-db-migrator@overload-party-ops.iam.gserviceaccount.com"
+
+  artifact_registry_cloudrun_consumer_project_numbers = {
+    dev  = "346314225010"
+    stg  = "352552278611"
+    prod = "555166780133"
+    ops  = "1017837997433"
+  }
 
   cost_monitored_projects = [
     "overload-party-dev",
@@ -40,6 +48,21 @@ module "shared" {
   source = "./modules/shared"
 
   project_id = local.project_id
+}
+
+module "artifact_registry" {
+  source = "./modules/artifact-registry"
+
+  project_id    = local.project_id
+  region        = local.region
+  repository_id = "overload-party"
+
+  cloudrun_consumer_project_numbers = local.artifact_registry_cloudrun_consumer_project_numbers
+
+  writer_members = [
+    local.deploy_sa_member,
+    local.db_migrator_sa_member,
+  ]
 }
 
 module "cost_monitor" {
