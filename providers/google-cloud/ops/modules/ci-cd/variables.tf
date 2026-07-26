@@ -8,9 +8,9 @@ variable "github_owner" {
   type        = string
 }
 
-variable "workload_identity_pool_name" {
-  description = "Workload Identity Pool のフル名（projects/<num>/locations/global/workloadIdentityPools/<id>）。pool 自体は keyandnotes-platform が所有するため cross-project で参照する"
-  type        = string
+variable "workload_identity_pool_names" {
+  description = "なりすましを許可する Workload Identity Pool のフル名（projects/<num>/locations/global/workloadIdentityPools/<id>）一覧"
+  type        = list(string)
 }
 
 variable "ci_wif_repositories" {

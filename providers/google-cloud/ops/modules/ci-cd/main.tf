@@ -1,3 +1,28 @@
+locals {
+  # for_each は map か set(string) しか受け付けず、setproduct が返す list(list) を
+  # 直接渡せないため、pool と repository の組を一意なキーにした map に変換する。
+  ci_wif_bindings = {
+    for pair in setproduct(var.workload_identity_pool_names, var.ci_wif_repositories) :
+    "${pair[0]}/${pair[1]}" => { pool = pair[0], repository = pair[1] }
+  }
+  terraform_deployer_wif_bindings = {
+    for pair in setproduct(var.workload_identity_pool_names, var.terraform_deployer_wif_repositories) :
+    "${pair[0]}/${pair[1]}" => { pool = pair[0], repository = pair[1] }
+  }
+  gke_deployer_wif_bindings = {
+    for pair in setproduct(var.workload_identity_pool_names, var.gke_deployer_wif_repositories) :
+    "${pair[0]}/${pair[1]}" => { pool = pair[0], repository = pair[1] }
+  }
+  cloudsql_operator_wif_bindings = {
+    for pair in setproduct(var.workload_identity_pool_names, var.cloudsql_operator_wif_repositories) :
+    "${pair[0]}/${pair[1]}" => { pool = pair[0], repository = pair[1] }
+  }
+  db_migrator_wif_bindings = {
+    for pair in setproduct(var.workload_identity_pool_names, var.db_migrator_wif_repositories) :
+    "${pair[0]}/${pair[1]}" => { pool = pair[0], repository = pair[1] }
+  }
+}
+
 # SA を保持するプロジェクトでは、SA を quota project として API 呼び出しを行う際に
 # IAM API と Cloud Resource Manager API が enabled である必要がある。
 resource "google_project_service" "iam" {
@@ -21,10 +46,10 @@ resource "google_service_account" "ci" {
 }
 
 resource "google_service_account_iam_member" "ci_wif" {
-  for_each           = toset(var.ci_wif_repositories)
+  for_each           = local.ci_wif_bindings
   service_account_id = google_service_account.ci.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${each.value}"
+  member             = "principalSet://iam.googleapis.com/${each.value.pool}/attribute.repository/${var.github_owner}/${each.value.repository}"
 }
 
 resource "google_service_account" "terraform_deployer" {
@@ -34,10 +59,10 @@ resource "google_service_account" "terraform_deployer" {
 }
 
 resource "google_service_account_iam_member" "terraform_deployer_wif" {
-  for_each           = toset(var.terraform_deployer_wif_repositories)
+  for_each           = local.terraform_deployer_wif_bindings
   service_account_id = google_service_account.terraform_deployer.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${each.value}"
+  member             = "principalSet://iam.googleapis.com/${each.value.pool}/attribute.repository/${var.github_owner}/${each.value.repository}"
 }
 
 resource "google_service_account" "gke_deployer" {
@@ -47,10 +72,10 @@ resource "google_service_account" "gke_deployer" {
 }
 
 resource "google_service_account_iam_member" "gke_deployer_wif" {
-  for_each           = toset(var.gke_deployer_wif_repositories)
+  for_each           = local.gke_deployer_wif_bindings
   service_account_id = google_service_account.gke_deployer.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${each.value}"
+  member             = "principalSet://iam.googleapis.com/${each.value.pool}/attribute.repository/${var.github_owner}/${each.value.repository}"
 }
 
 resource "google_service_account" "cloudsql_operator" {
@@ -60,10 +85,10 @@ resource "google_service_account" "cloudsql_operator" {
 }
 
 resource "google_service_account_iam_member" "cloudsql_operator_wif" {
-  for_each           = toset(var.cloudsql_operator_wif_repositories)
+  for_each           = local.cloudsql_operator_wif_bindings
   service_account_id = google_service_account.cloudsql_operator.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${each.value}"
+  member             = "principalSet://iam.googleapis.com/${each.value.pool}/attribute.repository/${var.github_owner}/${each.value.repository}"
 }
 
 # DB マイグレーション専用 SA。github-ci と分けるのは、汎用 CI に DB 起動停止権限
@@ -75,10 +100,10 @@ resource "google_service_account" "db_migrator" {
 }
 
 resource "google_service_account_iam_member" "db_migrator_wif" {
-  for_each           = toset(var.db_migrator_wif_repositories)
+  for_each           = local.db_migrator_wif_bindings
   service_account_id = google_service_account.db_migrator.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${each.value}"
+  member             = "principalSet://iam.googleapis.com/${each.value.pool}/attribute.repository/${var.github_owner}/${each.value.repository}"
 }
 
 resource "google_project_iam_member" "ci_analytics_deploy_cloudfunctions" {
