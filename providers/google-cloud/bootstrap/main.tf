@@ -15,8 +15,6 @@ locals {
 
   github_owner = "kenyamaneko"
 
-  # リポ単位でしか絞らないため、このリストに入ったリポなら任意のブランチから
-  # 紐付いた SA になりすませる。ブランチや environment での絞り込みは行わない。
   wif_allowed_repositories = [
     "overload-party-account",
     "overload-party-analytics",
@@ -37,7 +35,6 @@ locals {
     "overload-party-support",
   ]
 
-  # 誤って state オブジェクトを削除した際の復旧猶予 (7日)。
   tfstate_soft_delete_retention_seconds = 60 * 60 * 24 * 7
 }
 
@@ -81,8 +78,7 @@ resource "google_iam_workload_identity_pool_provider" "github" {
     "attribute.repository_owner" = "assertion.repository_owner"
   }
 
-  # SA 側の workloadIdentityUser 付与と二重化する defense in depth。
-  # SA 側の付与ミスで意図しないリポから impersonation が通らないよう pool 入口で弾く。
+  # SA 側の付与ミスで意図しないリポジトリからのなりすましが通らないよう、入口でも弾く。
   attribute_condition = "assertion.repository in [${join(", ", [for r in local.wif_allowed_repositories : "'${local.github_owner}/${r}'"])}]"
 
   oidc {
