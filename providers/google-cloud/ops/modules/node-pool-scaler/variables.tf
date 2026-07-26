@@ -13,7 +13,12 @@ variable "github_repository" {
   type        = string
 }
 
-variable "workload_identity_pool_names" {
-  description = "なりすましを許可する WIF プールの full resource name (例: projects/<num>/locations/global/workloadIdentityPools/github-actions) 一覧"
-  type        = list(string)
+variable "workload_identity_pool_name" {
+  description = "旧 WIF プールの full resource name (例: projects/<num>/locations/global/workloadIdentityPools/github-actions)"
+  type        = string
+}
+
+variable "workload_identity_pool_name_new" {
+  description = "新 WIF プールの full resource name (例: projects/<num>/locations/global/workloadIdentityPools/github-actions)"
+  type        = string
 }

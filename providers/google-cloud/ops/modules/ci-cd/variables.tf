@@ -8,9 +8,14 @@ variable "github_owner" {
   type        = string
 }
 
-variable "workload_identity_pool_names" {
-  description = "なりすましを許可する Workload Identity Pool のフル名（projects/<num>/locations/global/workloadIdentityPools/<id>）一覧"
-  type        = list(string)
+variable "workload_identity_pool_name" {
+  description = "旧 Workload Identity Pool のフル名（projects/<num>/locations/global/workloadIdentityPools/<id>）。keyandnotes-platform が所有するため cross-project で参照する"
+  type        = string
+}
+
+variable "workload_identity_pool_name_new" {
+  description = "新 Workload Identity Pool のフル名（projects/<num>/locations/global/workloadIdentityPools/<id>）。overload-party-ops が所有する"
+  type        = string
 }
 
 variable "ci_wif_repositories" {
