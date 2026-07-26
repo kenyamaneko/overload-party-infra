@@ -22,14 +22,13 @@ locals {
     prod = { subdomain = "overload-party-assets-prod" }
   }
 
-  # 利用者に見えるレコードの役割で識別できるようにするため、キーはサービス名でなく役割で付ける。
   app_records = {
-    "api-dev"      = { name = "overloadparty-dev", target = var.app_hostnames["gateway"]["dev"] }
-    "api-stg"      = { name = "overloadparty-stg", target = var.app_hostnames["gateway"]["stg"] }
-    "api-prod"     = { name = "overloadparty-prod", target = var.app_hostnames["gateway"]["prod"] }
-    "admin-dev"    = { name = "overloadparty-admin-dev", target = var.app_hostnames["news"]["dev"] }
-    "admin-stg"    = { name = "overloadparty-admin-stg", target = var.app_hostnames["news"]["stg"] }
-    "admin-prod"   = { name = "overloadparty-admin-prod", target = var.app_hostnames["news"]["prod"] }
+    "gateway-dev"  = { name = "overloadparty-dev", target = var.app_hostnames["gateway"]["dev"] }
+    "gateway-stg"  = { name = "overloadparty-stg", target = var.app_hostnames["gateway"]["stg"] }
+    "gateway-prod" = { name = "overloadparty-prod", target = var.app_hostnames["gateway"]["prod"] }
+    "news-dev"     = { name = "overloadparty-admin-dev", target = var.app_hostnames["news"]["dev"] }
+    "news-stg"     = { name = "overloadparty-admin-stg", target = var.app_hostnames["news"]["stg"] }
+    "news-prod"    = { name = "overloadparty-admin-prod", target = var.app_hostnames["news"]["prod"] }
     "support-dev"  = { name = "overloadparty-support-dev", target = var.app_hostnames["support"]["dev"] }
     "support-stg"  = { name = "overloadparty-support-stg", target = var.app_hostnames["support"]["stg"] }
     "support-prod" = { name = "overloadparty-support-prod", target = var.app_hostnames["support"]["prod"] }
@@ -66,15 +65,15 @@ resource "cloudflare_record" "app" {
 
 moved {
   from = cloudflare_record.api["dev"]
-  to   = cloudflare_record.app["api-dev"]
+  to   = cloudflare_record.app["gateway-dev"]
 }
 
 moved {
   from = cloudflare_record.api["stg"]
-  to   = cloudflare_record.app["api-stg"]
+  to   = cloudflare_record.app["gateway-stg"]
 }
 
 moved {
   from = cloudflare_record.api["prod"]
-  to   = cloudflare_record.app["api-prod"]
+  to   = cloudflare_record.app["gateway-prod"]
 }
