@@ -12,9 +12,6 @@ locals {
   restart_alert_window    = "600s"
   restart_alert_threshold = 1
 
-  # 実トラフィックの実績が無いため、250 接続分の WebSocket ハンドシェイク/keepalive を大きく超える量として暫定的に 10 倍を閾値にする。
-  request_count_alert_threshold = var.max_concurrent_connections * 10
-
   # 同一インシデントの再通知を抑えて通知疲れを防ぐため、5 分間隔にする。
   notification_rate_limit_period = "300s"
 }
@@ -116,24 +113,24 @@ resource "google_monitoring_alert_policy" "instance_restarted" {
   depends_on = [google_project_service.monitoring]
 }
 
-resource "google_monitoring_alert_policy" "request_count_spike" {
+resource "google_monitoring_alert_policy" "request_not_served" {
   project      = var.project_id
-  display_name = "gateway: リクエスト数が異常に増加した"
+  display_name = "gateway: 捌けなかったリクエストが発生した"
   combiner     = "OR"
 
   conditions {
-    display_name = "request count per minute > threshold"
+    display_name = "pending request queue depth > 0"
 
+    # この指標は同時実行が飽和して処理を待たされているリクエスト数を表すため、0 を上回ったら発報する。
     condition_threshold {
-      filter          = "resource.type = \"cloud_run_revision\" AND resource.labels.service_name = \"${google_cloud_run_v2_service.gateway.name}\" AND metric.type = \"run.googleapis.com/request_count\""
+      filter          = "resource.type = \"cloud_run_revision\" AND resource.labels.service_name = \"${google_cloud_run_v2_service.gateway.name}\" AND metric.type = \"run.googleapis.com/pending_queue/pending_requests\""
       comparison      = "COMPARISON_GT"
-      threshold_value = local.request_count_alert_threshold
+      threshold_value = 0
       duration        = "60s"
 
       aggregations {
-        alignment_period     = "60s"
-        per_series_aligner   = "ALIGN_SUM"
-        cross_series_reducer = "REDUCE_SUM"
+        alignment_period   = "60s"
+        per_series_aligner = "ALIGN_MAX"
       }
     }
   }
