@@ -58,6 +58,10 @@ jobs:
     strategy:
       matrix:
         path: ${{ fromJson(needs.detect.outputs.paths) }}
+    # 同じ state root への plan は Terraform のロックを奪い合うため、PR をまたいで直列化する
+    concurrency:
+      group: terraform-plan-${{ matrix.path }}
+      cancel-in-progress: false
     steps:
       - name: Checkout
         uses: actions/checkout@v4
