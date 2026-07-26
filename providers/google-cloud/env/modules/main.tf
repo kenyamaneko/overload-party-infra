@@ -435,6 +435,9 @@ module "gateway" {
 
   matchmaking_timeout_sec = 60
 
+  pubsub_push_service_account_email = module.pubsub.push_service_account_email
+  pubsub_push_audience              = module.pubsub.push_audience
+
   depends_on = [module.network.service_networking_connection]
 }
 

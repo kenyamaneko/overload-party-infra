@@ -1,4 +1,12 @@
 locals {
+  # 署名に使うサービスアカウントが全購読で共通のため、audience を宛先サービスごとに分けてトークンの誤用を防ぐ。
+  push_audiences = {
+    gateway = "overload-party-pubsub-push-gateway"
+    account = "overload-party-pubsub-push-account"
+    card    = "overload-party-pubsub-push-card"
+    news    = "overload-party-pubsub-push-news"
+  }
+
   # 購読プロセスを常駐させずに済ませるため、購読は Cloud Run の受け口への push 配信にする。
   topics = {
     matchmaking_events = {
@@ -104,6 +112,7 @@ locals {
         sub_name      = sub.sub_name
         sa_email      = sub.sa_email
         push_endpoint = sub.push_endpoint
+        push_audience = local.push_audiences[sub_key]
       }
     }
   ]...)
@@ -180,6 +189,7 @@ resource "google_pubsub_subscription" "main" {
 
       oidc_token {
         service_account_email = google_service_account.push.email
+        audience              = each.value.push_audience
       }
     }
   }

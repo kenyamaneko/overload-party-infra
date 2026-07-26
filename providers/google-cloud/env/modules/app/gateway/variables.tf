@@ -122,3 +122,13 @@ variable "matchmaking_timeout_sec" {
   description = "マッチング待機タイムアウト (秒)"
   type        = number
 }
+
+variable "pubsub_push_service_account_email" {
+  description = "push 購読の OIDC トークン署名に使うサービスアカウントのメールアドレス。push 受け口の検証に使う"
+  type        = string
+}
+
+variable "pubsub_push_audience" {
+  description = "push 購読の OIDC トークンの audience。push 受け口の検証に使う"
+  type        = string
+}
