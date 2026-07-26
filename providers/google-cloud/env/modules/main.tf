@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    google = {
+      source                = "hashicorp/google"
+      configuration_aliases = [google.platform]
+    }
+  }
+}
+
 locals {
   migration_image = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/db-migrate:latest"
   newsfeed_image  = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/newsfeed:latest"

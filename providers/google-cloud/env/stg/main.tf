@@ -14,8 +14,18 @@ provider "google" {
   region  = "asia-northeast1"
 }
 
+provider "google" {
+  alias   = "platform"
+  project = "keyandnotes-platform"
+  region  = "asia-northeast1"
+}
+
 module "env" {
   source = "../modules"
+
+  providers = {
+    google.platform = google.platform
+  }
 
   env_name      = "stg"
   project_id    = "overload-party-stg"
