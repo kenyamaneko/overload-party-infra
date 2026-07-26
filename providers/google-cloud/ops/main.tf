@@ -15,7 +15,6 @@ locals {
   deploy_sa_member      = "serviceAccount:github-ci@overload-party-ops.iam.gserviceaccount.com"
   db_migrator_sa_member = "serviceAccount:gh-db-migrator@overload-party-ops.iam.gserviceaccount.com"
 
-  # overload-party の Cloud Run が稼働する各プロジェクトの Cloud Run サービスエージェント。
   artifact_registry_cloudrun_consumer_project_numbers = {
     dev  = "346314225010"
     stg  = "352552278611"
