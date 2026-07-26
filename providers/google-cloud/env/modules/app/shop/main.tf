@@ -34,13 +34,6 @@ resource "google_cloud_run_v2_service" "shop" {
       egress = "PRIVATE_RANGES_ONLY"
     }
 
-    volumes {
-      name = "cloudsql"
-      cloud_sql_instance {
-        instances = [var.cloudsql_connection_name]
-      }
-    }
-
     containers {
       image = var.image
 
@@ -57,14 +50,17 @@ resource "google_cloud_run_v2_service" "shop" {
         cpu_idle = true
       }
 
-      volume_mounts {
-        name       = "cloudsql"
-        mount_path = "/cloudsql"
-      }
-
       env {
         name  = "DATABASE_CONN"
-        value = "host=/cloudsql/${var.cloudsql_connection_name} port=5432 dbname=${var.database_name} sslmode=disable"
+        value = "user=${trimsuffix(var.service_account_email, ".gserviceaccount.com")} dbname=${var.database_name} sslmode=disable"
+      }
+      env {
+        name  = "DATABASE_IAM_AUTH_ENABLED"
+        value = "true"
+      }
+      env {
+        name  = "CLOUDSQL_CONNECTION_NAME"
+        value = var.cloudsql_connection_name
       }
       # shop の config.go はこの変数名を "_ID" サフィックス無しで読む (他サービスと綴りが異なる)。
       env {
