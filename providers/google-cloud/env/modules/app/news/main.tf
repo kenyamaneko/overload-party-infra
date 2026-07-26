@@ -87,10 +87,6 @@ resource "google_cloud_run_v2_service" "news" {
         value = var.project_id
       }
       env {
-        name  = "NEWS_ARTICLE_COLLECTED_SUBSCRIPTION"
-        value = var.news_article_collected_subscription
-      }
-      env {
         name = "INTERNAL_AUTH_SECRET"
         value_source {
           secret_key_ref {

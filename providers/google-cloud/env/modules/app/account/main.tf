@@ -72,26 +72,6 @@ resource "google_cloud_run_v2_service" "account" {
         name  = "GOOGLE_CLOUD_PROJECT_ID"
         value = var.project_id
       }
-      env {
-        name  = "FACTION_ACQUIRED_SUBSCRIPTION"
-        value = var.faction_acquired_subscription
-      }
-      env {
-        name  = "PREMIUM_UPDATED_SUBSCRIPTION"
-        value = var.premium_updated_subscription
-      }
-      env {
-        name  = "PLAYER_ONBOARDED_SUBSCRIPTION"
-        value = var.player_onboarded_subscription
-      }
-      env {
-        name  = "ONBOARDING_NAME_SET_SUBSCRIPTION"
-        value = var.onboarding_name_set_subscription
-      }
-      env {
-        name  = "ONBOARDING_FACTION_SET_SUBSCRIPTION"
-        value = var.onboarding_faction_set_subscription
-      }
       # config.go は "production" | "local" のみ許容するため、クラウド実行では "production" を渡す。
       env {
         name  = "LOG_MODE"

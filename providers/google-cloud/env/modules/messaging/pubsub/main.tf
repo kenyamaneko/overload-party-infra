@@ -1,60 +1,105 @@
 locals {
+  # 署名に使うサービスアカウントが全購読で共通のため、audience を宛先サービスごとに分けてトークンの誤用を防ぐ。
+  push_audiences = {
+    gateway = "overload-party-pubsub-push-gateway"
+    account = "overload-party-pubsub-push-account"
+    card    = "overload-party-pubsub-push-card"
+    news    = "overload-party-pubsub-push-news"
+  }
+
+  # 購読プロセスを常駐させずに済ませるため、購読は Cloud Run の受け口への push 配信にする。
   topics = {
     matchmaking_events = {
       topic_name   = "matchmaking-events"
       publisher_sa = var.matchmaking_service_account_email
       subscribers = {
-        gateway = { sub_name = "matchmaking-events-gateway", sa_email = var.gateway_service_account_email }
+        gateway = {
+          sub_name      = "matchmaking-events-gateway"
+          sa_email      = null
+          push_endpoint = "${var.gateway_service_url}/internal/v1/pubsub/match-made"
+        }
       }
     }
     faction_acquired = {
       topic_name   = "faction-acquired"
       publisher_sa = var.shop_service_account_email
       subscribers = {
-        account = { sub_name = "faction-acquired-account-sub", sa_email = var.account_service_account_email }
+        account = {
+          sub_name      = "faction-acquired-account-sub"
+          sa_email      = null
+          push_endpoint = "${var.account_service_url}/internal/v1/pubsub/faction-acquired"
+        }
       }
     }
     card_pack_purchased = {
       topic_name   = "card-pack-purchased"
       publisher_sa = var.shop_service_account_email
       subscribers = {
-        card = { sub_name = "card-pack-purchased-card-sub", sa_email = var.card_service_account_email }
+        card = {
+          sub_name      = "card-pack-purchased-card-sub"
+          sa_email      = null
+          push_endpoint = "${var.card_service_url}/internal/v1/pubsub/card-pack-purchased"
+        }
       }
     }
     premium_updated = {
       topic_name   = "premium-updated"
       publisher_sa = var.shop_service_account_email
       subscribers = {
-        account = { sub_name = "premium-updated-account-sub", sa_email = var.account_service_account_email }
+        account = {
+          sub_name      = "premium-updated-account-sub"
+          sa_email      = null
+          push_endpoint = "${var.account_service_url}/internal/v1/pubsub/premium-updated"
+        }
       }
     }
     player_onboarded = {
       topic_name   = "player-onboarded"
       publisher_sa = var.scenario_service_account_email
       subscribers = {
-        account = { sub_name = "player-onboarded-account-sub", sa_email = var.account_service_account_email }
-        card    = { sub_name = "player-onboarded-card-sub", sa_email = var.card_service_account_email }
+        account = {
+          sub_name      = "player-onboarded-account-sub"
+          sa_email      = null
+          push_endpoint = "${var.account_service_url}/internal/v1/pubsub/player-onboarded"
+        }
+        card = {
+          sub_name      = "player-onboarded-card-sub"
+          sa_email      = null
+          push_endpoint = "${var.card_service_url}/internal/v1/pubsub/player-onboarded"
+        }
       }
     }
     onboarding_name_set = {
       topic_name   = "onboarding-name-set"
       publisher_sa = var.scenario_service_account_email
       subscribers = {
-        account = { sub_name = "onboarding-name-set-account-sub", sa_email = var.account_service_account_email }
+        account = {
+          sub_name      = "onboarding-name-set-account-sub"
+          sa_email      = null
+          push_endpoint = "${var.account_service_url}/internal/v1/pubsub/onboarding-name-set"
+        }
       }
     }
     onboarding_faction_set = {
       topic_name   = "onboarding-faction-set"
       publisher_sa = var.scenario_service_account_email
       subscribers = {
-        account = { sub_name = "onboarding-faction-set-account-sub", sa_email = var.account_service_account_email }
+        account = {
+          sub_name      = "onboarding-faction-set-account-sub"
+          sa_email      = null
+          push_endpoint = "${var.account_service_url}/internal/v1/pubsub/onboarding-faction-set"
+        }
       }
     }
     news_article_collected = {
       topic_name   = "news-article-collected"
       publisher_sa = var.newsfeed_service_account_email
       subscribers = {
-        news = { sub_name = "news-article-collected-news-sub", sa_email = var.news_service_account_email }
+        news = {
+          sub_name      = "news-article-collected-news-sub"
+          sa_email      = null
+          push_endpoint = "${var.news_service_url}/internal/v1/pubsub/news-article-collected"
+        }
       }
     }
   }
@@ -63,12 +108,16 @@ locals {
     for topic_key, topic in local.topics : {
       for sub_key, sub in topic.subscribers :
       "${topic_key}.${sub_key}" => {
-        topic_key = topic_key
-        sub_name  = sub.sub_name
-        sa_email  = sub.sa_email
+        topic_key     = topic_key
+        sub_name      = sub.sub_name
+        sa_email      = sub.sa_email
+        push_endpoint = sub.push_endpoint
+        push_audience = local.push_audiences[sub_key]
       }
     }
   ]...)
+
+  pull_subscriptions = { for k, v in local.subscriptions : k => v if v.push_endpoint == null }
 }
 
 # ──────────────────────────────────────────────
@@ -108,7 +157,8 @@ resource "google_pubsub_topic" "dlq" {
 }
 
 # ──────────────────────────────────────────────
-# サブスクリプション (exactly-once、DLQ 配送付き)
+# サブスクリプション (DLQ 配送付き)
+# push (Cloud Run 受け口) は exactly-once delivery に非対応のため、pull に残す購読にのみ付与する。
 # ──────────────────────────────────────────────
 
 resource "google_pubsub_subscription" "main" {
@@ -118,7 +168,7 @@ resource "google_pubsub_subscription" "main" {
   name    = each.value.sub_name
   topic   = google_pubsub_topic.main[each.value.topic_key].name
 
-  enable_exactly_once_delivery = true
+  enable_exactly_once_delivery = each.value.push_endpoint == null
   ack_deadline_seconds         = 10
 
   # Pub/Sub はトラフィックの無い subscription を一定期間後に自動削除する。terraform がライフサイクル所有者のためこれを無効化する
@@ -130,6 +180,36 @@ resource "google_pubsub_subscription" "main" {
     dead_letter_topic     = google_pubsub_topic.dlq[each.value.topic_key].id
     max_delivery_attempts = 5
   }
+
+  dynamic "push_config" {
+    for_each = each.value.push_endpoint != null ? [each.value.push_endpoint] : []
+
+    content {
+      push_endpoint = push_config.value
+
+      oidc_token {
+        service_account_email = google_service_account.push.email
+        audience              = each.value.push_audience
+      }
+    }
+  }
+}
+
+# push 用サービスアカウント
+# push subscription の OIDC トークンをこの SA で署名するため、専用の SA を用意する
+
+resource "google_service_account" "push" {
+  project      = var.project_id
+  account_id   = "pubsub-push"
+  display_name = "Overload Party Pub/Sub Push"
+}
+
+# Pub/Sub サービスエージェントが push 用 SA になりすまして OIDC トークンを発行できるようにする。
+# これが無いと push_config の oidc_token 設定があっても配信時にトークンを生成できない。
+resource "google_service_account_iam_member" "push_token_creator" {
+  service_account_id = google_service_account.push.name
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "serviceAccount:service-${data.google_project.this.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
 }
 
 # ──────────────────────────────────────────────
@@ -145,8 +225,9 @@ resource "google_pubsub_topic_iam_member" "publisher" {
   member  = "serviceAccount:${each.value.publisher_sa}"
 }
 
+# push 購読は Pub/Sub API を呼ばず HTTP で配信を受けるため、pull に残る購読の SA にのみ付与する。
 resource "google_pubsub_subscription_iam_member" "subscriber" {
-  for_each = local.subscriptions
+  for_each = local.pull_subscriptions
 
   project      = var.project_id
   subscription = google_pubsub_subscription.main[each.key].name

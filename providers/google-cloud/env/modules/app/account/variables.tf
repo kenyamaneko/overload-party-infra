@@ -58,27 +58,3 @@ variable "internal_auth_secret_id" {
   type        = string
 }
 
-variable "faction_acquired_subscription" {
-  description = "faction-acquired の pull subscription 名"
-  type        = string
-}
-
-variable "premium_updated_subscription" {
-  description = "premium-updated の pull subscription 名"
-  type        = string
-}
-
-variable "player_onboarded_subscription" {
-  description = "player-onboarded の pull subscription 名"
-  type        = string
-}
-
-variable "onboarding_name_set_subscription" {
-  description = "onboarding-name-set の pull subscription 名"
-  type        = string
-}
-
-variable "onboarding_faction_set_subscription" {
-  description = "onboarding-faction-set の pull subscription 名"
-  type        = string
-}

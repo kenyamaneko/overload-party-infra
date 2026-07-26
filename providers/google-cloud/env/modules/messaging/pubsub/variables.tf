@@ -8,11 +8,6 @@ variable "matchmaking_service_account_email" {
   type        = string
 }
 
-variable "gateway_service_account_email" {
-  description = "Email of the gateway service GSA. Granted roles/pubsub.subscriber on the matchmaking-events-gateway subscription."
-  type        = string
-}
-
 variable "scenario_service_account_email" {
   description = "Email of the scenario service GSA. Granted roles/pubsub.publisher on the player-onboarded topic (onboarding completion handoff to account / card)."
   type        = string
@@ -23,22 +18,27 @@ variable "shop_service_account_email" {
   type        = string
 }
 
-variable "account_service_account_email" {
-  description = "Email of the account service GSA. Granted roles/pubsub.subscriber on the faction-acquired-account-sub, premium-updated-account-sub, and player-onboarded-account-sub subscriptions."
-  type        = string
-}
-
-variable "card_service_account_email" {
-  description = "Email of the card service GSA. Granted roles/pubsub.subscriber on the card-pack-purchased-card-sub and player-onboarded-card-sub subscriptions."
-  type        = string
-}
-
 variable "newsfeed_service_account_email" {
   description = "Email of the newsfeed Cloud Run Job GSA. Granted roles/pubsub.publisher on the news-article-collected topic."
   type        = string
 }
 
-variable "news_service_account_email" {
-  description = "Email of the news service GSA. Granted roles/pubsub.subscriber on the news-article-collected-news-sub subscription."
+variable "gateway_service_url" {
+  description = "gateway Cloud Run サービスの URL。matchmaking-events-gateway の push エンドポイント組み立てに使用"
+  type        = string
+}
+
+variable "account_service_url" {
+  description = "account Cloud Run サービスの URL。account 向け push subscription のエンドポイント組み立てに使用"
+  type        = string
+}
+
+variable "card_service_url" {
+  description = "card Cloud Run サービスの URL。card 向け push subscription のエンドポイント組み立てに使用"
+  type        = string
+}
+
+variable "news_service_url" {
+  description = "news Cloud Run サービスの URL。news-article-collected-news-sub の push エンドポイント組み立てに使用"
   type        = string
 }
