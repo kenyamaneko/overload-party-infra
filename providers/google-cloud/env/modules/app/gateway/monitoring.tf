@@ -8,9 +8,17 @@ locals {
   # 上限到達で新規プレイヤーが接続できなくなる前に気づけるよう、上限の 8 割を早期警戒ラインにする。
   concurrency_alert_threshold = floor(var.max_concurrent_connections * 0.8)
 
+  # 瞬間的な変動による誤報を避けるため、閾値超過が持続した場合のみ発報する。
+  sustained_alert_duration = "60s"
+
+  alert_alignment_period = "60s"
+
+  # 集計期間内で閾値を超えた時点をそのまま異常とみなすため、持続時間を追加で設けない。
+  immediate_alert_duration = "0s"
+
   # request_timeout_sec の間は同一インスタンスが継続する前提のため、短時間に複数回の起動は想定外の再起動とみなす。
-  restart_alert_window    = "600s"
-  restart_alert_threshold = 1
+  restart_alert_alignment_period = "600s"
+  restart_alert_threshold        = 1
 
   # 同一インシデントの再通知を抑えて通知疲れを防ぐため、5 分間隔にする。
   notification_rate_limit_period = "300s"
@@ -28,10 +36,10 @@ resource "google_monitoring_alert_policy" "concurrency_near_limit" {
       filter          = "resource.type = \"cloud_run_revision\" AND resource.labels.service_name = \"${google_cloud_run_v2_service.gateway.name}\" AND metric.type = \"run.googleapis.com/container/max_request_concurrencies\" AND metric.labels.state = \"active\""
       comparison      = "COMPARISON_GT"
       threshold_value = local.concurrency_alert_threshold
-      duration        = "60s"
+      duration        = local.sustained_alert_duration
 
       aggregations {
-        alignment_period   = "60s"
+        alignment_period   = local.alert_alignment_period
         per_series_aligner = "ALIGN_PERCENTILE_99"
       }
     }
@@ -60,10 +68,10 @@ resource "google_monitoring_alert_policy" "server_error_response" {
       filter          = "resource.type = \"cloud_run_revision\" AND resource.labels.service_name = \"${google_cloud_run_v2_service.gateway.name}\" AND metric.type = \"run.googleapis.com/request_count\" AND metric.labels.response_code_class = \"5xx\""
       comparison      = "COMPARISON_GT"
       threshold_value = 0
-      duration        = "0s"
+      duration        = local.immediate_alert_duration
 
       aggregations {
-        alignment_period     = "60s"
+        alignment_period     = local.alert_alignment_period
         per_series_aligner   = "ALIGN_SUM"
         cross_series_reducer = "REDUCE_SUM"
       }
@@ -93,10 +101,10 @@ resource "google_monitoring_alert_policy" "instance_restarted" {
       filter          = "resource.type = \"cloud_run_revision\" AND resource.labels.service_name = \"${google_cloud_run_v2_service.gateway.name}\" AND metric.type = \"run.googleapis.com/container/startup_latencies\""
       comparison      = "COMPARISON_GT"
       threshold_value = local.restart_alert_threshold
-      duration        = "0s"
+      duration        = local.immediate_alert_duration
 
       aggregations {
-        alignment_period   = local.restart_alert_window
+        alignment_period   = local.restart_alert_alignment_period
         per_series_aligner = "ALIGN_COUNT"
       }
     }
@@ -126,10 +134,10 @@ resource "google_monitoring_alert_policy" "request_not_served" {
       filter          = "resource.type = \"cloud_run_revision\" AND resource.labels.service_name = \"${google_cloud_run_v2_service.gateway.name}\" AND metric.type = \"run.googleapis.com/pending_queue/pending_requests\""
       comparison      = "COMPARISON_GT"
       threshold_value = 0
-      duration        = "60s"
+      duration        = local.sustained_alert_duration
 
       aggregations {
-        alignment_period   = "60s"
+        alignment_period   = local.alert_alignment_period
         per_series_aligner = "ALIGN_MAX"
       }
     }
