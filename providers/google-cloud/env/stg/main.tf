@@ -60,6 +60,9 @@ module "env" {
 
   gateway_allowed_origins = "https://overloadparty-stg.keyandnotes.com,capacitor://localhost,http://localhost"
 
+  # Slack 通知チャンネルの受け渡し方法が未決のため、通知先が無い状態でアラートのみ作成する
+  gateway_alert_notification_channel_ids = []
+
   shop_apple_environment = "Sandbox"
 
   support_cors_allowed_origins  = "https://overloadparty-stg.keyandnotes.com"

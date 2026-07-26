@@ -123,6 +123,11 @@ variable "gateway_allowed_origins" {
   type        = string
 }
 
+variable "gateway_alert_notification_channel_ids" {
+  description = "gateway の監視アラートの通知先チャンネル ID 一覧"
+  type        = list(string)
+}
+
 variable "shop_apple_environment" {
   description = "shop の Apple IAP 検証環境 (\"Sandbox\" | \"Production\")。prod のみ Production"
   type        = string

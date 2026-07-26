@@ -122,3 +122,8 @@ variable "matchmaking_timeout_sec" {
   description = "マッチング待機タイムアウト (秒)"
   type        = number
 }
+
+variable "alert_notification_channel_ids" {
+  description = "gateway の監視アラートの通知先チャンネル ID 一覧 (google_monitoring_notification_channel の ID)。未設定の間はアラートが作成されるだけで通知は届かない"
+  type        = list(string)
+}
