@@ -35,9 +35,7 @@ locals {
   }
 }
 
-# ──────────────────────────────────────────────
-# GCS は IP を固定していないため A レコードは使えない。CNAME で c.storage.googleapis.com に向ける必要がある。
-# ──────────────────────────────────────────────
+# GCS は IP を固定していないため、A レコードではなく CNAME で c.storage.googleapis.com に向ける。
 
 resource "cloudflare_record" "assets" {
   for_each = local.assets
@@ -49,9 +47,7 @@ resource "cloudflare_record" "assets" {
   proxied = true
 }
 
-# ──────────────────────────────────────────────
 # Cloud Run はホスト名で公開されるため、CNAME で参照する。
-# ──────────────────────────────────────────────
 
 resource "cloudflare_record" "app" {
   for_each = local.app_records
