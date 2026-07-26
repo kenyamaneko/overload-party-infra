@@ -8,13 +8,8 @@ variable "matchmaking_service_account_email" {
   type        = string
 }
 
-variable "gateway_service_account_email" {
-  description = "Email of the gateway service GSA. Granted roles/pubsub.subscriber on the faction-acquired-gateway-sub and card-pack-purchased-gateway-sub subscriptions, which remain pull because gateway has no consuming process for them."
-  type        = string
-}
-
 variable "scenario_service_account_email" {
-  description = "Email of the scenario service GSA. Granted roles/pubsub.publisher on the player-onboarded topic (onboarding completion handoff to account / card / gateway)."
+  description = "Email of the scenario service GSA. Granted roles/pubsub.publisher on the player-onboarded topic (onboarding completion handoff to account / card)."
   type        = string
 }
 

@@ -132,3 +132,13 @@ variable "alert_notification_channel_ids" {
     error_message = "gateway は未認証で公開されるため監視アラートの通知先が必須です。Cloud Monitoring 上で通知チャンネルを作成し、その ID を渡してください。"
   }
 }
+
+variable "pubsub_push_service_account_email" {
+  description = "push 購読の OIDC トークン署名に使うサービスアカウントのメールアドレス。push 受け口の検証に使う"
+  type        = string
+}
+
+variable "pubsub_push_audience" {
+  description = "push 購読の OIDC トークンの audience。push 受け口の検証に使う"
+  type        = string
+}

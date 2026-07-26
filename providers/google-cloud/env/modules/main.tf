@@ -126,7 +126,6 @@ module "pubsub" {
 
   project_id                        = var.project_id
   matchmaking_service_account_email = module.service_accounts.accounts["matchmaking"].email
-  gateway_service_account_email     = module.service_accounts.accounts["gateway"].email
   scenario_service_account_email    = module.service_accounts.accounts["scenario"].email
   shop_service_account_email        = module.service_accounts.accounts["shop"].email
   newsfeed_service_account_email    = module.service_accounts.accounts["newsfeed"].email
@@ -438,6 +437,9 @@ module "gateway" {
 
   alert_notification_channel_ids = var.gateway_alert_notification_channel_ids
 
+  pubsub_push_service_account_email = module.pubsub.push_service_account_email
+  pubsub_push_audience              = module.pubsub.push_audience
+
   depends_on = [module.network.service_networking_connection]
 }
 
@@ -480,4 +482,16 @@ module "iam_grants" {
     support     = module.service_accounts.accounts["support"].name
     battle      = module.service_accounts.accounts["battle"].name
   }
+
+  # 付与先のサービスを名前の文字列で指定しており参照を持たないため、作成順を明示する。
+  depends_on = [
+    module.account,
+    module.battle,
+    module.card,
+    module.matchmaking,
+    module.news,
+    module.scenario,
+    module.shop,
+    module.support,
+  ]
 }
