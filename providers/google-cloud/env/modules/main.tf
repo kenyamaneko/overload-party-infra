@@ -466,7 +466,6 @@ module "iam_grants" {
     account = "account"
     card    = "card"
     news    = "news"
-    gateway = "gateway"
   }
 
   ci_deploy_sa_member = local.deploy_sa_member
