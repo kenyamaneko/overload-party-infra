@@ -59,8 +59,7 @@ module "env" {
 
   gateway_allowed_origins = "https://overloadparty-prod.keyandnotes.com,capacitor://localhost,http://localhost"
 
-  # Slack 通知チャンネルの受け渡し方法が未決のため、通知先が無い状態でアラートのみ作成する
-  gateway_alert_notification_channel_ids = []
+  gateway_alert_slack_channel_name = "CHANGEME_PROD_ALERT_CHANNEL"
 
   shop_apple_environment = "Production"
 

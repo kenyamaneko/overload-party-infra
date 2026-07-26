@@ -123,7 +123,7 @@ variable "matchmaking_timeout_sec" {
   type        = number
 }
 
-variable "alert_notification_channel_ids" {
-  description = "gateway の監視アラートの通知先チャンネル ID 一覧 (google_monitoring_notification_channel の ID)。未設定の間はアラートが作成されるだけで通知は届かない"
-  type        = list(string)
+variable "alert_slack_channel_name" {
+  description = "gateway の監視アラートを通知する Slack チャンネル名"
+  type        = string
 }

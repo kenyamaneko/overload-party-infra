@@ -123,9 +123,9 @@ variable "gateway_allowed_origins" {
   type        = string
 }
 
-variable "gateway_alert_notification_channel_ids" {
-  description = "gateway の監視アラートの通知先チャンネル ID 一覧"
-  type        = list(string)
+variable "gateway_alert_slack_channel_name" {
+  description = "gateway の監視アラートを通知する Slack チャンネル名"
+  type        = string
 }
 
 variable "shop_apple_environment" {
