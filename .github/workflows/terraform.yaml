@@ -24,7 +24,9 @@ on:
 
 concurrency:
   group: terraform-${{ github.event_name }}-${{ github.ref }}-${{ inputs.path || 'pr' }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  # 実行中の terraform をキャンセルすると state ロックを掴んだまま停止し、以降の plan が
+  # すべてロック競合で失敗するため、完了を待つ
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -58,6 +60,10 @@ jobs:
     strategy:
       matrix:
         path: ${{ fromJson(needs.detect.outputs.paths) }}
+    # 同じ state root への plan は Terraform のロックを奪い合うため、PR をまたいで直列化する
+    concurrency:
+      group: terraform-plan-${{ matrix.path }}
+      cancel-in-progress: false
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -76,12 +82,13 @@ jobs:
 
       - name: Terraform Init
         working-directory: providers/${{ matrix.path }}
-        run: terraform init
+        run: terraform init -input=false
 
       - name: Terraform Plan
         id: plan
         working-directory: providers/${{ matrix.path }}
-        run: terraform plan -no-color -out=tfplan 2>&1 | tee plan.txt
+        shell: bash
+        run: terraform plan -input=false -no-color -out=tfplan 2>&1 | tee plan.txt
         env:
           TF_VAR_cloudflare_cdn_api_token: ${{ secrets.CLOUDFLARE_CDN_API_TOKEN }}
           TF_VAR_upstash_email: ${{ vars.UPSTASH_EMAIL }}
@@ -118,11 +125,11 @@ jobs:
 
       - name: Terraform Init
         working-directory: providers/${{ inputs.path }}
-        run: terraform init
+        run: terraform init -input=false
 
       - name: Terraform Apply
         working-directory: providers/${{ inputs.path }}
-        run: terraform apply -auto-approve
+        run: terraform apply -input=false -auto-approve
         env:
           TF_VAR_cloudflare_cdn_api_token: ${{ secrets.CLOUDFLARE_CDN_API_TOKEN }}
           TF_VAR_upstash_email: ${{ vars.UPSTASH_EMAIL }}
