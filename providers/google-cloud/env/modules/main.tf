@@ -89,36 +89,18 @@ module "service_accounts" {
 module "database" {
   source = "./data/database"
 
-  project_id                    = var.project_id
-  region                        = var.region
-  instance_name                 = var.cloudsql_instance_name
-  tier                          = var.cloudsql_tier
-  database_name                 = var.database_name
-  network_id                    = module.network.network_self_link
-  ipv4_enabled                  = var.ipv4_enabled
-  psc_allowed_consumer_projects = var.psc_allowed_consumer_projects
-  deletion_protection           = var.deletion_protection
+  project_id          = var.project_id
+  region              = var.region
+  instance_name       = var.cloudsql_instance_name
+  tier                = var.cloudsql_tier
+  database_name       = var.database_name
+  network_id          = module.network.network_self_link
+  ipv4_enabled        = var.ipv4_enabled
+  deletion_protection = var.deletion_protection
 
   db_users = { for svc, _ in local.db_services : svc => module.service_accounts.accounts[svc].email }
 
   depends_on = [module.network.service_networking_connection]
-}
-
-module "psc_cloudsql" {
-  source = "./data/psc-cloudsql"
-
-  providers = {
-    google.platform = google.platform
-  }
-
-  project_id             = var.psc_consumer_project_id
-  region                 = var.region
-  network                = var.psc_consumer_network
-  env_name               = var.env_name
-  cloudsql_project_id    = var.project_id
-  cloudsql_instance_name = var.cloudsql_instance_name
-
-  depends_on = [module.database]
 }
 
 module "pubsub" {
@@ -458,6 +440,16 @@ module "iam_grants" {
     battle      = "battle"
   }
   gateway_service_account_email = module.service_accounts.accounts["gateway"].email
+
+  gateway_cloud_run_service_name = "gateway"
+
+  push_service_account_email = module.pubsub.push_service_account_email
+  push_target_cloud_run_service_names = {
+    account = "account"
+    card    = "card"
+    news    = "news"
+    gateway = "gateway"
+  }
 
   ci_deploy_sa_member = local.deploy_sa_member
   cloud_run_runtime_service_account_names = {

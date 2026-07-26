@@ -42,8 +42,3 @@ variable "ipv4_enabled" {
   description = "Cloud SQL インスタンスにパブリック IPv4 を割り当てるか"
   type        = bool
 }
-
-variable "psc_allowed_consumer_projects" {
-  description = "PSC 接続を許可する consumer プロジェクト ID 一覧（空なら PSC 無効）"
-  type        = list(string)
-}
