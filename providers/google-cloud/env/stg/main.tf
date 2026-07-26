@@ -60,7 +60,7 @@ module "env" {
 
   gateway_allowed_origins = "https://overloadparty-stg.keyandnotes.com,capacitor://localhost,http://localhost"
 
-  # Slack 通知チャンネルは Cloud Monitoring 上で手動作成し、その ID をここに追加する (state に秘密情報を持ち込まないため)
+  # 通知チャンネルの作成手順は infra#79 を参照する (state に秘密情報を持ち込まないため Terraform ではなく Cloud Monitoring 上で作る)
   gateway_alert_notification_channel_ids = []
 
   shop_apple_environment = "Sandbox"

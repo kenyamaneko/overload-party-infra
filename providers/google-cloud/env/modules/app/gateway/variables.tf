@@ -126,4 +126,9 @@ variable "matchmaking_timeout_sec" {
 variable "alert_notification_channel_ids" {
   description = "gateway の監視アラートの通知先チャンネル ID 一覧 (Cloud Monitoring 上で作成済みの google_monitoring_notification_channel の ID)"
   type        = list(string)
+
+  validation {
+    condition     = length(var.alert_notification_channel_ids) > 0
+    error_message = "gateway は未認証で公開されるため監視アラートの通知先が必須です。Cloud Monitoring 上で通知チャンネルを作成し、その ID を渡してください。"
+  }
 }
