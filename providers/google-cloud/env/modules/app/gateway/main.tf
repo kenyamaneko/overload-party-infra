@@ -119,6 +119,14 @@ resource "google_cloud_run_v2_service" "gateway" {
         value = tostring(var.matchmaking_timeout_sec)
       }
       env {
+        name  = "PUBSUB_PUSH_SERVICE_ACCOUNT_EMAIL"
+        value = var.pubsub_push_service_account_email
+      }
+      env {
+        name  = "PUBSUB_PUSH_AUDIENCE"
+        value = var.pubsub_push_audience
+      }
+      env {
         name = "INTERNAL_AUTH_SECRET"
         value_source {
           secret_key_ref {

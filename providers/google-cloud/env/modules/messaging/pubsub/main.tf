@@ -1,5 +1,13 @@
 locals {
-  # push_endpoint を持つ購読は Cloud Run の受け口へ push 配信する。持たない購読は購読プロセスが存在しないため pull のまま残す。
+  # 署名に使うサービスアカウントが全購読で共通のため、audience を宛先サービスごとに分けてトークンの誤用を防ぐ。
+  push_audiences = {
+    gateway = "overload-party-pubsub-push-gateway"
+    account = "overload-party-pubsub-push-account"
+    card    = "overload-party-pubsub-push-card"
+    news    = "overload-party-pubsub-push-news"
+  }
+
+  # 購読プロセスを常駐させずに済ませるため、購読は Cloud Run の受け口への push 配信にする。
   topics = {
     matchmaking_events = {
       topic_name   = "matchmaking-events"
@@ -21,7 +29,6 @@ locals {
           sa_email      = null
           push_endpoint = "${var.account_service_url}/internal/v1/pubsub/faction-acquired"
         }
-        gateway = { sub_name = "faction-acquired-gateway-sub", sa_email = var.gateway_service_account_email, push_endpoint = null }
       }
     }
     card_pack_purchased = {
@@ -33,7 +40,6 @@ locals {
           sa_email      = null
           push_endpoint = "${var.card_service_url}/internal/v1/pubsub/card-pack-purchased"
         }
-        gateway = { sub_name = "card-pack-purchased-gateway-sub", sa_email = var.gateway_service_account_email, push_endpoint = null }
       }
     }
     premium_updated = {
@@ -106,6 +112,7 @@ locals {
         sub_name      = sub.sub_name
         sa_email      = sub.sa_email
         push_endpoint = sub.push_endpoint
+        push_audience = local.push_audiences[sub_key]
       }
     }
   ]...)
@@ -182,16 +189,14 @@ resource "google_pubsub_subscription" "main" {
 
       oidc_token {
         service_account_email = google_service_account.push.email
+        audience              = each.value.push_audience
       }
     }
   }
 }
 
-# ──────────────────────────────────────────────
 # push 用サービスアカウント
-# push subscription の OIDC トークンはこの SA の identity で署名される。到達制御は Cloud Run
-# 側の run.invoker (foundation/iam-grants) がこの SA へ付与する。
-# ──────────────────────────────────────────────
+# push subscription の OIDC トークンをこの SA で署名するため、専用の SA を用意する
 
 resource "google_service_account" "push" {
   project      = var.project_id
