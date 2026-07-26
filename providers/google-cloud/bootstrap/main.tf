@@ -49,10 +49,14 @@ provider "google" {
 resource "google_storage_bucket" "tfstate" {
   name                        = "overload-party-tfstate"
   project                     = local.project_id
-  location                    = "ASIA-NORTHEAST1"
+  location                    = local.region
   storage_class               = "STANDARD"
   uniform_bucket_level_access = true
   force_destroy               = false
+
+  versioning {
+    enabled = false
+  }
 
   soft_delete_policy {
     retention_duration_seconds = local.tfstate_soft_delete_retention_seconds
