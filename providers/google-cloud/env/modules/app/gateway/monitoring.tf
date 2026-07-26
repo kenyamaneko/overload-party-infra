@@ -37,7 +37,7 @@ resource "google_monitoring_alert_policy" "concurrency_near_limit" {
     }
   }
 
-  notification_channels = [google_monitoring_notification_channel.slack.id]
+  notification_channels = var.alert_notification_channel_ids
 
   alert_strategy {
     notification_rate_limit {
@@ -70,7 +70,7 @@ resource "google_monitoring_alert_policy" "server_error_response" {
     }
   }
 
-  notification_channels = [google_monitoring_notification_channel.slack.id]
+  notification_channels = var.alert_notification_channel_ids
 
   alert_strategy {
     notification_rate_limit {
@@ -102,7 +102,7 @@ resource "google_monitoring_alert_policy" "instance_restarted" {
     }
   }
 
-  notification_channels = [google_monitoring_notification_channel.slack.id]
+  notification_channels = var.alert_notification_channel_ids
 
   alert_strategy {
     notification_rate_limit {
@@ -135,7 +135,7 @@ resource "google_monitoring_alert_policy" "request_not_served" {
     }
   }
 
-  notification_channels = [google_monitoring_notification_channel.slack.id]
+  notification_channels = var.alert_notification_channel_ids
 
   alert_strategy {
     notification_rate_limit {

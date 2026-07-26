@@ -59,7 +59,8 @@ module "env" {
 
   gateway_allowed_origins = "https://overloadparty-prod.keyandnotes.com,capacitor://localhost,http://localhost"
 
-  gateway_alert_slack_channel_name = "CHANGEME_PROD_ALERT_CHANNEL"
+  # Slack 通知チャンネルは Cloud Monitoring 上で手動作成し、その ID をここに追加する (state に秘密情報を持ち込まないため)
+  gateway_alert_notification_channel_ids = []
 
   shop_apple_environment = "Production"
 

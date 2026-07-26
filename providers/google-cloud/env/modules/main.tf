@@ -436,7 +436,7 @@ module "gateway" {
 
   matchmaking_timeout_sec = 60
 
-  alert_slack_channel_name = var.gateway_alert_slack_channel_name
+  alert_notification_channel_ids = var.gateway_alert_notification_channel_ids
 
   depends_on = [module.network.service_networking_connection]
 }
