@@ -27,7 +27,6 @@ resource "google_service_account_iam_member" "ci_wif" {
   member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${each.value}"
 }
 
-# 新プール経由のなりすましも許可するため、旧プール向け ci_wif とは別 resource として追加する。
 resource "google_service_account_iam_member" "ci_wif_new" {
   for_each           = toset(var.ci_wif_repositories)
   service_account_id = google_service_account.ci.name
@@ -48,7 +47,6 @@ resource "google_service_account_iam_member" "terraform_deployer_wif" {
   member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${each.value}"
 }
 
-# 新プール経由のなりすましも許可するため、旧プール向け terraform_deployer_wif とは別 resource として追加する。
 resource "google_service_account_iam_member" "terraform_deployer_wif_new" {
   for_each           = toset(var.terraform_deployer_wif_repositories)
   service_account_id = google_service_account.terraform_deployer.name
@@ -69,7 +67,6 @@ resource "google_service_account_iam_member" "gke_deployer_wif" {
   member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${each.value}"
 }
 
-# 新プール経由のなりすましも許可するため、旧プール向け gke_deployer_wif とは別 resource として追加する。
 resource "google_service_account_iam_member" "gke_deployer_wif_new" {
   for_each           = toset(var.gke_deployer_wif_repositories)
   service_account_id = google_service_account.gke_deployer.name
@@ -90,7 +87,6 @@ resource "google_service_account_iam_member" "cloudsql_operator_wif" {
   member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${each.value}"
 }
 
-# 新プール経由のなりすましも許可するため、旧プール向け cloudsql_operator_wif とは別 resource として追加する。
 resource "google_service_account_iam_member" "cloudsql_operator_wif_new" {
   for_each           = toset(var.cloudsql_operator_wif_repositories)
   service_account_id = google_service_account.cloudsql_operator.name
@@ -113,7 +109,6 @@ resource "google_service_account_iam_member" "db_migrator_wif" {
   member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${each.value}"
 }
 
-# 新プール経由のなりすましも許可するため、旧プール向け db_migrator_wif とは別 resource として追加する。
 resource "google_service_account_iam_member" "db_migrator_wif_new" {
   for_each           = toset(var.db_migrator_wif_repositories)
   service_account_id = google_service_account.db_migrator.name
