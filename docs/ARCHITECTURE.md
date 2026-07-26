@@ -10,6 +10,7 @@ Terraform state は **変更ライフサイクルと権限境界** で分割し�
 |---|---|---|
 | `google-cloud/env/{dev,stg,prod}` | `overload-party-{dev,stg,prod}` | 環境ごとのワークロードリソース。state を分けて env ごとに独立に apply できるようにする |
 | `google-cloud/ops` | `overload-party-ops` | 運用ツール（drift-monitor / cost-monitor）は env を全 destroy しても残す必要があり、env のライフサイクルから独立させる |
+| `google-cloud/bootstrap` | `overload-party-ops` | CI 自身の認証経路 (WIF プール) と state 保存先 (バケット) を管理する。CI が日常的に apply する `ops` root と同居させると、壊れたときに CI から直せなくなるため、人間がローカルから手動で apply する root として分離する |
 | `cloudflare` | — | DNS レコードは Google Cloud とライフサイクルが異なる |
 | `upstash/env/{dev,stg,prod}` | — | Upstash は Google Cloud provider と独立しており、env ごとに state を分けて独立に apply できるようにする |
 
