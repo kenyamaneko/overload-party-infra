@@ -185,11 +185,8 @@ resource "google_pubsub_subscription" "main" {
   }
 }
 
-# ──────────────────────────────────────────────
 # push 用サービスアカウント
-# push subscription の OIDC トークンはこの SA の identity で署名される。到達制御は Cloud Run
-# 側の run.invoker (foundation/iam-grants) がこの SA へ付与する。
-# ──────────────────────────────────────────────
+# push subscription の OIDC トークンをこの SA で署名するため、専用の SA を用意する
 
 resource "google_service_account" "push" {
   project      = var.project_id
