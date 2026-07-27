@@ -415,7 +415,7 @@ module "gateway" {
   news_service_url        = module.news.uri
   support_service_url     = module.support.uri
 
-  matchmaking_timeout_sec = 60
+  matchmaking_timeout_sec = 30
 
   pubsub_push_service_account_email = module.pubsub.push_service_account_email
   pubsub_push_audience              = module.pubsub.push_audience
