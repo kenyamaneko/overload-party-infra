@@ -38,6 +38,14 @@ Terraform state は **変更ライフサイクルと権限境界** で分割し�
 
 PSC エンドポイントの永続リソース (IP / DNS) は env state (`env/modules/data/psc-cloudsql/`) で管理する。詳細は上の節「keyandnotes-platform と overload-party-* の関係」の例外項参照。forwarding rule は overload-party-k8s 側が `env-up/down` で動的に管理する。
 
+## Upstash の接続情報の受け渡し
+
+Upstash のデータベースと、その接続情報を保持する Secret Manager シークレットは同じ `upstash/env/{env}` state が作る。データベースを作った state だけが接続情報を持つため、シークレットの入れ物と権限をそこに置くことで、値の出所と置き場所が離れずに済む。
+
+`google-cloud/env/{env}` state はシークレットを名前の文字列で参照する。state をまたいで参照するので、名前が両側で一致していることは Terraform が保証しない。
+
+シークレットの値は Terraform が投入せず、apply 後に人が入れる。値の投入前に Cloud Run のリビジョンを作ると起動に失敗するため、Upstash 側の apply、値の投入、Google Cloud 側の apply の順で行う。
+
 ## CI/CD SA の集約
 
 overload-party 系全リポの GitHub Actions CI は `overload-party-ops` の `github-ci` SA を共用する。env や repo ごとに分けると、apply で権限不足が出るたびに複数の権限定義を横断する必要が生じるため、`ops/modules/ci-cd` の一箇所に権限マトリクスを集約している。

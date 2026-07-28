@@ -68,6 +68,10 @@ locals {
   gateway_resources                  = { cpu = "1", memory = "512Mi" }
   gateway_max_concurrent_connections = 250
   gateway_request_timeout_sec        = 3600
+
+  # シークレット自体は upstash provider の state が作る (providers/upstash/env/modules/gateway)。
+  # state をまたぐため名前で参照する。
+  gateway_upstash_redis_url_secret_id = "gateway-upstash-redis-url"
 }
 
 module "network" {
@@ -404,6 +408,8 @@ module "gateway" {
   cloudsql_connection_name   = local.cloudsql_connection_name
   database_name              = var.database_name
   internal_auth_secret_id    = module.internal_auth_secret.secret_id
+
+  upstash_redis_url_secret_id = local.gateway_upstash_redis_url_secret_id
 
   allowed_origins         = var.gateway_allowed_origins
   battle_service_url      = module.battle.uri

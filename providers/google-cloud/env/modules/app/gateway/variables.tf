@@ -73,6 +73,11 @@ variable "internal_auth_secret_id" {
   type        = string
 }
 
+variable "upstash_redis_url_secret_id" {
+  description = "対戦ごとの計時の写しを置く Upstash Redis の接続 URL を保持する Secret Manager シークレット ID"
+  type        = string
+}
+
 variable "allowed_origins" {
   description = "CORS 許可オリジン (カンマ区切り)"
   type        = string

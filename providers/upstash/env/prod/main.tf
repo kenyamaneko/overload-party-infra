@@ -41,3 +41,13 @@ module "newsfeed_redis" {
   primary_region = "asia-northeast1"
   eviction       = true
 }
+
+# eviction = true: gateway が置くのは対戦ごとの計時の写しで、主はインメモリ側にある。
+# 失われても対戦は続くため、メモリ上限に達したとき書き込みを止めるより縮退させる方がよい。
+module "gateway_redis" {
+  source = "../modules/gateway"
+
+  env            = "prod"
+  primary_region = "asia-northeast1"
+  eviction       = true
+}
