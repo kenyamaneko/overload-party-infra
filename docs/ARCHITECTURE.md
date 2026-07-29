@@ -22,21 +22,24 @@ Terraform state は **変更ライフサイクルと権限境界** で分割し�
 
 具体例: `google_service_account` (project = `overload-party-ops`) は overload-party-infra (`ops/modules/ci-cd`) が管理。`google_project_iam_member` で SA に IAM を付与する場合、`project = overload-party-dev` ならこのリポ、`project = keyandnotes-platform` なら `keyandnotes-platform` リポ。SA がどのプロジェクトに属するかは関係なく、IAM binding が書き込まれる側のプロジェクトで決まる。
 
-例外: PSC エンドポイント (`env/modules/data/psc-cloudsql/`) は **書き込まれるプロジェクトが `keyandnotes-platform`、所有リポが `overload-party-infra` の env state** で、原則の対応関係が崩れている。
-
-- なぜ keyandnotes-platform プロジェクトに書くか: 内部 IP は接続元 VPC の subnet からしか払い出せず別 VPC から経路が無いため、GKE Pod が走る `keyandnotes-platform` VPC に置くしかない。
-- なぜ overload-party-infra の env state が所有するか: PSC は機能的に overload-party 専用 (overload-party-{env} の Cloud SQL に接続するためだけに存在) で、env 単位で 1 つずつ増減し、env-up/down で forwarding rule を動的に作成削除する。機能オーナーが所有することで env apply 一発で配線が完結し、env 追加時に `keyandnotes-platform` リポを触らずに済む。
-
 例外: env nodepool (`ops/modules/gke-nodepools/`) は **書き込まれるプロジェクトが `keyandnotes-platform`、所有リポが `overload-party-infra` の ops state** で、原則の対応関係が崩れている。
 
 - なぜ keyandnotes-platform プロジェクトに書くか: nodepool は cluster の子リソースで、cluster と同じプロジェクトに作るしかない。
 - なぜ overload-party-infra の ops state が所有するか: env nodepool の machine_type / count / labels はアプリのワークロード要件で決まるアプリの意思決定であり、所有をアプリに置くとアプリ PR で完結する。所有境界の設計の根拠は overload-party-common ADR-045。cross-project IAM 付与 (`modules/app-iam-grants/`) はブランド側に集約する。
 
-## Cloud SQL アクセス経路 (PSC)
+## Cloud SQL アクセス経路
 
-各環境の Cloud SQL (`overload-party-{dev,stg,prod}`) は **PSC (Private Service Connect)** で `keyandnotes-platform` の VPC に接続する。DB 接続の手段として PSC を選んだ理由: forwarding rule の作成・削除だけで接続を on/off でき、env 未使用時のコスト ($0.025/時間) を `env-up/down` で動的に落としやすいため。
+各環境の Cloud SQL (`overload-party-{dev,stg,prod}`) へは、Cloud Run の内蔵コネクタと private IP で接続する。別 VPC からの経路を用意する必要が無くなり、接続用の永続リソースを env ごとに持たずに済む。
 
-PSC エンドポイントの永続リソース (IP / DNS) は env state (`env/modules/data/psc-cloudsql/`) で管理する。詳細は上の節「keyandnotes-platform と overload-party-* の関係」の例外項参照。forwarding rule は overload-party-k8s 側が `env-up/down` で動的に管理する。
+接続する identity は各サービスの runtime SA で、パスワードを配らない IAM データベース認証を使う。
+
+## Upstash の接続情報の受け渡し
+
+Upstash のデータベースと、その接続情報を保持する Secret Manager シークレットは同じ `upstash/env/{env}` state が作る。データベースを作った state だけが接続情報を持つため、シークレットの入れ物と権限をそこに置くことで、値の出所と置き場所が離れずに済む。
+
+`google-cloud/env/{env}` state はシークレットを名前の文字列で参照する。state をまたいで参照するので、名前が両側で一致していることは Terraform が保証しない。
+
+シークレットの値は Terraform が投入せず、apply 後に人が入れる。値の投入前に Cloud Run のリビジョンを作ると起動に失敗するため、Upstash 側の apply、値の投入、Google Cloud 側の apply の順で行う。
 
 ## CI/CD SA の集約
 

@@ -24,14 +24,6 @@ resource "google_sql_database_instance" "main" {
     ip_configuration {
       ipv4_enabled    = var.ipv4_enabled
       private_network = var.network_id
-
-      dynamic "psc_config" {
-        for_each = length(var.psc_allowed_consumer_projects) > 0 ? [1] : []
-        content {
-          psc_enabled               = true
-          allowed_consumer_projects = var.psc_allowed_consumer_projects
-        }
-      }
     }
     backup_configuration {
       enabled    = true

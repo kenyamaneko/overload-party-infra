@@ -38,13 +38,6 @@ resource "google_cloud_run_v2_service" "gateway" {
       egress = "PRIVATE_RANGES_ONLY"
     }
 
-    volumes {
-      name = "cloudsql"
-      cloud_sql_instance {
-        instances = [var.cloudsql_connection_name]
-      }
-    }
-
     containers {
       image = var.image
 
@@ -61,11 +54,6 @@ resource "google_cloud_run_v2_service" "gateway" {
         cpu_idle = true
       }
 
-      volume_mounts {
-        name       = "cloudsql"
-        mount_path = "/cloudsql"
-      }
-
       env {
         name  = "ENV"
         value = var.env_name
@@ -76,7 +64,15 @@ resource "google_cloud_run_v2_service" "gateway" {
       }
       env {
         name  = "DATABASE_CONN"
-        value = "host=/cloudsql/${var.cloudsql_connection_name} port=5432 dbname=${var.database_name} sslmode=disable"
+        value = "user=${trimsuffix(var.service_account_email, ".gserviceaccount.com")} dbname=${var.database_name} sslmode=disable"
+      }
+      env {
+        name  = "DATABASE_IAM_AUTH_ENABLED"
+        value = "true"
+      }
+      env {
+        name  = "CLOUDSQL_CONNECTION_NAME"
+        value = var.cloudsql_connection_name
       }
       env {
         name  = "BATTLE_SERVER_URL"
@@ -131,6 +127,15 @@ resource "google_cloud_run_v2_service" "gateway" {
         value_source {
           secret_key_ref {
             secret  = var.internal_auth_secret_id
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name = "UPSTASH_REDIS_URL"
+        value_source {
+          secret_key_ref {
+            secret  = var.upstash_redis_url_secret_id
             version = "latest"
           }
         }

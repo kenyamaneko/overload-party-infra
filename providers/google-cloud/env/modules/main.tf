@@ -68,6 +68,10 @@ locals {
   gateway_resources                  = { cpu = "1", memory = "512Mi" }
   gateway_max_concurrent_connections = 250
   gateway_request_timeout_sec        = 3600
+
+  # シークレット自体は upstash provider の state が作る (providers/upstash/env/modules/gateway)。
+  # state をまたぐため名前で参照する。
+  gateway_upstash_redis_url_secret_id = "gateway-upstash-redis-url"
 }
 
 module "network" {
@@ -89,36 +93,18 @@ module "service_accounts" {
 module "database" {
   source = "./data/database"
 
-  project_id                    = var.project_id
-  region                        = var.region
-  instance_name                 = var.cloudsql_instance_name
-  tier                          = var.cloudsql_tier
-  database_name                 = var.database_name
-  network_id                    = module.network.network_self_link
-  ipv4_enabled                  = var.ipv4_enabled
-  psc_allowed_consumer_projects = var.psc_allowed_consumer_projects
-  deletion_protection           = var.deletion_protection
+  project_id          = var.project_id
+  region              = var.region
+  instance_name       = var.cloudsql_instance_name
+  tier                = var.cloudsql_tier
+  database_name       = var.database_name
+  network_id          = module.network.network_self_link
+  ipv4_enabled        = var.ipv4_enabled
+  deletion_protection = var.deletion_protection
 
   db_users = { for svc, _ in local.db_services : svc => module.service_accounts.accounts[svc].email }
 
   depends_on = [module.network.service_networking_connection]
-}
-
-module "psc_cloudsql" {
-  source = "./data/psc-cloudsql"
-
-  providers = {
-    google.platform = google.platform
-  }
-
-  project_id             = var.psc_consumer_project_id
-  region                 = var.region
-  network                = var.psc_consumer_network
-  env_name               = var.env_name
-  cloudsql_project_id    = var.project_id
-  cloudsql_instance_name = var.cloudsql_instance_name
-
-  depends_on = [module.database]
 }
 
 module "pubsub" {
@@ -423,6 +409,8 @@ module "gateway" {
   database_name              = var.database_name
   internal_auth_secret_id    = module.internal_auth_secret.secret_id
 
+  upstash_redis_url_secret_id = local.gateway_upstash_redis_url_secret_id
+
   allowed_origins         = var.gateway_allowed_origins
   battle_service_url      = module.battle.uri
   card_service_url        = module.card.uri
@@ -433,7 +421,7 @@ module "gateway" {
   news_service_url        = module.news.uri
   support_service_url     = module.support.uri
 
-  matchmaking_timeout_sec = 60
+  matchmaking_timeout_sec = 30
 
   alert_notification_channel_ids = var.gateway_alert_notification_channel_ids
 
@@ -468,6 +456,7 @@ module "iam_grants" {
     account = "account"
     card    = "card"
     news    = "news"
+    gateway = "gateway"
   }
 
   ci_deploy_sa_member = local.deploy_sa_member

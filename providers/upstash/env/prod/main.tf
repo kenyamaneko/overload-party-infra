@@ -41,3 +41,12 @@ module "newsfeed_redis" {
   primary_region = "asia-northeast1"
   eviction       = true
 }
+
+# 置くのは計時の写しで主はインメモリ側にあり、失われても対戦は続くため eviction を許す。
+module "gateway_redis" {
+  source = "../modules/gateway"
+
+  env            = "prod"
+  primary_region = "asia-northeast1"
+  eviction       = true
+}
