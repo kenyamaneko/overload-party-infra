@@ -60,6 +60,10 @@ jobs:
     strategy:
       matrix:
         path: ${{ fromJson(needs.detect.outputs.paths) }}
+      # 既定の fail-fast は、ある state root の plan が失敗した瞬間に他の root の plan を
+      # 実行中でも打ち切る。打ち切られた terraform はロックを掴んだまま止まるため、次の
+      # 実行がそのロックで失敗し、また他を打ち切るという連鎖になる
+      fail-fast: false
     # 同じ state root への plan は Terraform のロックを奪い合うため、PR をまたいで直列化する
     concurrency:
       group: terraform-plan-${{ matrix.path }}
