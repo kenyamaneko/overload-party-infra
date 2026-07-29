@@ -84,50 +84,6 @@ module "drift_monitor" {
   monitored_projects = local.drift_monitored_projects
 }
 
-module "gke_nodepools" {
-  source = "./modules/gke-nodepools"
-
-  cluster_host_project = "keyandnotes-platform"
-  cluster_name         = "keyandnotes-main"
-  cluster_location     = "asia-northeast1-a"
-
-  # stg は prod と同スペックで本番再現性を確保。
-  node_pools = {
-    dev = {
-      machine_type      = "e2-medium"
-      node_count        = 0
-      ignore_node_count = true
-      labels            = {}
-      taints            = []
-    }
-    stg = {
-      machine_type      = "e2-standard-2"
-      node_count        = 0
-      ignore_node_count = true
-      labels            = {}
-      taints            = []
-    }
-    # 本稼働開始まで 0 ノードで運用。開始時に node_count = 1 に戻す。
-    prod = {
-      machine_type      = "e2-standard-2"
-      node_count        = 0
-      ignore_node_count = false
-      labels            = {}
-      taints            = []
-    }
-  }
-}
-
-module "node_pool_scaler" {
-  source = "./modules/node-pool-scaler"
-
-  ops_project_id                  = local.project_id
-  github_owner                    = "kenyamaneko"
-  github_repository               = "overload-party-infra"
-  workload_identity_pool_name     = local.workload_identity_pool_name
-  workload_identity_pool_name_new = local.workload_identity_pool_name_new
-}
-
 module "ci_cd" {
   source = "./modules/ci-cd"
 
@@ -157,11 +113,6 @@ module "ci_cd" {
 
   terraform_deployer_wif_repositories = [
     "overload-party-infra",
-    "overload-party-k8s",
-  ]
-
-  gke_deployer_wif_repositories = [
-    "overload-party-k8s",
   ]
 
   cloudsql_operator_wif_repositories = [
@@ -190,9 +141,4 @@ module "ci_cd" {
     "overload-party-dev",
     "overload-party-stg",
   ]
-}
-
-# GitHub Actions repo variable NODE_POOL_SCALER_SERVICE_ACCOUNT に手動投入する用途。
-output "node_pool_scaler_sa_email" {
-  value = module.node_pool_scaler.service_account_email
 }

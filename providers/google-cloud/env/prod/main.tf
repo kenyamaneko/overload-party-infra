@@ -27,10 +27,9 @@ module "env" {
     google.platform = google.platform
   }
 
-  env_name      = "prod"
-  project_id    = "overload-party-prod"
-  region        = "asia-northeast1"
-  k8s_namespace = "overload-party-prod"
+  env_name   = "prod"
+  project_id = "overload-party-prod"
+  region     = "asia-northeast1"
 
   cloudsql_instance_name = "overload-party-db"
   cloudsql_tier          = "db-g1-small"
