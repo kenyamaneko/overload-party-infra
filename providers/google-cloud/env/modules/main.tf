@@ -85,7 +85,6 @@ module "service_accounts" {
   source = "./foundation/service-accounts"
 
   project_id       = var.project_id
-  k8s_namespace    = var.k8s_namespace
   k8s_services     = local.k8s_services
   non_k8s_services = local.non_k8s_services
 }

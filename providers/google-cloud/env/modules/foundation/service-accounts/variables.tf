@@ -13,12 +13,6 @@ variable "non_k8s_services" {
   type        = map(string)
 }
 
-variable "k8s_namespace" {
-  description = "k8s_services の Workload Identity バインドに使う Kubernetes namespace"
-  type        = string
-}
-
 locals {
-  gke_project_id = "keyandnotes-platform"
-  all_services   = merge(var.k8s_services, var.non_k8s_services)
+  all_services = merge(var.k8s_services, var.non_k8s_services)
 }

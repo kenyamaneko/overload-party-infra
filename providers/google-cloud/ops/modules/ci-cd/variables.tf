@@ -28,11 +28,6 @@ variable "terraform_deployer_wif_repositories" {
   type        = list(string)
 }
 
-variable "gke_deployer_wif_repositories" {
-  description = "github-deploy SA (k8s kubectl apply / PSC 配線用) を impersonate できる GitHub リポジトリ一覧"
-  type        = list(string)
-}
-
 variable "cloudsql_operator_wif_repositories" {
   description = "gh-cloudsql-operator SA (Cloud SQL start/stop 用) を impersonate できる GitHub リポジトリ一覧"
   type        = list(string)

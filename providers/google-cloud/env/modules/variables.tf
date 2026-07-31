@@ -8,11 +8,6 @@ variable "region" {
   type        = string
 }
 
-variable "k8s_namespace" {
-  description = "Workload Identity バインドに使う Kubernetes namespace"
-  type        = string
-}
-
 # ──────────────────────────────────────────────
 # Cloud SQL
 # ──────────────────────────────────────────────

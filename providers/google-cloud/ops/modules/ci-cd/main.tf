@@ -54,26 +54,6 @@ resource "google_service_account_iam_member" "terraform_deployer_wif_new" {
   member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name_new}/attribute.repository/${var.github_owner}/${each.value}"
 }
 
-resource "google_service_account" "gke_deployer" {
-  project      = var.project_id
-  account_id   = "github-deploy"
-  display_name = "GitHub Actions Deploy (k8s)"
-}
-
-resource "google_service_account_iam_member" "gke_deployer_wif" {
-  for_each           = toset(var.gke_deployer_wif_repositories)
-  service_account_id = google_service_account.gke_deployer.name
-  role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name}/attribute.repository/${var.github_owner}/${each.value}"
-}
-
-resource "google_service_account_iam_member" "gke_deployer_wif_new" {
-  for_each           = toset(var.gke_deployer_wif_repositories)
-  service_account_id = google_service_account.gke_deployer.name
-  role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${var.workload_identity_pool_name_new}/attribute.repository/${var.github_owner}/${each.value}"
-}
-
 resource "google_service_account" "cloudsql_operator" {
   project      = var.project_id
   account_id   = "gh-cloudsql-operator"
