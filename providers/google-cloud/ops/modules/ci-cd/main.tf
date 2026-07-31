@@ -165,12 +165,13 @@ resource "google_project_iam_member" "terraform_project_iam_admin" {
   member   = "serviceAccount:${google_service_account.terraform_deployer.email}"
 }
 
-# overload-party-ops プロジェクト内の SA (この module の 4 SA を含む) と
-# その IAM (workload identity binding 等) を terraform で管理するために必要。
+# 各プロジェクトの SA と、その SA 単位の IAM を terraform で管理するために必要。
+# roles/editor は iam.serviceAccounts.setIamPolicy を含まない。
 resource "google_project_iam_member" "terraform_service_account_admin" {
-  project = var.project_id
-  role    = "roles/iam.serviceAccountAdmin"
-  member  = "serviceAccount:${google_service_account.terraform_deployer.email}"
+  for_each = toset(var.terraform_managed_projects)
+  project  = each.value
+  role     = "roles/iam.serviceAccountAdmin"
+  member   = "serviceAccount:${google_service_account.terraform_deployer.email}"
 }
 
 # roles/editor は artifactregistry の repository に対する setIamPolicy を含まないため、
