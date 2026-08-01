@@ -68,6 +68,9 @@ module "env" {
 
   gateway_allowed_origins = "http://localhost:3000,capacitor://localhost,http://localhost"
 
+  # 本来は Sandbox の実ストアを叩く設計だが、App Store Connect API キーが未発行で
+  # shop が起動できないため暫定的に stub にしている。復帰は overload-party-shop#129。
+  shop_iap_verifier      = "stub"
   shop_apple_environment = "Sandbox"
 
   support_cors_allowed_origins  = "http://localhost:3000"
