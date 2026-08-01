@@ -267,6 +267,7 @@ module "shop" {
   faction_acquired_topic    = "faction-acquired"
   card_pack_purchased_topic = "card-pack-purchased"
   premium_updated_topic     = "premium-updated"
+  iap_verifier              = var.shop_iap_verifier
   apple_environment         = var.shop_apple_environment
 
   depends_on = [module.network.service_networking_connection]

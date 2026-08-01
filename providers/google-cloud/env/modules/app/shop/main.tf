@@ -80,7 +80,11 @@ resource "google_cloud_run_v2_service" "shop" {
         value = var.premium_updated_topic
       }
       env {
-        name  = "IAP_MODE"
+        name  = "IAP_VERIFIER"
+        value = var.iap_verifier
+      }
+      env {
+        name  = "LOG_MODE"
         value = "production"
       }
       env {

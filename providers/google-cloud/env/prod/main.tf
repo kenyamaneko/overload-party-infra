@@ -67,6 +67,7 @@ module "env" {
 
   gateway_allowed_origins = "https://overloadparty-prod.keyandnotes.com,capacitor://localhost,http://localhost"
 
+  shop_iap_verifier      = "store"
   shop_apple_environment = "Production"
 
   support_cors_allowed_origins  = "https://overloadparty-prod.keyandnotes.com"

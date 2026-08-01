@@ -73,6 +73,11 @@ variable "premium_updated_topic" {
   type        = string
 }
 
+variable "iap_verifier" {
+  description = "レシート検証に実ストア (store) と stub のどちらを使うか。叩くストア環境は apple_environment が別に決める"
+  type        = string
+}
+
 variable "apple_environment" {
   description = "Apple IAP 検証環境 (\"Sandbox\" | \"Production\")。prod のみ Production"
   type        = string

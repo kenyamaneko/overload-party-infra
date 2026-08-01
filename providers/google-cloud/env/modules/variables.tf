@@ -108,6 +108,11 @@ variable "gateway_allowed_origins" {
   type        = string
 }
 
+variable "shop_iap_verifier" {
+  description = "shop のレシート検証に実ストア (store) と stub のどちらを使うか"
+  type        = string
+}
+
 variable "shop_apple_environment" {
   description = "shop の Apple IAP 検証環境 (\"Sandbox\" | \"Production\")。prod のみ Production"
   type        = string
