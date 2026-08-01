@@ -119,15 +119,6 @@ resource "google_cloud_run_v2_service" "support" {
           }
         }
       }
-      env {
-        name = "INTERNAL_AUTH_SECRET"
-        value_source {
-          secret_key_ref {
-            secret  = var.internal_auth_secret_id
-            version = "latest"
-          }
-        }
-      }
 
       startup_probe {
         http_get {

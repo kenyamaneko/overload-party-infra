@@ -123,10 +123,10 @@ resource "google_cloud_run_v2_service" "gateway" {
         value = var.pubsub_push_audience
       }
       env {
-        name = "INTERNAL_AUTH_SECRET"
+        name = "INTERNAL_AUTH_PRIVATE_KEY"
         value_source {
           secret_key_ref {
-            secret  = var.internal_auth_secret_id
+            secret  = var.internal_auth_private_key_secret_id
             version = "latest"
           }
         }

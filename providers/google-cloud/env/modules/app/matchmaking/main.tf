@@ -75,13 +75,8 @@ resource "google_cloud_run_v2_service" "matchmaking" {
         value = "10"
       }
       env {
-        name = "INTERNAL_AUTH_SECRET"
-        value_source {
-          secret_key_ref {
-            secret  = var.internal_auth_secret_id
-            version = "latest"
-          }
-        }
+        name  = "INTERNAL_AUTH_PUBLIC_KEY"
+        value = var.internal_auth_public_key
       }
 
       startup_probe {

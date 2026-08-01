@@ -193,21 +193,11 @@ module "e2e" {
   developer_members = var.e2e_developer_members
 }
 
-module "internal_auth_secret" {
-  source = "./foundation/internal-auth-secret"
+module "internal_auth_key" {
+  source = "./foundation/internal-auth-key"
 
-  project_id = var.project_id
-  accessor_service_account_emails = {
-    gateway     = module.service_accounts.accounts["gateway"].email
-    account     = module.service_accounts.accounts["account"].email
-    card        = module.service_accounts.accounts["card"].email
-    shop        = module.service_accounts.accounts["shop"].email
-    scenario    = module.service_accounts.accounts["scenario"].email
-    matchmaking = module.service_accounts.accounts["matchmaking"].email
-    news        = module.service_accounts.accounts["news"].email
-    support     = module.service_accounts.accounts["support"].email
-    # battle は対象外 (プレイヤー identity を持たず IAM 到達制御のみを受ける設計のため)
-  }
+  project_id                   = var.project_id
+  signer_service_account_email = module.service_accounts.accounts["gateway"].email
 }
 
 module "support_secrets" {
@@ -231,7 +221,7 @@ module "account" {
   max_instance_count       = local.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
-  internal_auth_secret_id  = module.internal_auth_secret.secret_id
+  internal_auth_public_key = var.internal_auth_public_key
 
   depends_on = [module.network.service_networking_connection]
 }
@@ -251,7 +241,7 @@ module "card" {
   max_instance_count       = local.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
-  internal_auth_secret_id  = module.internal_auth_secret.secret_id
+  internal_auth_public_key = var.internal_auth_public_key
 
   account_service_url = module.account.uri
 
@@ -272,7 +262,7 @@ module "shop" {
   max_instance_count       = local.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
-  internal_auth_secret_id  = module.internal_auth_secret.secret_id
+  internal_auth_public_key = var.internal_auth_public_key
 
   faction_acquired_topic    = "faction-acquired"
   card_pack_purchased_topic = "card-pack-purchased"
@@ -297,7 +287,7 @@ module "scenario" {
   max_instance_count       = local.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
-  internal_auth_secret_id  = module.internal_auth_secret.secret_id
+  internal_auth_public_key = var.internal_auth_public_key
 
   story_bucket                 = "overload-party-${var.env_name}-story"
   player_onboarded_topic       = "player-onboarded"
@@ -311,15 +301,15 @@ module "scenario" {
 module "matchmaking" {
   source = "./app/matchmaking"
 
-  project_id              = var.project_id
-  region                  = var.region
-  image                   = local.cloud_run_images["matchmaking"]
-  service_account_email   = module.service_accounts.accounts["matchmaking"].email
-  max_instance_count      = local.cloud_run_max_instance_count
-  resources_limit_cpu     = local.standard_resources[var.env_name].cpu
-  resources_limit_memory  = local.standard_resources[var.env_name].memory
-  internal_auth_secret_id = module.internal_auth_secret.secret_id
-  match_made_topic        = "matchmaking-events"
+  project_id               = var.project_id
+  region                   = var.region
+  image                    = local.cloud_run_images["matchmaking"]
+  service_account_email    = module.service_accounts.accounts["matchmaking"].email
+  max_instance_count       = local.cloud_run_max_instance_count
+  resources_limit_cpu      = local.standard_resources[var.env_name].cpu
+  resources_limit_memory   = local.standard_resources[var.env_name].memory
+  internal_auth_public_key = var.internal_auth_public_key
+  match_made_topic         = "matchmaking-events"
 }
 
 module "news" {
@@ -337,7 +327,7 @@ module "news" {
   max_instance_count       = local.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
-  internal_auth_secret_id  = module.internal_auth_secret.secret_id
+  internal_auth_public_key = var.internal_auth_public_key
 
   depends_on = [module.network.service_networking_connection]
 }
@@ -357,7 +347,6 @@ module "support" {
   max_instance_count       = local.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
-  internal_auth_secret_id  = module.internal_auth_secret.secret_id
 
   cors_allowed_origins       = var.support_cors_allowed_origins
   slack_channel_id           = var.support_slack_channel_id
@@ -392,21 +381,21 @@ module "battle" {
 module "gateway" {
   source = "./app/gateway"
 
-  project_id                 = var.project_id
-  region                     = var.region
-  env_name                   = var.env_name
-  image                      = local.cloud_run_images["gateway"]
-  container_port             = 9090
-  max_concurrent_connections = local.gateway_max_concurrent_connections
-  request_timeout_sec        = local.gateway_request_timeout_sec
-  resources_limit_cpu        = local.gateway_resources.cpu
-  resources_limit_memory     = local.gateway_resources.memory
-  service_account_email      = module.service_accounts.accounts["gateway"].email
-  network                    = module.network.network_name
-  subnetwork                 = module.network.subnetwork_name
-  cloudsql_connection_name   = local.cloudsql_connection_name
-  database_name              = var.database_name
-  internal_auth_secret_id    = module.internal_auth_secret.secret_id
+  project_id                          = var.project_id
+  region                              = var.region
+  env_name                            = var.env_name
+  image                               = local.cloud_run_images["gateway"]
+  container_port                      = 9090
+  max_concurrent_connections          = local.gateway_max_concurrent_connections
+  request_timeout_sec                 = local.gateway_request_timeout_sec
+  resources_limit_cpu                 = local.gateway_resources.cpu
+  resources_limit_memory              = local.gateway_resources.memory
+  service_account_email               = module.service_accounts.accounts["gateway"].email
+  network                             = module.network.network_name
+  subnetwork                          = module.network.subnetwork_name
+  cloudsql_connection_name            = local.cloudsql_connection_name
+  database_name                       = var.database_name
+  internal_auth_private_key_secret_id = module.internal_auth_key.secret_id
 
   upstash_redis_url_secret_id = local.gateway_upstash_redis_url_secret_id
 

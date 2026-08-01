@@ -31,6 +31,20 @@ module "env" {
   project_id = "overload-party-dev"
   region     = "asia-northeast1"
 
+  # 対になる秘密鍵は Secret Manager の internal-auth-private-key に手動投入する。
+  # 公開鍵は秘密ではないため平文で持つ。
+  internal_auth_public_key = <<-EOT
+    -----BEGIN PUBLIC KEY-----
+    MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxmcelJAEG0NX5amKXxSp
+    B/sP5zbOjKYWhVXH14VOnkPSXEY0AMgXcLu36XT1X0qy85JU4s0tcf6aFOjbWVtD
+    y4b3SjiIbM4LI0Mrn1B2yxEKlftLOzHTt0xUKbC+z/rC9gfGmf7lCX68XUJI0Ouu
+    xAwYgGpb43TyPPNzqSL57HMfbr7lJXr5JPL5v1flJeWuqO5yO+hhDG2LirFBXVYw
+    MDH78YkMEW4U2yKXHCRkeQYJxaKU+mP98s9Mu/RLuz3VlsRu19jgWvXHSCdt75F1
+    xb9k2A5gySqdy19VHPY8iK1fVG5i6cnP0diniq/P5B7+kIIvxympg6QMA5L/0kYg
+    7wIDAQAB
+    -----END PUBLIC KEY-----
+  EOT
+
   cloudsql_instance_name = "overload-party-db"
   cloudsql_tier          = "db-g1-small"
   database_name          = "overload_party"
