@@ -58,10 +58,6 @@ variable "resources_limit_memory" {
   type        = string
 }
 
-variable "internal_auth_secret_id" {
-  description = "内部認証共有鍵 (HS256) の Secret Manager secret_id"
-  type        = string
-}
 
 variable "cors_allowed_origins" {
   description = "外部問い合わせフォーム (:9209) の CORS 許可オリジン"

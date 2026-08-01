@@ -58,8 +58,8 @@ variable "resources_limit_memory" {
   type        = string
 }
 
-variable "internal_auth_secret_id" {
-  description = "内部認証共有鍵 (HS256) の Secret Manager secret_id"
+variable "internal_auth_public_key" {
+  description = "内部認証トークン (RS256) を検証する gateway の公開鍵 (PEM)。公開鍵は秘密ではないため平文で渡す"
   type        = string
 }
 

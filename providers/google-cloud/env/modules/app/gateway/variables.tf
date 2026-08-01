@@ -68,8 +68,8 @@ variable "database_name" {
   type        = string
 }
 
-variable "internal_auth_secret_id" {
-  description = "内部認証トークンの署名鍵を保持する Secret Manager シークレット ID"
+variable "internal_auth_private_key_secret_id" {
+  description = "内部認証トークンの署名鍵 (RSA 秘密鍵) を保持する Secret Manager シークレット ID"
   type        = string
 }
 

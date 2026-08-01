@@ -8,6 +8,11 @@ variable "region" {
   type        = string
 }
 
+variable "internal_auth_public_key" {
+  description = "gateway が発行する内部認証トークン (RS256) を検証する公開鍵 (PEM)。対になる秘密鍵は Secret Manager に手動投入する"
+  type        = string
+}
+
 # ──────────────────────────────────────────────
 # Cloud SQL
 # ──────────────────────────────────────────────
