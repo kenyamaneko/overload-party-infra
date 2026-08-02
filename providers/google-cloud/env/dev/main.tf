@@ -48,7 +48,8 @@ module "env" {
   cloudsql_instance_name = "overload-party-db"
   cloudsql_tier          = "db-g1-small"
 
-  # 9 サービス分の同時接続が Cloud SQL のコネクション上限を超えないための上限。
+  # db-g1-small のコネクション上限に対する安全側の暫定値。実接続数に基づく正式な
+  # サイジングではない。
   cloud_run_max_instance_count = 3
   database_name                = "overload_party"
   deletion_protection          = false
