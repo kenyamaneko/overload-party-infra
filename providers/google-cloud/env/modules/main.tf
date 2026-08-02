@@ -104,6 +104,11 @@ locals {
   # 資源の逼迫は環境によらず同じ割合で危険なため、使用率の閾値は env で変えない。
   database_utilization_thresholds = { cpu = 0.9, memory = 0.9, disk = 0.85 }
 
+  # pgxpool の既定は max(4, NumCPU) で、インスタンス数を絞っても接続数の上限は決まらない。
+  # 上限を握るのはプール側なので明示する。Go 7 サービスに効き、stg / prod では
+  # 7 サービス × 1 インスタンス × 2 = 14 接続が上限になる。
+  database_pool_max_conns = 2
+
   # 接続数は max_connections がマシンタイプで変わるため env ごとに置く。db-f1-micro は
   # 最小メモリ帯の既定 25、db-g1-small はそれより上の帯を想定し、上限に触れる手前で
   # 気づけるよう余裕を残した値にする。
@@ -335,6 +340,7 @@ module "account" {
   subnetwork               = module.network.subnetwork_name
   cloudsql_connection_name = local.cloudsql_connection_name
   database_name            = var.database_name
+  db_pool_max_conns        = local.database_pool_max_conns
   max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
@@ -355,6 +361,7 @@ module "card" {
   subnetwork               = module.network.subnetwork_name
   cloudsql_connection_name = local.cloudsql_connection_name
   database_name            = var.database_name
+  db_pool_max_conns        = local.database_pool_max_conns
   max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
@@ -376,6 +383,7 @@ module "shop" {
   subnetwork               = module.network.subnetwork_name
   cloudsql_connection_name = local.cloudsql_connection_name
   database_name            = var.database_name
+  db_pool_max_conns        = local.database_pool_max_conns
   max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
@@ -402,6 +410,7 @@ module "scenario" {
   subnetwork               = module.network.subnetwork_name
   cloudsql_connection_name = local.cloudsql_connection_name
   database_name            = var.database_name
+  db_pool_max_conns        = local.database_pool_max_conns
   max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
@@ -442,6 +451,7 @@ module "news" {
   subnetwork               = module.network.subnetwork_name
   cloudsql_connection_name = local.cloudsql_connection_name
   database_name            = var.database_name
+  db_pool_max_conns        = local.database_pool_max_conns
   max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
@@ -462,6 +472,7 @@ module "support" {
   subnetwork               = module.network.subnetwork_name
   cloudsql_connection_name = local.cloudsql_connection_name
   database_name            = var.database_name
+  db_pool_max_conns        = local.database_pool_max_conns
   max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
@@ -513,6 +524,7 @@ module "gateway" {
   subnetwork                          = module.network.subnetwork_name
   cloudsql_connection_name            = local.cloudsql_connection_name
   database_name                       = var.database_name
+  db_pool_max_conns                   = local.database_pool_max_conns
   internal_auth_private_key_secret_id = module.internal_auth_key.secret_id
 
   upstash_redis_url_secret_id = local.gateway_upstash_redis_url_secret_id

@@ -71,7 +71,7 @@ resource "google_cloud_run_v2_service" "support" {
       }
       env {
         name  = "DATABASE_CONN"
-        value = "user=${trimsuffix(var.service_account_email, ".gserviceaccount.com")} dbname=${var.database_name} sslmode=disable"
+        value = "user=${trimsuffix(var.service_account_email, ".gserviceaccount.com")} dbname=${var.database_name} sslmode=disable pool_max_conns=${var.db_pool_max_conns}"
       }
       env {
         name  = "DATABASE_IAM_AUTH_ENABLED"
