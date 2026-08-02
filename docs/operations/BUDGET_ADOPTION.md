@@ -8,6 +8,8 @@
 
 **予算を既存に合わせた変更を、この手順より先に通常の apply で流してはいけない。**コードは表示名を手作りした側 (`overload-party-<env>-budget`) に合わせてある。取り込む前に apply すると、terraform が作った予算の表示名と金額が書き換わり、同じ名前の予算が 2 つ並ぶ。どちらが state に載っているか見分けが付かなくなる。
 
+実行するのは、予算を既存に合わせた変更が入った main のチェックアウト。手元のコードが古い値のままだと、取り込んだ後の plan に金額と表示名の差分が出て、意図した差分と見分けが付かなくなる。
+
 state root ごとに、その root の plan / apply が動いていないことを確かめてから始める。terraform を Ctrl-C で止めてはいけない。GCS のロックを掴んだまま終了し、以降の plan がすべてロック競合で失敗する。
 
 `terraform destroy` と `terraform import` は CI の workflow に無いので、手元で実行する。`TF_VAR_alert_email` が要る (env の 3 root のみ)。
