@@ -25,6 +25,6 @@ variable "billing_account_id" {
 }
 
 variable "monthly_budget_jpy" {
-  description = "月次予算 (円)。この額の 50 / 80 / 100 % に達した時点で通知する"
+  description = "月次予算 (円)。この額の 50 / 75 / 100 % に達した時点で通知する"
   type        = number
 }

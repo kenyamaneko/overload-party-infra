@@ -1,33 +1,4 @@
-resource "google_project_service" "monitoring" {
-  project            = var.project_id
-  service            = "monitoring.googleapis.com"
-  disable_on_destroy = false
-}
-
-resource "google_project_service" "billingbudgets" {
-  project            = var.project_id
-  service            = "billingbudgets.googleapis.com"
-  disable_on_destroy = false
-}
-
-resource "google_monitoring_notification_channel" "email" {
-  project      = var.project_id
-  display_name = "Overload Party アラート通知 (${var.env_name})"
-  type         = "email"
-
-  labels = {
-    email_address = var.alert_email
-  }
-
-  depends_on = [google_project_service.monitoring]
-}
-
 locals {
-  notification_channel_ids = concat(
-    [google_monitoring_notification_channel.email.id],
-    var.slack_notification_channel_id == "" ? [] : [var.slack_notification_channel_id],
-  )
-
   budget_warning_threshold_percent  = 0.5
   budget_critical_threshold_percent = 0.75
   budget_exceeded_threshold_percent = 1.0
@@ -38,6 +9,7 @@ data "google_project" "current" {
 }
 
 # 請求データの反映に数時間の遅れがあり、上限で止めても超過を防ぎきれないため、通知だけを行う。
+# 通知先を指定しない場合の宛先は請求先アカウントの管理者になる。
 resource "google_billing_budget" "monthly" {
   billing_account = var.billing_account_id
   display_name    = "${var.project_id}-budget"
@@ -65,10 +37,4 @@ resource "google_billing_budget" "monthly" {
   threshold_rules {
     threshold_percent = local.budget_exceeded_threshold_percent
   }
-
-  all_updates_rule {
-    monitoring_notification_channels = local.notification_channel_ids
-  }
-
-  depends_on = [google_project_service.billingbudgets]
 }
