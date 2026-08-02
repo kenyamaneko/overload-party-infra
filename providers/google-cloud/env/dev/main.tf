@@ -59,6 +59,8 @@ module "env" {
   scenarios_bucket_name = "overload-party-dev-scenarios"
   newsfeed_bucket_name  = "overload-party-dev-newsfeed"
 
+  master_data_bucket_name = "overload-party-dev-master-data"
+
   # dev は Cloud Scheduler を形式的に配置するのみ (cron は設定するが常時 PAUSED)。
   # 手動実行は `gcloud run jobs execute newsfeed-job` を使う。
   newsfeed_scheduler_paused = true

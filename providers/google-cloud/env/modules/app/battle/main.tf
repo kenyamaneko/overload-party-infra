@@ -72,6 +72,10 @@ resource "google_cloud_run_v2_service" "battle" {
         name  = "CARD_SERVICE_URL"
         value = var.card_service_url
       }
+      env {
+        name  = "MASTER_DATA_BUCKET"
+        value = var.master_data_bucket
+      }
 
       startup_probe {
         http_get {

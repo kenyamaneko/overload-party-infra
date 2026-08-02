@@ -59,6 +59,8 @@ module "env" {
   scenarios_bucket_name = "overload-party-stg-scenarios"
   newsfeed_bucket_name  = "overload-party-stg-newsfeed"
 
+  master_data_bucket_name = "overload-party-stg-master-data"
+
   # stg は通常 PAUSED。prod リリース前検証時のみ `gcloud scheduler jobs resume` で
   # 一時的に有効化し、確認後に手動で pause に戻す運用。
   newsfeed_scheduler_paused = true

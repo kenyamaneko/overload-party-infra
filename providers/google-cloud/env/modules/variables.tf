@@ -75,6 +75,11 @@ variable "newsfeed_bucket_name" {
   type        = string
 }
 
+variable "master_data_bucket_name" {
+  description = "カード / 施策マスタバケット名（グローバル一意）"
+  type        = string
+}
+
 # ──────────────────────────────────────────────
 # コンテナイメージ
 # ──────────────────────────────────────────────
