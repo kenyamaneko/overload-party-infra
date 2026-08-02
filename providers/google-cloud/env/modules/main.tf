@@ -93,6 +93,35 @@ locals {
       }
     }
   ]...)
+
+  # dev と stg は動作確認やテストでエラーパスを意図的に踏み、そのまま発報させると通知が
+  # 埋もれるため、単発のエラーでは発報しない閾値にする。
+  alert_thresholds = {
+    dev  = { server_error_count = 5, error_log_count = 20 }
+    stg  = { server_error_count = 1, error_log_count = 5 }
+    prod = { server_error_count = 0, error_log_count = 0 }
+  }
+
+  # 最小インスタンス数 0 でインスタンスが常時停止しており、計測される応答時間にコールド
+  # スタートが含まれるため、秒単位の余裕を持たせる。
+  standard_latency_p95_threshold_ms = 20000
+
+  # .NET ランタイムの起動が Go より重いため、battle だけ上限を広く取る。
+  battle_latency_p95_threshold_ms = 45000
+
+  # gateway の応答時間は WebSocket 接続が切れるまでの時間そのものになり応答の遅さを
+  # 表さないため、gateway だけ応答時間を監視しない。
+  service_latency_p95_threshold_ms = {
+    account     = local.standard_latency_p95_threshold_ms
+    battle      = local.battle_latency_p95_threshold_ms
+    card        = local.standard_latency_p95_threshold_ms
+    gateway     = null
+    matchmaking = local.standard_latency_p95_threshold_ms
+    news        = local.standard_latency_p95_threshold_ms
+    scenario    = local.standard_latency_p95_threshold_ms
+    shop        = local.standard_latency_p95_threshold_ms
+    support     = local.standard_latency_p95_threshold_ms
+  }
 }
 
 module "network" {
@@ -108,6 +137,30 @@ module "service_accounts" {
   project_id       = var.project_id
   k8s_services     = local.k8s_services
   non_k8s_services = local.non_k8s_services
+}
+
+module "monitoring" {
+  source = "./foundation/monitoring"
+
+  project_id                    = var.project_id
+  env_name                      = var.env_name
+  alert_email                   = var.alert_email
+  slack_notification_channel_id = var.alert_slack_notification_channel_id
+  billing_account_id            = var.billing_account_id
+  monthly_budget_jpy            = var.monthly_budget_jpy
+}
+
+module "service_monitoring" {
+  for_each = local.k8s_services
+
+  source = "./foundation/service-monitoring"
+
+  project_id                   = var.project_id
+  service_name                 = each.key
+  notification_channel_ids     = module.monitoring.notification_channel_ids
+  server_error_count_threshold = local.alert_thresholds[var.env_name].server_error_count
+  error_log_count_threshold    = local.alert_thresholds[var.env_name].error_log_count
+  latency_p95_threshold_ms     = local.service_latency_p95_threshold_ms[each.key]
 }
 
 module "database" {

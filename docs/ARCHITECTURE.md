@@ -57,6 +57,18 @@ k8s manifest と Terraform はデプロイ頻度・更新ライフサイクル�
 
 Cloud SQL インスタンスは `env/` の Terraform が所有している。起動・停止（`activation_policy` 切替）も、リソースの所有者と操作の所有者を一致させるため、このリポの `cloudsql-activation.yaml` が担当する。手動で起動・停止する場合は `cloudsql-activation.yaml` を `workflow_dispatch` で叩く。
 
+## 監視の当て方
+
+Cloud Run サービスの監視は `env/modules/foundation/service-monitoring` を全サービスに `for_each` で当てる。サービスごとに監視を書くと、サービスが増えたときに当て忘れても誰も気づけないため、当てる範囲をサービス一覧そのものから導く。サービス固有の指標だけを各サービスのモジュールに置く。
+
+ERROR ログの監視には Cloud Logging が標準で出す件数メトリクスを severity で絞って使う。ログベースメトリクスを定義する方式と違い、ログバケットもシンクも要らず、アラートポリシーだけで完結する。
+
+dev も監視対象に含める。dev のデプロイが 3 週間失敗し続けても気づけなかったため、通知の届かない環境を作らない。テストで踏んだエラーが通知を埋めないよう、閾値は環境ごとに変える。
+
+gateway の応答時間は監視しない。WebSocket 接続は切断まで 1 リクエストとして計測され、応答時間が接続時間そのものになって遅さを表さないため。
+
+予算アラートは環境ごとのプロジェクトを対象に 1 つずつ置く。請求先アカウント単位でまとめると、どの環境で費用が増えたのかが分からないため。
+
 ## apply は手動トリガー
 
 PR 時は `terraform plan` を自動実行してコメントに結果を貼る。`terraform apply` は `workflow_dispatch` のみ（main ブランチ限定）。PR マージが即 apply にならないのは、インフラ変更は人間が apply タイミングを判断すべきであるため。
