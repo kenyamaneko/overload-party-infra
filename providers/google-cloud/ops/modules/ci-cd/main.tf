@@ -174,6 +174,15 @@ resource "google_project_iam_member" "terraform_service_account_admin" {
   member   = "serviceAccount:${google_service_account.terraform_deployer.email}"
 }
 
+# roles/editor と roles/run.developer は Cloud Run サービスの setIamPolicy を含まないため、
+# サービス間呼び出しの invoker を terraform で管理できるよう run.admin を付与する。
+resource "google_project_iam_member" "terraform_run_admin" {
+  for_each = toset(var.terraform_managed_projects)
+  project  = each.value
+  role     = "roles/run.admin"
+  member   = "serviceAccount:${google_service_account.terraform_deployer.email}"
+}
+
 # roles/editor は artifactregistry の repository に対する setIamPolicy を含まないため、
 # Artifact Registry リソースの IAM binding を terraform が書き込めない (pubsub / secretmanager と同じ制約)。
 resource "google_project_iam_member" "terraform_artifactregistry_admin" {
