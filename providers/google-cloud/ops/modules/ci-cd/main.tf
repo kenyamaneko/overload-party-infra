@@ -12,6 +12,14 @@ resource "google_project_service" "cloudresourcemanager" {
   disable_on_destroy = false
 }
 
+# 予算は請求先アカウント単位のリソースでプロジェクトに属さないため、呼び出し元の SA が
+# 属するこのプロジェクトが quota project になる。
+resource "google_project_service" "billingbudgets" {
+  project            = var.project_id
+  service            = "billingbudgets.googleapis.com"
+  disable_on_destroy = false
+}
+
 resource "google_service_account" "ci" {
   project      = var.project_id
   account_id   = "github-ci"
