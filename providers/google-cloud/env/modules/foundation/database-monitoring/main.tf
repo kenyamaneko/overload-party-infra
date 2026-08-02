@@ -5,6 +5,8 @@ locals {
   # 資源の逼迫は一時的な尖りで発報させたくないため、閾値超えが 5 分続いたときに発報する。
   sustained_alert_duration = "300s"
 
+  # 資源の逼迫が収まったことを検知できない条件でもインシデントが残り続けないよう、
+  # 7 日で自動クローズする。
   auto_close_duration = "604800s"
 
   database_id = "${var.project_id}:${var.instance_name}"
@@ -109,8 +111,8 @@ resource "google_monitoring_alert_policy" "disk_utilization" {
   }
 }
 
-# 各サービスは接続プールの上限を設定しておらず driver の既定に委ねているため、
-# 接続数は設定から導けない。上限に触れる前に気づけるよう実測値で見る。
+# battle は接続プールの上限を設定しておらず、設定から積み上げた上限が実際の接続数と
+# 一致しない。上限に触れる前に気づけるよう実測値で見る。
 resource "google_monitoring_alert_policy" "connection_count" {
   project      = var.project_id
   display_name = "Cloud SQL ${var.instance_name}: 同時接続数が多い"

@@ -28,7 +28,7 @@ variable "cloudsql_tier" {
 }
 
 variable "cloud_run_max_instance_count" {
-  description = "account / card / shop / scenario / matchmaking / news / support / battle の最大インスタンス数。Cloud SQL への同時接続量に効くため cloudsql_tier と合わせて決める。gateway は ADR-058 の設計で 1 に固定しており本変数を受け取らない"
+  description = "account / card / shop / scenario / matchmaking / news / support / battle の最大インスタンス数。Cloud SQL への同時接続量に効くため cloudsql_tier と合わせて決める。gateway は WebSocket 接続をプロセス内に保持し 1 インスタンスに固定するため本変数を受け取らない"
   type        = number
 }
 

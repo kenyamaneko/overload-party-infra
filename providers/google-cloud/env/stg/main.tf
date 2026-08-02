@@ -48,9 +48,8 @@ module "env" {
   cloudsql_instance_name = "overload-party-db"
   cloudsql_tier          = "db-f1-micro"
 
-  # db-f1-micro はメモリが db-g1-small の 1/3 程度のため、DB に接続する 8 サービスの
-  # 同時接続を減らす向きに絞った暫定値。各サービスの接続プール上限を数えた正式な
-  # サイジングではない (プール上限は未設定で pgxpool の既定に委ねている)。
+  # db-f1-micro はメモリが db-g1-small の 1/3 程度のため、同時接続を減らす向きに絞る。
+  # 接続数の上限は database_pool_max_conns との積で決まる。
   cloud_run_max_instance_count = 1
   database_name                = "overload_party"
   deletion_protection          = false

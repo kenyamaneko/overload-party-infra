@@ -202,7 +202,7 @@ module "database_monitoring" {
   source = "./foundation/database-monitoring"
 
   project_id               = var.project_id
-  instance_name            = var.cloudsql_instance_name
+  instance_name            = module.database.instance_name
   notification_channel_ids = module.monitoring.notification_channel_ids
 
   cpu_utilization_threshold    = local.database_utilization_thresholds.cpu
