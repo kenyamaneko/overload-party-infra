@@ -439,6 +439,9 @@ module "iam_grants" {
 
   gateway_cloud_run_service_name = "gateway"
 
+  battle_service_account_email = module.service_accounts.accounts["battle"].email
+  card_cloud_run_service_name  = "card"
+
   push_service_account_email = module.pubsub.push_service_account_email
   push_target_cloud_run_service_names = {
     account = "account"

@@ -1,7 +1,4 @@
-# スター型トポロジ (gateway → 各サービス) のため付与は線形。battle も対象に含む。
-# サービス間の同期呼び出し (battle→card, card→account) は HTTP 経由で各サービスの runtime SA を
-# 使わないため、invoker 対象は gateway に限定する (card→account, battle→card は同一トラストゾーン内の
-# 直接呼び出しのため IAM 保護の対象外)。
+# gateway は全サービスの呼び出し元になるため、スター型に線形で付与する。battle も対象に含む。
 
 resource "google_cloud_run_v2_service_iam_member" "gateway_invoker" {
   for_each = var.cloud_run_service_names
@@ -20,6 +17,16 @@ resource "google_cloud_run_v2_service_iam_member" "gateway_unauthenticated" {
   name     = var.gateway_cloud_run_service_name
   role     = "roles/run.invoker"
   member   = "allUsers"
+}
+
+# battle は起動時に card からマスタデータを読む。Cloud Run は allUsers 以外の呼び出しに
+# 必ず invoker を要求するため、この経路にも付与が要る。
+resource "google_cloud_run_v2_service_iam_member" "battle_card_invoker" {
+  project  = var.project_id
+  location = var.region
+  name     = var.card_cloud_run_service_name
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${var.battle_service_account_email}"
 }
 
 # push subscription の配信は push 用 SA の OIDC トークンを使った HTTP 呼び出しのため、呼び出し IAM を通すには push 先サービスへの run.invoker が要る。
