@@ -101,6 +101,18 @@ locals {
     prod = { server_error_count = 0, error_log_count = 2 }
   }
 
+  # 資源の逼迫は環境によらず同じ割合で危険なため、使用率の閾値は env で変えない。
+  database_utilization_thresholds = { cpu = 0.9, memory = 0.9, disk = 0.85 }
+
+  # 接続数は max_connections がマシンタイプで変わるため env ごとに置く。db-f1-micro は
+  # 最小メモリ帯の既定 25、db-g1-small はそれより上の帯を想定し、上限に触れる手前で
+  # 気づけるよう余裕を残した値にする。
+  database_connection_count_thresholds = {
+    dev  = 40
+    stg  = 20
+    prod = 20
+  }
+
   # 監視対象の Cloud Run ジョブ。サービスと違い一覧から導けないため、ジョブを増やしたらここに足す。
   monitored_jobs = {
     newsfeed = module.newsfeed.job_name
@@ -179,6 +191,19 @@ module "job_monitoring" {
   job_name                            = each.value
   notification_channel_ids            = module.monitoring.notification_channel_ids
   failed_task_attempt_count_threshold = local.job_failed_task_attempt_count_threshold
+}
+
+module "database_monitoring" {
+  source = "./foundation/database-monitoring"
+
+  project_id               = var.project_id
+  instance_name            = var.cloudsql_instance_name
+  notification_channel_ids = module.monitoring.notification_channel_ids
+
+  cpu_utilization_threshold    = local.database_utilization_thresholds.cpu
+  memory_utilization_threshold = local.database_utilization_thresholds.memory
+  disk_utilization_threshold   = local.database_utilization_thresholds.disk
+  connection_count_threshold   = local.database_connection_count_thresholds[var.env_name]
 }
 
 module "database" {
