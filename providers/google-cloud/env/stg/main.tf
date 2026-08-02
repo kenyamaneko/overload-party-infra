@@ -82,5 +82,5 @@ module "env" {
   alert_slack_notification_channel_id = ""
 
   billing_account_id = "019A0B-9A103A-B4C602"
-  monthly_budget_jpy = 15000
+  monthly_budget_jpy = 1000
 }
