@@ -60,8 +60,9 @@ locals {
     stg  = { cpu = "200m", memory = "256Mi" }
     prod = { cpu = "200m", memory = "256Mi" }
   }
+  # Cloud Run は同時実行数が 1 を超えるとき 1 vCPU 未満を許さないため、dev も 1 にする。
   battle_resources = {
-    dev  = { cpu = "500m", memory = "512Mi" }
+    dev  = { cpu = "1", memory = "512Mi" }
     stg  = { cpu = "1", memory = "1Gi" }
     prod = { cpu = "1", memory = "1Gi" }
   }
