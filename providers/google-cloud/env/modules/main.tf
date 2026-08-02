@@ -27,17 +27,21 @@ locals {
     newsfeed = "overload-party-newsfeed"
   }
 
-  db_services = {
-    gateway  = "overload-party-gateway"
-    battle   = "overload-party-battle"
-    card     = "overload-party-card"
-    account  = "overload-party-account"
-    shop     = "overload-party-shop"
-    scenario = "overload-party-scenario"
-    newsfeed = "overload-party-newsfeed"
-    news     = "overload-party-news"
-    support  = "overload-party-support"
+  # サービスの定義。用途ごとの集合はここから導く。
+  services = {
+    account     = { uses_db = true, push_target = true }
+    battle      = { uses_db = true, push_target = false }
+    card        = { uses_db = true, push_target = true }
+    gateway     = { uses_db = true, push_target = true }
+    matchmaking = { uses_db = false, push_target = false }
+    news        = { uses_db = true, push_target = true }
+    newsfeed    = { uses_db = true, push_target = false }
+    scenario    = { uses_db = true, push_target = false }
+    shop        = { uses_db = true, push_target = false }
+    support     = { uses_db = true, push_target = false }
   }
+
+  db_services = { for svc, attributes in local.services : svc => "overload-party-${svc}" if attributes.uses_db }
 
   # GitHub Actions の CI/CD は overload-party-ops プロジェクトの github-ci SA に集約しており
   # env ごとに切り替えない。db-migration / newsfeed の Cloud Run Job invoker 等に付与する。
@@ -86,6 +90,10 @@ locals {
     scenario    = module.scenario.service_name
     shop        = module.shop.service_name
     support     = module.support.service_name
+  }
+
+  push_target_cloud_run_service_names = {
+    for svc, attributes in local.services : svc => local.cloud_run_service_names[svc] if attributes.push_target
   }
 
   # 実在するサービス間呼び出しの一覧。各サービスの config が持つ *_SERVICE_URL /
@@ -553,13 +561,8 @@ module "iam_grants" {
 
   gateway_cloud_run_service_name = local.cloud_run_service_names["gateway"]
 
-  push_service_account_email = module.pubsub.push_service_account_email
-  push_target_cloud_run_service_names = {
-    account = local.cloud_run_service_names["account"]
-    card    = local.cloud_run_service_names["card"]
-    news    = local.cloud_run_service_names["news"]
-    gateway = local.cloud_run_service_names["gateway"]
-  }
+  push_service_account_email          = module.pubsub.push_service_account_email
+  push_target_cloud_run_service_names = local.push_target_cloud_run_service_names
 
   ci_deploy_sa_member = local.deploy_sa_member
   cloud_run_runtime_service_account_names = {
