@@ -4,9 +4,9 @@
 
 この手順は一度きりの移行のためのもので、取り込みが済めば以降の予算の変更は通常の apply で足りる。
 
-## 先に読むこと
+## 取り込みより先に apply してはいけない
 
-**この変更を通常の apply で先に流してはいけない。**コードは表示名を手作りした側 (`overload-party-<env>-budget`) に合わせてある。取り込む前に apply すると、terraform が作った予算の表示名と金額が書き換わり、同じ名前の予算が 2 つ並ぶ。どちらが state に載っているか見分けが付かなくなる。
+**予算を既存に合わせた変更を、この手順より先に通常の apply で流してはいけない。**コードは表示名を手作りした側 (`overload-party-<env>-budget`) に合わせてある。取り込む前に apply すると、terraform が作った予算の表示名と金額が書き換わり、同じ名前の予算が 2 つ並ぶ。どちらが state に載っているか見分けが付かなくなる。
 
 state root ごとに、その root の plan / apply が動いていないことを確かめてから始める。terraform を Ctrl-C で止めてはいけない。GCS のロックを掴んだまま終了し、以降の plan がすべてロック競合で失敗する。
 
@@ -72,6 +72,8 @@ terraform import \
 
 ### 4. 差分が意図した分だけであることを確かめる
 
+root ごとに、そのアドレスで実行する。
+
 ```
 terraform plan -input=false \
   -target='module.env.module.monitoring.google_billing_budget.monthly'
@@ -85,7 +87,7 @@ ops で出てよい差分は無い。`all_updates_rule` の差分が出る場合
 
 ### 5. apply する
 
-4 で確かめた差分をそのまま適用する。
+4 で確かめた差分をそのまま適用する。4 と同じく root ごとにアドレスを読み替える。
 
 ```
 terraform apply -input=false \
