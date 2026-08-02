@@ -46,10 +46,14 @@ module "env" {
   EOT
 
   cloudsql_instance_name = "overload-party-db"
-  cloudsql_tier          = "db-g1-small"
-  database_name          = "overload_party"
-  deletion_protection    = true
-  ipv4_enabled           = false
+  cloudsql_tier          = "db-f1-micro"
+
+  # db-f1-micro はコネクション上限が db-g1-small より低いため、9 サービス分の同時接続が
+  # 収まるよう 1 に絞る。
+  cloud_run_max_instance_count = 1
+  database_name                = "overload_party"
+  deletion_protection          = true
+  ipv4_enabled                 = false
 
   firestore_location = "asia-northeast1"
 

@@ -52,9 +52,6 @@ locals {
   # news/support の config.go は "staging" | "production" のみ要求するため、dev/stg は staging、prod のみ production とする。
   staging_or_production_env = var.env_name == "prod" ? "production" : "staging"
 
-  # db-g1-small のコネクション上限に対する安全側の暫定値。実接続数に基づく正式なサイジングではない。
-  cloud_run_max_instance_count = 3
-
   standard_resources = {
     dev  = { cpu = "100m", memory = "128Mi" }
     stg  = { cpu = "200m", memory = "256Mi" }
@@ -313,7 +310,7 @@ module "account" {
   subnetwork               = module.network.subnetwork_name
   cloudsql_connection_name = local.cloudsql_connection_name
   database_name            = var.database_name
-  max_instance_count       = local.cloud_run_max_instance_count
+  max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
   internal_auth_public_key = var.internal_auth_public_key
@@ -333,7 +330,7 @@ module "card" {
   subnetwork               = module.network.subnetwork_name
   cloudsql_connection_name = local.cloudsql_connection_name
   database_name            = var.database_name
-  max_instance_count       = local.cloud_run_max_instance_count
+  max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
   internal_auth_public_key = var.internal_auth_public_key
@@ -354,7 +351,7 @@ module "shop" {
   subnetwork               = module.network.subnetwork_name
   cloudsql_connection_name = local.cloudsql_connection_name
   database_name            = var.database_name
-  max_instance_count       = local.cloud_run_max_instance_count
+  max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
   internal_auth_public_key = var.internal_auth_public_key
@@ -380,7 +377,7 @@ module "scenario" {
   subnetwork               = module.network.subnetwork_name
   cloudsql_connection_name = local.cloudsql_connection_name
   database_name            = var.database_name
-  max_instance_count       = local.cloud_run_max_instance_count
+  max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
   internal_auth_public_key = var.internal_auth_public_key
@@ -401,7 +398,7 @@ module "matchmaking" {
   region                   = var.region
   image                    = local.cloud_run_images["matchmaking"]
   service_account_email    = module.service_accounts.accounts["matchmaking"].email
-  max_instance_count       = local.cloud_run_max_instance_count
+  max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
   internal_auth_public_key = var.internal_auth_public_key
@@ -420,7 +417,7 @@ module "news" {
   subnetwork               = module.network.subnetwork_name
   cloudsql_connection_name = local.cloudsql_connection_name
   database_name            = var.database_name
-  max_instance_count       = local.cloud_run_max_instance_count
+  max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
   internal_auth_public_key = var.internal_auth_public_key
@@ -440,7 +437,7 @@ module "support" {
   subnetwork               = module.network.subnetwork_name
   cloudsql_connection_name = local.cloudsql_connection_name
   database_name            = var.database_name
-  max_instance_count       = local.cloud_run_max_instance_count
+  max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
 
@@ -465,7 +462,7 @@ module "battle" {
   subnetwork               = module.network.subnetwork_name
   cloudsql_connection_name = local.cloudsql_connection_name
   database_name            = var.database_name
-  max_instance_count       = local.cloud_run_max_instance_count
+  max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.battle_resources[var.env_name].cpu
   resources_limit_memory   = local.battle_resources[var.env_name].memory
 

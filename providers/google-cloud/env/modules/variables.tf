@@ -27,6 +27,11 @@ variable "cloudsql_tier" {
   type        = string
 }
 
+variable "cloud_run_max_instance_count" {
+  description = "Cloud Run サービス 1 つあたりの最大インスタンス数。全サービスの合計が Cloud SQL のコネクション上限を超えないよう cloudsql_tier と合わせて決める"
+  type        = number
+}
+
 variable "database_name" {
   description = "PostgreSQL データベース名"
   type        = string

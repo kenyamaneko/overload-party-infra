@@ -47,9 +47,12 @@ module "env" {
 
   cloudsql_instance_name = "overload-party-db"
   cloudsql_tier          = "db-g1-small"
-  database_name          = "overload_party"
-  deletion_protection    = false
-  ipv4_enabled           = false
+
+  # 9 サービス分の同時接続が Cloud SQL のコネクション上限を超えないための上限。
+  cloud_run_max_instance_count = 3
+  database_name                = "overload_party"
+  deletion_protection          = false
+  ipv4_enabled                 = false
 
   firestore_location = "asia-northeast1"
 
