@@ -59,6 +59,8 @@ module "env" {
   scenarios_bucket_name = "overload-party-prod-scenarios"
   newsfeed_bucket_name  = "overload-party-prod-newsfeed"
 
+  master_data_bucket_name = "overload-party-prod-master-data"
+
   # prod のみ Cloud Scheduler を有効化。2 時間周期で Cloud Run Job を起動する。
   newsfeed_scheduler_paused = false
 

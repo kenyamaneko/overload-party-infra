@@ -280,6 +280,16 @@ module "assets" {
   scenarios_bucket_name = var.scenarios_bucket_name
 }
 
+module "master_data" {
+  source = "./app/master-data"
+
+  project_id                   = var.project_id
+  region                       = var.region
+  bucket_name                  = var.master_data_bucket_name
+  deploy_sa_member             = local.deploy_sa_member
+  battle_service_account_email = module.service_accounts.accounts["battle"].email
+}
+
 module "e2e" {
   count  = var.enable_e2e ? 1 : 0
   source = "./jobs/e2e"
@@ -469,9 +479,15 @@ module "battle" {
   resources_limit_cpu      = local.battle_resources[var.env_name].cpu
   resources_limit_memory   = local.battle_resources[var.env_name].memory
 
-  card_service_url = module.card.uri
+  card_service_url   = module.card.uri
+  master_data_bucket = module.master_data.bucket_name
 
-  depends_on = [module.network.service_networking_connection]
+  # 読み取り権限が付く前にリビジョンを作ると battle が起動時にマスターデータを取得できないため、
+  # バケットと権限付与の完了を待つ。
+  depends_on = [
+    module.network.service_networking_connection,
+    module.master_data,
+  ]
 }
 
 module "gateway" {
