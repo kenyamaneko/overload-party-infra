@@ -74,6 +74,20 @@ locals {
   # state をまたぐため名前で参照する。
   gateway_upstash_redis_url_secret_id = "gateway-upstash-redis-url"
 
+  # IAM の付与がサービスの作成後に走るよう Terraform に依存を組ませるため、サービス名は
+  # リテラルではなくモジュールの出力を経由して渡す。
+  cloud_run_service_names = {
+    account     = module.account.service_name
+    battle      = module.battle.service_name
+    card        = module.card.service_name
+    gateway     = module.gateway.service_name
+    matchmaking = module.matchmaking.service_name
+    news        = module.news.service_name
+    scenario    = module.scenario.service_name
+    shop        = module.shop.service_name
+    support     = module.support.service_name
+  }
+
   # 実在するサービス間呼び出しの一覧。各サービスの config が持つ *_SERVICE_URL /
   # *_BASE_URL から洗い出したもの。Cloud Run は呼び出しごとに run.invoker を要求するため、
   # 呼び出しを増やすときはここに足す。
@@ -89,7 +103,7 @@ locals {
     for caller, callees in local.internal_call_targets : {
       for callee in callees : "${caller}_to_${callee}" => {
         caller_service_account_email = module.service_accounts.accounts[caller].email
-        callee_service_name          = callee
+        callee_service_name          = local.cloud_run_service_names[callee]
       }
     }
   ]...)
@@ -521,14 +535,14 @@ module "iam_grants" {
 
   internal_calls = local.internal_calls
 
-  gateway_cloud_run_service_name = "gateway"
+  gateway_cloud_run_service_name = local.cloud_run_service_names["gateway"]
 
   push_service_account_email = module.pubsub.push_service_account_email
   push_target_cloud_run_service_names = {
-    account = "account"
-    card    = "card"
-    news    = "news"
-    gateway = "gateway"
+    account = local.cloud_run_service_names["account"]
+    card    = local.cloud_run_service_names["card"]
+    news    = local.cloud_run_service_names["news"]
+    gateway = local.cloud_run_service_names["gateway"]
   }
 
   ci_deploy_sa_member = local.deploy_sa_member
@@ -543,16 +557,4 @@ module "iam_grants" {
     support     = module.service_accounts.accounts["support"].name
     battle      = module.service_accounts.accounts["battle"].name
   }
-
-  # 付与先のサービスを名前の文字列で指定しており参照を持たないため、作成順を明示する。
-  depends_on = [
-    module.account,
-    module.battle,
-    module.card,
-    module.matchmaking,
-    module.news,
-    module.scenario,
-    module.shop,
-    module.support,
-  ]
 }
