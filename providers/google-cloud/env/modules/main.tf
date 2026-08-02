@@ -73,6 +73,26 @@ locals {
   # シークレット自体は upstash provider の state が作る (providers/upstash/env/modules/gateway)。
   # state をまたぐため名前で参照する。
   gateway_upstash_redis_url_secret_id = "gateway-upstash-redis-url"
+
+  # 実在するサービス間呼び出しの一覧。各サービスの config が持つ *_SERVICE_URL /
+  # *_BASE_URL から洗い出したもの。Cloud Run は呼び出しごとに run.invoker を要求するため、
+  # 呼び出しを増やすときはここに足す。
+  internal_call_targets = {
+    gateway = ["account", "card", "matchmaking", "news", "scenario", "shop", "support", "battle"]
+    battle  = ["card"]
+    card    = ["account"]
+    # scenario は ACCOUNT_BASE_URL でアンロック判定時に account を呼ぶ。
+    scenario = ["account"]
+  }
+
+  internal_calls = merge([
+    for caller, callees in local.internal_call_targets : {
+      for callee in callees : "${caller}_to_${callee}" => {
+        caller_service_account_email = module.service_accounts.accounts[caller].email
+        callee_service_name          = callee
+      }
+    }
+  ]...)
 }
 
 module "network" {
@@ -425,22 +445,9 @@ module "iam_grants" {
   project_id = var.project_id
   region     = var.region
 
-  cloud_run_service_names = {
-    account     = "account"
-    card        = "card"
-    shop        = "shop"
-    scenario    = "scenario"
-    matchmaking = "matchmaking"
-    news        = "news"
-    support     = "support"
-    battle      = "battle"
-  }
-  gateway_service_account_email = module.service_accounts.accounts["gateway"].email
+  internal_calls = local.internal_calls
 
   gateway_cloud_run_service_name = "gateway"
-
-  battle_service_account_email = module.service_accounts.accounts["battle"].email
-  card_cloud_run_service_name  = "card"
 
   push_service_account_email = module.pubsub.push_service_account_email
   push_target_cloud_run_service_names = {
