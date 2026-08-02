@@ -23,6 +23,16 @@ variable "gateway_cloud_run_service_name" {
   type        = string
 }
 
+variable "battle_service_account_email" {
+  description = "battle の runtime GSA email。起動時に card を呼ぶため card への run.invoker 付与対象"
+  type        = string
+}
+
+variable "card_cloud_run_service_name" {
+  description = "card の Cloud Run サービス名。battle からの呼び出しを受ける対象"
+  type        = string
+}
+
 variable "push_service_account_email" {
   description = "Pub/Sub push subscription の OIDC 署名に使う SA の email。push_target_cloud_run_service_names への run.invoker 付与対象"
   type        = string
