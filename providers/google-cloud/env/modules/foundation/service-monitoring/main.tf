@@ -5,9 +5,6 @@ locals {
   # 集計期間内で閾値を超えた時点をそのまま異常とみなすため、持続時間を追加で設けない。
   immediate_alert_duration = "0s"
 
-  # 同一インシデントの再通知を抑えて通知疲れを防ぐため、5 分間隔にする。
-  notification_rate_limit_period = "300s"
-
   # 収束を検知できない条件でもインシデントが残り続けないよう、7 日で自動クローズする。
   auto_close_duration = "604800s"
 }
@@ -44,10 +41,6 @@ resource "google_monitoring_alert_policy" "server_error_response" {
 
   alert_strategy {
     auto_close = local.auto_close_duration
-
-    notification_rate_limit {
-      period = local.notification_rate_limit_period
-    }
   }
 }
 
@@ -84,10 +77,6 @@ resource "google_monitoring_alert_policy" "slow_response" {
 
   alert_strategy {
     auto_close = local.auto_close_duration
-
-    notification_rate_limit {
-      period = local.notification_rate_limit_period
-    }
   }
 }
 
@@ -125,9 +114,5 @@ resource "google_monitoring_alert_policy" "error_log_recorded" {
 
   alert_strategy {
     auto_close = local.auto_close_duration
-
-    notification_rate_limit {
-      period = local.notification_rate_limit_period
-    }
   }
 }
