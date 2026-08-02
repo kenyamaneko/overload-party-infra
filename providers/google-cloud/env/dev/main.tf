@@ -78,7 +78,7 @@ module "env" {
   support_sendgrid_from_address = "support-dev@keyandnotes.com"
   support_sendgrid_from_name    = "Overload Party Support (dev)"
 
-  alert_email                         = "kenya.m.amaoto@gmail.com"
+  alert_email                         = var.alert_email
   alert_slack_notification_channel_id = ""
 
   billing_account_id = "019A0B-9A103A-B4C602"

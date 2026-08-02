@@ -96,11 +96,21 @@ locals {
 
   # dev と stg は動作確認やテストでエラーパスを意図的に踏み、そのまま発報させると通知が
   # 埋もれるため、単発のエラーでは発報しない閾値にする。
+  # 5xx を返す障害は ERROR ログにも現れて 1 件の障害で二度発報するため、prod でも要求の
+  # 失敗は 5xx の監視に任せ、ERROR ログは単発では発報しない閾値にする。
   alert_thresholds = {
     dev  = { server_error_count = 5, error_log_count = 20 }
     stg  = { server_error_count = 1, error_log_count = 5 }
-    prod = { server_error_count = 0, error_log_count = 0 }
+    prod = { server_error_count = 0, error_log_count = 2 }
   }
+
+  # 監視対象の Cloud Run ジョブ。サービスと違い一覧から導けないため、ジョブを増やしたらここに足す。
+  monitored_jobs = {
+    newsfeed = module.newsfeed.job_name
+  }
+
+  # ジョブは要求を受けず動作確認のエラーが紛れ込まないため、環境を問わず 1 件の失敗で発報する。
+  job_failed_task_attempt_count_threshold = 0
 
   # 最小インスタンス数 0 でインスタンスが常時停止しており、計測される応答時間にコールド
   # スタートが含まれるため、秒単位の余裕を持たせる。
@@ -161,6 +171,17 @@ module "service_monitoring" {
   server_error_count_threshold = local.alert_thresholds[var.env_name].server_error_count
   error_log_count_threshold    = local.alert_thresholds[var.env_name].error_log_count
   latency_p95_threshold_ms     = local.service_latency_p95_threshold_ms[each.key]
+}
+
+module "job_monitoring" {
+  for_each = local.monitored_jobs
+
+  source = "./foundation/job-monitoring"
+
+  project_id                          = var.project_id
+  job_name                            = each.value
+  notification_channel_ids            = module.monitoring.notification_channel_ids
+  failed_task_attempt_count_threshold = local.job_failed_task_attempt_count_threshold
 }
 
 module "database" {

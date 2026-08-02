@@ -145,6 +145,7 @@ variable "support_sendgrid_from_name" {
 variable "alert_email" {
   description = "アラートと予算超過の通知先メールアドレス"
   type        = string
+  sensitive   = true
 }
 
 variable "alert_slack_notification_channel_id" {

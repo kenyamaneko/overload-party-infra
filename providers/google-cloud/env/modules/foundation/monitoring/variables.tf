@@ -11,6 +11,7 @@ variable "env_name" {
 variable "alert_email" {
   description = "アラートと予算超過の通知先メールアドレス"
   type        = string
+  sensitive   = true
 }
 
 variable "slack_notification_channel_id" {
