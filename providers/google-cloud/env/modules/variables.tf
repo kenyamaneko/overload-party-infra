@@ -27,6 +27,11 @@ variable "cloudsql_tier" {
   type        = string
 }
 
+variable "cloud_run_max_instance_count" {
+  description = "account / card / shop / scenario / matchmaking / news / support / battle の最大インスタンス数。Cloud SQL への同時接続量に効くため cloudsql_tier と合わせて決める。gateway は WebSocket 接続をプロセス内に保持し 1 インスタンスに固定するため本変数を受け取らない"
+  type        = number
+}
+
 variable "database_name" {
   description = "PostgreSQL データベース名"
   type        = string
@@ -164,6 +169,6 @@ variable "billing_account_id" {
 }
 
 variable "monthly_budget_jpy" {
-  description = "月次予算 (円)。この額の 50 / 80 / 100 % に達した時点で通知する"
+  description = "月次予算 (円)。この額の 50 / 75 / 100 % に達した時点で通知する"
   type        = number
 }

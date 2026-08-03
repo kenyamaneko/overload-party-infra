@@ -68,6 +68,11 @@ variable "database_name" {
   type        = string
 }
 
+variable "db_pool_max_conns" {
+  description = "1 インスタンスが張る接続プールの上限"
+  type        = number
+}
+
 variable "internal_auth_private_key_secret_id" {
   description = "内部認証トークンの署名鍵 (RSA 秘密鍵) を保持する Secret Manager シークレット ID"
   type        = string

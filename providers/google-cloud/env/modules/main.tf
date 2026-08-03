@@ -27,17 +27,21 @@ locals {
     newsfeed = "overload-party-newsfeed"
   }
 
-  db_services = {
-    gateway  = "overload-party-gateway"
-    battle   = "overload-party-battle"
-    card     = "overload-party-card"
-    account  = "overload-party-account"
-    shop     = "overload-party-shop"
-    scenario = "overload-party-scenario"
-    newsfeed = "overload-party-newsfeed"
-    news     = "overload-party-news"
-    support  = "overload-party-support"
+  # サービスの定義。用途ごとの集合はここから導く。
+  services = {
+    account     = { uses_db = true, push_target = true }
+    battle      = { uses_db = true, push_target = false }
+    card        = { uses_db = true, push_target = true }
+    gateway     = { uses_db = true, push_target = true }
+    matchmaking = { uses_db = false, push_target = false }
+    news        = { uses_db = true, push_target = true }
+    newsfeed    = { uses_db = true, push_target = false }
+    scenario    = { uses_db = true, push_target = false }
+    shop        = { uses_db = true, push_target = false }
+    support     = { uses_db = true, push_target = false }
   }
+
+  db_services = { for svc, attributes in local.services : svc => "overload-party-${svc}" if attributes.uses_db }
 
   # GitHub Actions の CI/CD は overload-party-ops プロジェクトの github-ci SA に集約しており
   # env ごとに切り替えない。db-migration / newsfeed の Cloud Run Job invoker 等に付与する。
@@ -51,9 +55,6 @@ locals {
 
   # news/support の config.go は "staging" | "production" のみ要求するため、dev/stg は staging、prod のみ production とする。
   staging_or_production_env = var.env_name == "prod" ? "production" : "staging"
-
-  # db-g1-small のコネクション上限に対する安全側の暫定値。実接続数に基づく正式なサイジングではない。
-  cloud_run_max_instance_count = 3
 
   standard_resources = {
     dev  = { cpu = "100m", memory = "128Mi" }
@@ -88,6 +89,10 @@ locals {
     support     = module.support.service_name
   }
 
+  push_target_cloud_run_service_names = {
+    for svc, attributes in local.services : svc => local.cloud_run_service_names[svc] if attributes.push_target
+  }
+
   # 実在するサービス間呼び出しの一覧。各サービスの config が持つ *_SERVICE_URL /
   # *_BASE_URL から洗い出したもの。Cloud Run は呼び出しごとに run.invoker を要求するため、
   # 呼び出しを増やすときはここに足す。
@@ -116,6 +121,25 @@ locals {
     dev  = { server_error_count = 5, error_log_count = 20 }
     stg  = { server_error_count = 1, error_log_count = 5 }
     prod = { server_error_count = 0, error_log_count = 2 }
+  }
+
+  # 資源の逼迫は環境によらず同じ割合で危険なため、使用率の閾値は env で変えない。
+  database_utilization_thresholds = { cpu = 0.9, memory = 0.9, disk = 0.85 }
+
+  # pgxpool の既定は max(4, NumCPU) で、インスタンス数を絞っても接続数の上限は決まらない。
+  # 上限を握るのはプール側なので明示する。効くのは Go の 7 サービスだけで、Npgsql を使う
+  # battle には効かない (overload-party-battle#260)。
+  database_pool_max_conns = 2
+
+  # 接続数の上限は max_connections がマシンタイプで変わるため env ごとに置く。既定は
+  # db-f1-micro が 25、db-g1-small が 50。
+  # gateway は最大 1 インスタンスに固定されているため、他の 6 サービスと分けて数える。
+  # dev は 6 × 3 × 2 + gateway 2 = 38、stg / prod は 6 × 1 × 2 + gateway 2 = 14 まで
+  # Go 側が健全に張りうる。それを超えたところで鳴らす。
+  database_connection_count_thresholds = {
+    dev  = 40
+    stg  = 18
+    prod = 18
   }
 
   # 監視対象の Cloud Run ジョブ。サービスと違い一覧から導けないため、ジョブを増やしたらここに足す。
@@ -196,6 +220,19 @@ module "job_monitoring" {
   job_name                            = each.value
   notification_channel_ids            = module.monitoring.notification_channel_ids
   failed_task_attempt_count_threshold = local.job_failed_task_attempt_count_threshold
+}
+
+module "database_monitoring" {
+  source = "./foundation/database-monitoring"
+
+  project_id               = var.project_id
+  instance_name            = module.database.instance_name
+  notification_channel_ids = module.monitoring.notification_channel_ids
+
+  cpu_utilization_threshold    = local.database_utilization_thresholds.cpu
+  memory_utilization_threshold = local.database_utilization_thresholds.memory
+  disk_utilization_threshold   = local.database_utilization_thresholds.disk
+  connection_count_threshold   = local.database_connection_count_thresholds[var.env_name]
 }
 
 module "database" {
@@ -337,7 +374,8 @@ module "account" {
   subnetwork               = module.network.subnetwork_name
   cloudsql_connection_name = local.cloudsql_connection_name
   database_name            = var.database_name
-  max_instance_count       = local.cloud_run_max_instance_count
+  db_pool_max_conns        = local.database_pool_max_conns
+  max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
   internal_auth_public_key = var.internal_auth_public_key
@@ -357,7 +395,8 @@ module "card" {
   subnetwork               = module.network.subnetwork_name
   cloudsql_connection_name = local.cloudsql_connection_name
   database_name            = var.database_name
-  max_instance_count       = local.cloud_run_max_instance_count
+  db_pool_max_conns        = local.database_pool_max_conns
+  max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
   internal_auth_public_key = var.internal_auth_public_key
@@ -378,7 +417,8 @@ module "shop" {
   subnetwork               = module.network.subnetwork_name
   cloudsql_connection_name = local.cloudsql_connection_name
   database_name            = var.database_name
-  max_instance_count       = local.cloud_run_max_instance_count
+  db_pool_max_conns        = local.database_pool_max_conns
+  max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
   internal_auth_public_key = var.internal_auth_public_key
@@ -404,7 +444,8 @@ module "scenario" {
   subnetwork               = module.network.subnetwork_name
   cloudsql_connection_name = local.cloudsql_connection_name
   database_name            = var.database_name
-  max_instance_count       = local.cloud_run_max_instance_count
+  db_pool_max_conns        = local.database_pool_max_conns
+  max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
   internal_auth_public_key = var.internal_auth_public_key
@@ -425,7 +466,7 @@ module "matchmaking" {
   region                   = var.region
   image                    = local.cloud_run_images["matchmaking"]
   service_account_email    = module.service_accounts.accounts["matchmaking"].email
-  max_instance_count       = local.cloud_run_max_instance_count
+  max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
   internal_auth_public_key = var.internal_auth_public_key
@@ -444,7 +485,8 @@ module "news" {
   subnetwork               = module.network.subnetwork_name
   cloudsql_connection_name = local.cloudsql_connection_name
   database_name            = var.database_name
-  max_instance_count       = local.cloud_run_max_instance_count
+  db_pool_max_conns        = local.database_pool_max_conns
+  max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
   internal_auth_public_key = var.internal_auth_public_key
@@ -464,7 +506,8 @@ module "support" {
   subnetwork               = module.network.subnetwork_name
   cloudsql_connection_name = local.cloudsql_connection_name
   database_name            = var.database_name
-  max_instance_count       = local.cloud_run_max_instance_count
+  db_pool_max_conns        = local.database_pool_max_conns
+  max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
 
@@ -489,7 +532,7 @@ module "battle" {
   subnetwork               = module.network.subnetwork_name
   cloudsql_connection_name = local.cloudsql_connection_name
   database_name            = var.database_name
-  max_instance_count       = local.cloud_run_max_instance_count
+  max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.battle_resources[var.env_name].cpu
   resources_limit_memory   = local.battle_resources[var.env_name].memory
 
@@ -521,6 +564,7 @@ module "gateway" {
   subnetwork                          = module.network.subnetwork_name
   cloudsql_connection_name            = local.cloudsql_connection_name
   database_name                       = var.database_name
+  db_pool_max_conns                   = local.database_pool_max_conns
   internal_auth_private_key_secret_id = module.internal_auth_key.secret_id
 
   upstash_redis_url_secret_id = local.gateway_upstash_redis_url_secret_id
@@ -553,13 +597,8 @@ module "iam_grants" {
 
   gateway_cloud_run_service_name = local.cloud_run_service_names["gateway"]
 
-  push_service_account_email = module.pubsub.push_service_account_email
-  push_target_cloud_run_service_names = {
-    account = local.cloud_run_service_names["account"]
-    card    = local.cloud_run_service_names["card"]
-    news    = local.cloud_run_service_names["news"]
-    gateway = local.cloud_run_service_names["gateway"]
-  }
+  push_service_account_email          = module.pubsub.push_service_account_email
+  push_target_cloud_run_service_names = local.push_target_cloud_run_service_names
 
   ci_deploy_sa_member = local.deploy_sa_member
   cloud_run_runtime_service_account_names = {
