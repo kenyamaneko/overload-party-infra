@@ -1,0 +1,11 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+tfplan
+*.tfplan
+# provider 解決は state root の lock が担保するため module 配下の lock は不要。
+providers/**/modules/**/.terraform.lock.hcl
+.DS_Store
+.claude/
+.vscode/

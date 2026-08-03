@@ -1,0 +1,142 @@
+name: Terraform
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "providers/**"
+      - "!**/*.md"
+  workflow_dispatch:
+    inputs:
+      path:
+        description: "State root path to apply (relative to providers/)"
+        required: true
+        type: choice
+        options:
+          - google-cloud/env/dev
+          - google-cloud/env/stg
+          - google-cloud/env/prod
+          - google-cloud/ops
+          - upstash/env/dev
+          - upstash/env/stg
+          - upstash/env/prod
+          - cloudflare
+
+concurrency:
+  group: terraform-${{ github.event_name }}-${{ github.ref }}-${{ inputs.path || 'pr' }}
+  # 実行中の terraform をキャンセルすると state ロックを掴んだまま停止し、以降の plan が
+  # すべてロック競合で失敗するため、完了を待つ
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+
+jobs:
+  detect:
+    if: github.event_name == 'pull_request'
+    runs-on: ubicloud-standard-2
+    timeout-minutes: 30
+    outputs:
+      paths: ${{ steps.detect.outputs.paths }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed environment paths
+        id: detect
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: .github/scripts/terraform/detect-envs.sh
+
+  plan:
+    needs: detect
+    if: github.event_name == 'pull_request' && needs.detect.outputs.paths != '[]'
+    runs-on: ubicloud-standard-2
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        path: ${{ fromJson(needs.detect.outputs.paths) }}
+      # 既定の fail-fast は、ある state root の plan が失敗した瞬間に他の root の plan を
+      # 実行中でも打ち切る。打ち切られた terraform はロックを掴んだまま止まるため、次の
+      # 実行がそのロックで失敗し、また他を打ち切るという連鎖になる
+      fail-fast: false
+    # 同じ state root への plan は Terraform のロックを奪い合うため、PR をまたいで直列化する
+    concurrency:
+      group: terraform-plan-${{ matrix.path }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9"
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.TF_SERVICE_ACCOUNT }}
+
+      - name: Terraform Init
+        working-directory: providers/${{ matrix.path }}
+        run: terraform init -input=false
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: providers/${{ matrix.path }}
+        shell: bash
+        run: terraform plan -input=false -no-color -out=tfplan 2>&1 | tee plan.txt
+        env:
+          TF_VAR_cloudflare_cdn_api_token: ${{ secrets.CLOUDFLARE_CDN_API_TOKEN }}
+          TF_VAR_upstash_email: ${{ vars.UPSTASH_EMAIL }}
+          TF_VAR_upstash_api_key: ${{ secrets.UPSTASH_API_KEY }}
+          TF_VAR_alert_email: ${{ vars.ALERT_EMAIL }}
+
+      - name: Comment PR
+        uses: actions/github-script@v7
+        env:
+          TF_ENV: ${{ matrix.path }}
+        with:
+          script: |
+            const commentPlan = require('./.github/scripts/terraform/comment-plan.js');
+            await commentPlan({ github, context });
+
+  apply:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubicloud-standard-2
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9"
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.TF_SERVICE_ACCOUNT }}
+
+      - name: Terraform Init
+        working-directory: providers/${{ inputs.path }}
+        run: terraform init -input=false
+
+      - name: Terraform Apply
+        working-directory: providers/${{ inputs.path }}
+        run: terraform apply -input=false -auto-approve
+        env:
+          TF_VAR_cloudflare_cdn_api_token: ${{ secrets.CLOUDFLARE_CDN_API_TOKEN }}
+          TF_VAR_upstash_email: ${{ vars.UPSTASH_EMAIL }}
+          TF_VAR_upstash_api_key: ${{ secrets.UPSTASH_API_KEY }}
+          TF_VAR_alert_email: ${{ vars.ALERT_EMAIL }}
