@@ -63,6 +63,8 @@ module "env" {
   scenarios_bucket_name = "overload-party-stg-scenarios"
   newsfeed_bucket_name  = "overload-party-stg-newsfeed"
 
+  master_data_bucket_name = "overload-party-stg-master-data"
+
   # stg は通常 PAUSED。prod リリース前検証時のみ `gcloud scheduler jobs resume` で
   # 一時的に有効化し、確認後に手動で pause に戻す運用。
   newsfeed_scheduler_paused = true
@@ -86,5 +88,5 @@ module "env" {
   alert_slack_notification_channel_id = ""
 
   billing_account_id = "019A0B-9A103A-B4C602"
-  monthly_budget_jpy = 15000
+  monthly_budget_jpy = 1000
 }

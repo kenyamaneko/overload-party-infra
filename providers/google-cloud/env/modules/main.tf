@@ -27,17 +27,21 @@ locals {
     newsfeed = "overload-party-newsfeed"
   }
 
-  db_services = {
-    gateway  = "overload-party-gateway"
-    battle   = "overload-party-battle"
-    card     = "overload-party-card"
-    account  = "overload-party-account"
-    shop     = "overload-party-shop"
-    scenario = "overload-party-scenario"
-    newsfeed = "overload-party-newsfeed"
-    news     = "overload-party-news"
-    support  = "overload-party-support"
+  # サービスの定義。用途ごとの集合はここから導く。
+  services = {
+    account     = { uses_db = true, push_target = true }
+    battle      = { uses_db = true, push_target = false }
+    card        = { uses_db = true, push_target = true }
+    gateway     = { uses_db = true, push_target = true }
+    matchmaking = { uses_db = false, push_target = false }
+    news        = { uses_db = true, push_target = true }
+    newsfeed    = { uses_db = true, push_target = false }
+    scenario    = { uses_db = true, push_target = false }
+    shop        = { uses_db = true, push_target = false }
+    support     = { uses_db = true, push_target = false }
   }
+
+  db_services = { for svc, attributes in local.services : svc => "overload-party-${svc}" if attributes.uses_db }
 
   # GitHub Actions の CI/CD は overload-party-ops プロジェクトの github-ci SA に集約しており
   # env ごとに切り替えない。db-migration / newsfeed の Cloud Run Job invoker 等に付与する。
@@ -71,6 +75,24 @@ locals {
   # state をまたぐため名前で参照する。
   gateway_upstash_redis_url_secret_id = "gateway-upstash-redis-url"
 
+  # IAM の付与がサービスの作成後に走るよう Terraform に依存を組ませるため、サービス名は
+  # リテラルではなくモジュールの出力を経由して渡す。
+  cloud_run_service_names = {
+    account     = module.account.service_name
+    battle      = module.battle.service_name
+    card        = module.card.service_name
+    gateway     = module.gateway.service_name
+    matchmaking = module.matchmaking.service_name
+    news        = module.news.service_name
+    scenario    = module.scenario.service_name
+    shop        = module.shop.service_name
+    support     = module.support.service_name
+  }
+
+  push_target_cloud_run_service_names = {
+    for svc, attributes in local.services : svc => local.cloud_run_service_names[svc] if attributes.push_target
+  }
+
   # 実在するサービス間呼び出しの一覧。各サービスの config が持つ *_SERVICE_URL /
   # *_BASE_URL から洗い出したもの。Cloud Run は呼び出しごとに run.invoker を要求するため、
   # 呼び出しを増やすときはここに足す。
@@ -86,7 +108,7 @@ locals {
     for caller, callees in local.internal_call_targets : {
       for callee in callees : "${caller}_to_${callee}" => {
         caller_service_account_email = module.service_accounts.accounts[caller].email
-        callee_service_name          = callee
+        callee_service_name          = local.cloud_run_service_names[callee]
       }
     }
   ]...)
@@ -309,6 +331,16 @@ module "assets" {
   scenarios_bucket_name = var.scenarios_bucket_name
 }
 
+module "master_data" {
+  source = "./app/master-data"
+
+  project_id                   = var.project_id
+  region                       = var.region
+  bucket_name                  = var.master_data_bucket_name
+  deploy_sa_member             = local.deploy_sa_member
+  battle_service_account_email = module.service_accounts.accounts["battle"].email
+}
+
 module "e2e" {
   count  = var.enable_e2e ? 1 : 0
   source = "./jobs/e2e"
@@ -504,9 +536,15 @@ module "battle" {
   resources_limit_cpu      = local.battle_resources[var.env_name].cpu
   resources_limit_memory   = local.battle_resources[var.env_name].memory
 
-  card_service_url = module.card.uri
+  card_service_url   = module.card.uri
+  master_data_bucket = module.master_data.bucket_name
 
-  depends_on = [module.network.service_networking_connection]
+  # 読み取り権限が付く前にリビジョンを作ると battle が起動時にマスターデータを取得できないため、
+  # バケットと権限付与の完了を待つ。
+  depends_on = [
+    module.network.service_networking_connection,
+    module.master_data,
+  ]
 }
 
 module "gateway" {
@@ -557,15 +595,10 @@ module "iam_grants" {
 
   internal_calls = local.internal_calls
 
-  gateway_cloud_run_service_name = "gateway"
+  gateway_cloud_run_service_name = local.cloud_run_service_names["gateway"]
 
-  push_service_account_email = module.pubsub.push_service_account_email
-  push_target_cloud_run_service_names = {
-    account = "account"
-    card    = "card"
-    news    = "news"
-    gateway = "gateway"
-  }
+  push_service_account_email          = module.pubsub.push_service_account_email
+  push_target_cloud_run_service_names = local.push_target_cloud_run_service_names
 
   ci_deploy_sa_member = local.deploy_sa_member
   cloud_run_runtime_service_account_names = {
@@ -579,16 +612,4 @@ module "iam_grants" {
     support     = module.service_accounts.accounts["support"].name
     battle      = module.service_accounts.accounts["battle"].name
   }
-
-  # 付与先のサービスを名前の文字列で指定しており参照を持たないため、作成順を明示する。
-  depends_on = [
-    module.account,
-    module.battle,
-    module.card,
-    module.matchmaking,
-    module.news,
-    module.scenario,
-    module.shop,
-    module.support,
-  ]
 }

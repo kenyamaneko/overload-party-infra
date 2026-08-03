@@ -57,3 +57,8 @@ variable "card_service_url" {
   description = "card Cloud Run サービスの URL (カード / 施策マスタ取得に使用)"
   type        = string
 }
+
+variable "master_data_bucket" {
+  description = "カード / 施策マスタを取得する GCS バケット名"
+  type        = string
+}

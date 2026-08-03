@@ -63,6 +63,8 @@ module "env" {
   scenarios_bucket_name = "overload-party-prod-scenarios"
   newsfeed_bucket_name  = "overload-party-prod-newsfeed"
 
+  master_data_bucket_name = "overload-party-prod-master-data"
+
   # prod のみ Cloud Scheduler を有効化。2 時間周期で Cloud Run Job を起動する。
   newsfeed_scheduler_paused = false
 
@@ -83,5 +85,5 @@ module "env" {
   alert_slack_notification_channel_id = ""
 
   billing_account_id = "019A0B-9A103A-B4C602"
-  monthly_budget_jpy = 20000
+  monthly_budget_jpy = 10000
 }

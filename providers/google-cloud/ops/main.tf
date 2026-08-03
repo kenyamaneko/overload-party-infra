@@ -40,6 +40,9 @@ locals {
 
   workload_identity_pool_name     = "projects/248288258659/locations/global/workloadIdentityPools/github-actions"
   workload_identity_pool_name_new = "projects/1017837997433/locations/global/workloadIdentityPools/github-actions"
+
+  billing_account_id = "019A0B-9A103A-B4C602"
+  monthly_budget_jpy = 200
 }
 
 provider "google" {
@@ -66,6 +69,14 @@ module "artifact_registry" {
     local.deploy_sa_member,
     local.db_migrator_sa_member,
   ]
+}
+
+module "budget" {
+  source = "./modules/budget"
+
+  project_id         = local.project_id
+  billing_account_id = local.billing_account_id
+  monthly_budget_jpy = local.monthly_budget_jpy
 }
 
 module "cost_monitor" {
