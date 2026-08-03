@@ -127,19 +127,19 @@ locals {
   database_utilization_thresholds = { cpu = 0.9, memory = 0.9, disk = 0.85 }
 
   # pgxpool の既定は max(4, NumCPU) で、インスタンス数を絞っても接続数の上限は決まらない。
-  # 上限を握るのはプール側なので明示する。Go 7 サービスに効き、stg / prod では
-  # 7 サービス × 1 インスタンス × 2 = 14 接続が上限になる。
+  # 上限を握るのはプール側なので明示する。効くのは Go の 7 サービスだけで、Npgsql を使う
+  # battle には効かない (overload-party-battle#260)。
   database_pool_max_conns = 2
 
-  # 接続数は max_connections がマシンタイプで変わるため env ごとに置く。db-f1-micro は
-  # 最小メモリ帯の既定 25、db-g1-small はそれより上の帯を想定し、上限に触れる手前で
-  # 気づけるよう余裕を残した値にする。
-  # dev は 7 サービス × 3 インスタンス × 2 = 42 まで健全に張りうるため、それを超えた
-  # ところで鳴らす。db-g1-small の既定 50 には手前で届く。
+  # 接続数の上限は max_connections がマシンタイプで変わるため env ごとに置く。既定は
+  # db-f1-micro が 25、db-g1-small が 50。
+  # gateway は最大 1 インスタンスに固定されているため、他の 6 サービスと分けて数える。
+  # dev は 6 × 3 × 2 + gateway 2 = 38、stg / prod は 6 × 1 × 2 + gateway 2 = 14 まで
+  # Go 側が健全に張りうる。それを超えたところで鳴らす。
   database_connection_count_thresholds = {
-    dev  = 45
-    stg  = 20
-    prod = 20
+    dev  = 40
+    stg  = 18
+    prod = 18
   }
 
   # 監視対象の Cloud Run ジョブ。サービスと違い一覧から導けないため、ジョブを増やしたらここに足す。
