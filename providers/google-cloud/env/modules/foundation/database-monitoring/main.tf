@@ -5,6 +5,9 @@ locals {
   # 資源の逼迫は一時的な尖りで発報させたくないため、閾値超えが 5 分続いたときに発報する。
   sustained_alert_duration = "300s"
 
+  # 集計期間内で閾値を超えた時点をそのまま異常とみなす条件に使う。
+  immediate_alert_duration = "0s"
+
   # 資源の逼迫が収まったことを検知できない条件でもインシデントが残り続けないよう、
   # 7 日で自動クローズする。
   auto_close_duration = "604800s"
@@ -130,11 +133,13 @@ resource "google_monitoring_alert_policy" "connection_count" {
 
       comparison      = "COMPARISON_GT"
       threshold_value = var.connection_count_threshold
-      duration        = local.sustained_alert_duration
+      duration        = local.immediate_alert_duration
 
+      # 接続の枯渇は起きた瞬間に接続拒否として利用者に出る。平均に均すと取り逃すため
+      # 窓内のピークで見て、継続時間も設けない。
       aggregations {
         alignment_period     = local.alert_alignment_period
-        per_series_aligner   = "ALIGN_MEAN"
+        per_series_aligner   = "ALIGN_MAX"
         cross_series_reducer = "REDUCE_SUM"
       }
     }

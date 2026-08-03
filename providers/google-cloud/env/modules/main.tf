@@ -112,8 +112,10 @@ locals {
   # 接続数は max_connections がマシンタイプで変わるため env ごとに置く。db-f1-micro は
   # 最小メモリ帯の既定 25、db-g1-small はそれより上の帯を想定し、上限に触れる手前で
   # 気づけるよう余裕を残した値にする。
+  # dev は 7 サービス × 3 インスタンス × 2 = 42 まで健全に張りうるため、それを超えた
+  # ところで鳴らす。db-g1-small の既定 50 には手前で届く。
   database_connection_count_thresholds = {
-    dev  = 40
+    dev  = 45
     stg  = 20
     prod = 20
   }
