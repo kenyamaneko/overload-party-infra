@@ -68,6 +68,11 @@ resource "google_cloud_run_v2_service" "battle" {
         name  = "DATABASE_CONN"
         value = "host=/cloudsql/${var.cloudsql_connection_name} port=5432 dbname=${var.database_name} sslmode=disable"
       }
+      # battle は値の未設定を起動失敗として扱うため、IAM データベース認証へ切り替えるまでの間も明示的に渡す。
+      env {
+        name  = "DATABASE_IAM_AUTH_ENABLED"
+        value = "false"
+      }
       env {
         name  = "CARD_SERVICE_URL"
         value = var.card_service_url
