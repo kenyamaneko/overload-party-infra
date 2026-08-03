@@ -46,11 +46,12 @@ module "env" {
   EOT
 
   cloudsql_instance_name = "overload-party-db"
-  cloudsql_tier          = "db-g1-small"
+  cloudsql_tier          = "db-f1-micro"
 
-  # db-g1-small のコネクション上限に対する安全側の暫定値。実接続数に基づく正式な
-  # サイジングではない。
-  cloud_run_max_instance_count = 3
+  # db-f1-micro はメモリが db-g1-small の 1/3 程度のため、同時接続を減らす向きに絞る。
+  # Go の各サービスが張る接続数はこの値と接続プールの上限との積で決まる。battle は
+  # 接続プールの上限を持たないため、この値だけでは決まらない。
+  cloud_run_max_instance_count = 1
   database_name                = "overload_party"
   deletion_protection          = false
   ipv4_enabled                 = false

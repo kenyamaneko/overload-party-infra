@@ -133,11 +133,12 @@ locals {
 
   # 接続数の上限は max_connections がマシンタイプで変わるため env ごとに置く。既定は
   # db-f1-micro が 25、db-g1-small が 50。
-  # gateway は最大 1 インスタンスに固定されているため、他の 6 サービスと分けて数える。
-  # dev は 6 × 3 × 2 + gateway 2 = 38、stg / prod は 6 × 1 × 2 + gateway 2 = 14 まで
-  # Go 側が健全に張りうる。それを超えたところで鳴らす。
+  # gateway は最大 1 インスタンスに固定されているため、pgxpool を使う他の 6 サービス
+  # (account / card / shop / scenario / news / support) と分けて数える。
+  # 3 環境とも 6 × 1 × 2 + gateway 2 = 14 まで Go 側が健全に張りうる。それを超えた
+  # ところで鳴らす。マシンタイプか最大インスタンス数を env ごとに変えたらここも変える。
   database_connection_count_thresholds = {
-    dev  = 40
+    dev  = 18
     stg  = 18
     prod = 18
   }
