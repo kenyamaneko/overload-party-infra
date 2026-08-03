@@ -38,6 +38,11 @@ variable "database_name" {
   type        = string
 }
 
+variable "db_pool_max_conns" {
+  description = "1 インスタンスが張る接続プールの上限"
+  type        = number
+}
+
 variable "max_instance_count" {
   description = "Cloud Run 最大インスタンス数 (Cloud SQL コネクション枯渇防止の上限)"
   type        = number

@@ -4,12 +4,6 @@ resource "google_project_service" "monitoring" {
   disable_on_destroy = false
 }
 
-resource "google_project_service" "billingbudgets" {
-  project            = var.project_id
-  service            = "billingbudgets.googleapis.com"
-  disable_on_destroy = false
-}
-
 resource "google_monitoring_notification_channel" "email" {
   project      = var.project_id
   display_name = "Overload Party アラート通知 (${var.env_name})"
@@ -69,6 +63,4 @@ resource "google_billing_budget" "monthly" {
   all_updates_rule {
     monitoring_notification_channels = local.notification_channel_ids
   }
-
-  depends_on = [google_project_service.billingbudgets]
 }
