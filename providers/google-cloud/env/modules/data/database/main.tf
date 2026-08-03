@@ -24,6 +24,13 @@ resource "google_sql_database_instance" "main" {
     ip_configuration {
       ipv4_enabled    = var.ipv4_enabled
       private_network = var.network_id
+
+      # 一度 PSC を設定したインスタンスは、無効化しても API が pscConfig を返し続ける。
+      # 宣言を持たないと毎回ブロックの削除が差分に出て plan が収束しないため、無効で
+      # あることを明示する。
+      psc_config {
+        psc_enabled = false
+      }
     }
     backup_configuration {
       enabled    = true
