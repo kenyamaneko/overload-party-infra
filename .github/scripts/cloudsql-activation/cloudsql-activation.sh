@@ -5,13 +5,15 @@ set -euo pipefail
 # 呼び出し元 (cloudsql-activation.yaml) に対して GITHUB_OUTPUT 経由で
 # 以下のいずれかの結果を返す。Slack 通知はこれを見てメッセージを分岐する。
 #   changed          : 実際に policy を切り替えた
-#   noop             : 既に目的の policy だった (何もしていない)
+#   noop             : 既に目的の policy だった (切替をしていない)
 #   pending-existing : 別オペレーション実行中で操作をスキップした
 #   not-found        : インスタンス自体が存在しなかった (skip)
 
 : "${ENV:?ENV is required}"
 : "${POLICY:?POLICY is required (ALWAYS|NEVER)}"
 : "${CLOUDSQL_INSTANCE:?CLOUDSQL_INSTANCE is required}"
+: "${OPERATION_TIMEOUT_SECONDS:?OPERATION_TIMEOUT_SECONDS is required}"
+: "${READY_TIMEOUT_SECONDS:?READY_TIMEOUT_SECONDS is required}"
 
 case "${POLICY}" in
   ALWAYS|NEVER) ;;
@@ -21,10 +23,20 @@ case "${POLICY}" in
     ;;
 esac
 
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+CLOUDSQL_SCRIPT_DIR="${SCRIPT_DIR}/../cloudsql"
+
 PROJECT="overload-party-${ENV}"
+export PROJECT
 
 write_result() {
   echo "result=$1" >> "${GITHUB_OUTPUT}"
+}
+
+wait_until_ready_when_up() {
+  if [ "${POLICY}" = "ALWAYS" ]; then
+    "${CLOUDSQL_SCRIPT_DIR}/wait-until-ready.sh"
+  fi
 }
 
 CURRENT=$(gcloud sql instances describe "${CLOUDSQL_INSTANCE}" \
@@ -41,6 +53,8 @@ CURRENT=$(gcloud sql instances describe "${CLOUDSQL_INSTANCE}" \
 
 if [ "${CURRENT}" = "${POLICY}" ]; then
   echo "Cloud SQL ${CLOUDSQL_INSTANCE} is already ${POLICY}"
+  # 起動途中でも policy は ALWAYS になっているため、使える状態かどうかは別に確かめる。
+  wait_until_ready_when_up
   write_result "noop"
   exit 0
 fi
@@ -59,10 +73,9 @@ if [ -n "${PENDING}" ]; then
   exit 0
 fi
 
-echo "Patching Cloud SQL ${CLOUDSQL_INSTANCE}: ${CURRENT} -> ${POLICY}"
-gcloud sql instances patch "${CLOUDSQL_INSTANCE}" \
-  --activation-policy="${POLICY}" \
-  --project="${PROJECT}" \
-  --quiet
+echo "Switching Cloud SQL ${CLOUDSQL_INSTANCE}: ${CURRENT} -> ${POLICY}"
+"${CLOUDSQL_SCRIPT_DIR}/patch-activation-policy.sh"
+
+wait_until_ready_when_up
 
 write_result "changed"

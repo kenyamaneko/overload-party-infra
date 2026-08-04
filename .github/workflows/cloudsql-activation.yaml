@@ -57,6 +57,8 @@ jobs:
         env:
           ENV: ${{ inputs.environment }}
           POLICY: ${{ inputs.action == 'up' && 'ALWAYS' || 'NEVER' }}
+          OPERATION_TIMEOUT_SECONDS: "900"
+          READY_TIMEOUT_SECONDS: "300"
         run: ./.github/scripts/cloudsql-activation/cloudsql-activation.sh
 
       - name: Notify Slack
