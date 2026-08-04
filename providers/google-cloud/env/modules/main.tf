@@ -35,7 +35,7 @@ locals {
     gateway     = { uses_db = true, push_target = true }
     matchmaking = { uses_db = false, push_target = false }
     news        = { uses_db = true, push_target = true }
-    newsfeed    = { uses_db = true, push_target = false }
+    newsfeed    = { uses_db = false, push_target = false }
     scenario    = { uses_db = true, push_target = false }
     shop        = { uses_db = true, push_target = false }
     support     = { uses_db = true, push_target = false }
@@ -306,8 +306,6 @@ module "newsfeed" {
   newsfeed_image        = local.newsfeed_image
   network               = module.network.network_name
   subnetwork            = module.network.subnetwork_name
-  cloudsql_private_ip   = module.database.private_ip_address
-  database_name         = var.database_name
   bucket_name           = var.newsfeed_bucket_name
   service_account_email = module.service_accounts.accounts["newsfeed"].email
   deploy_sa_member      = local.deploy_sa_member

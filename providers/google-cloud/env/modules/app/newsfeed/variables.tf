@@ -23,16 +23,6 @@ variable "subnetwork" {
   type        = string
 }
 
-variable "cloudsql_private_ip" {
-  description = "Cloud SQL インスタンスの内部 IP"
-  type        = string
-}
-
-variable "database_name" {
-  description = "接続先 PostgreSQL データベース名"
-  type        = string
-}
-
 variable "bucket_name" {
   description = "記事データを保存する GCS バケット名（グローバル一意）"
   type        = string
