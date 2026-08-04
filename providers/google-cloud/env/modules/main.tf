@@ -311,6 +311,8 @@ module "newsfeed" {
   deploy_sa_member      = local.deploy_sa_member
   scheduler_paused      = var.newsfeed_scheduler_paused
 
+  news_article_collected_topic = module.pubsub.news_article_collected_topic
+
   depends_on = [module.network.service_networking_connection]
 }
 

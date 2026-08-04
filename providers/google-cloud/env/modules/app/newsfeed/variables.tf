@@ -28,6 +28,11 @@ variable "bucket_name" {
   type        = string
 }
 
+variable "news_article_collected_topic" {
+  description = "収集した記事を配信する Pub/Sub トピック名"
+  type        = string
+}
+
 variable "deploy_sa_member" {
   description = "Cloud Run Job invoker を付与するデプロイ SA の IAM member 文字列"
   type        = string
