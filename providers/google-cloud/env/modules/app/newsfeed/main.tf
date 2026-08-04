@@ -114,6 +114,11 @@ resource "google_cloud_run_v2_job" "newsfeed" {
           name  = "VERTEX_LOCATION"
           value = local.vertex_location
         }
+
+        env {
+          name  = "NEWS_ARTICLE_COLLECTED_TOPIC"
+          value = var.news_article_collected_topic
+        }
       }
 
       vpc_access {
