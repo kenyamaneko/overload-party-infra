@@ -46,6 +46,8 @@ k8s manifest と Terraform はデプロイ頻度・更新ライフサイクル�
 
 Cloud SQL インスタンスは `env/` の Terraform が所有している。起動・停止（`activation_policy` 切替）も、リソースの所有者と操作の所有者を一致させるため、このリポの `cloudsql-activation.yaml` が担当する。手動で起動・停止する場合は `cloudsql-activation.yaml` を `workflow_dispatch` で叩く。
 
+`env/` の apply は DB ユーザーを読み書きするため、停止中のインスタンスに対しては必ず失敗する。夜間停止が既定の運用で、apply の前に起動が要るという手順上の依存が常にあるので、`terraform.yaml` の apply 自身がインスタンスを起動し、操作を受け付けるまで待つ。Terraform は `activation_policy` を `ignore_changes` に置いているため、apply がこの起動を巻き戻すことはない。
+
 ## 監視の当て方
 
 Cloud Run サービスの監視は `env/modules/foundation/service-monitoring` を全サービスに `for_each` で当てる。サービスごとに監視を書くと、サービスが増えたときに当て忘れても誰も気づけないため、当てる範囲をサービス一覧そのものから導く。サービス固有の指標だけを各サービスのモジュールに置く。
