@@ -35,7 +35,8 @@ permissions:
 jobs:
   activation:
     runs-on: ubicloud-standard-2
-    timeout-minutes: 30
+    # Cloud SQL の起動待ちが最大 35 分かかりうるため、その外側に上限を取る。
+    timeout-minutes: 45
     env:
       CLOUDSQL_INSTANCE: overload-party-db
     steps:
@@ -57,7 +58,8 @@ jobs:
         env:
           ENV: ${{ inputs.environment }}
           POLICY: ${{ inputs.action == 'up' && 'ALWAYS' || 'NEVER' }}
-          OPERATION_TIMEOUT_SECONDS: "900"
+          # db-f1-micro の起動は実測で 919 秒かかったため、その倍を上限に取る。
+          OPERATION_TIMEOUT_SECONDS: "1800"
           READY_TIMEOUT_SECONDS: "300"
         run: ./.github/scripts/cloudsql-activation/cloudsql-activation.sh
 
