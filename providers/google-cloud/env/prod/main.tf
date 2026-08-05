@@ -72,7 +72,7 @@ module "env" {
   enable_e2e            = false
   e2e_developer_members = []
 
-  gateway_allowed_origins = "https://overloadparty-prod.keyandnotes.com,capacitor://localhost,http://localhost"
+  gateway_allowed_origins = "capacitor://localhost,http://localhost"
 
   shop_iap_verifier      = "store"
   shop_apple_environment = "Production"
