@@ -36,7 +36,7 @@ permissions:
 jobs:
   detect:
     if: github.event_name == 'pull_request'
-    runs-on: ubicloud-standard-2
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
       paths: ${{ steps.detect.outputs.paths }}
@@ -55,7 +55,7 @@ jobs:
   plan:
     needs: detect
     if: github.event_name == 'pull_request' && needs.detect.outputs.paths != '[]'
-    runs-on: ubicloud-standard-2
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       matrix:
@@ -110,7 +110,7 @@ jobs:
 
   apply:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
-    runs-on: ubicloud-standard-2
+    runs-on: ubuntu-latest
     # Cloud SQL の起動待ちが最大 35 分かかりうるため、apply 本体の時間を足した上限を取る。
     timeout-minutes: 60
     steps:

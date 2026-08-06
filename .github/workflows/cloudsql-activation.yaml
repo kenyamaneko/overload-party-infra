@@ -34,7 +34,7 @@ permissions:
 
 jobs:
   activation:
-    runs-on: ubicloud-standard-2
+    runs-on: ubuntu-latest
     # Cloud SQL の起動待ちが最大 35 分かかりうるため、その外側に上限を取る。
     timeout-minutes: 45
     env:
