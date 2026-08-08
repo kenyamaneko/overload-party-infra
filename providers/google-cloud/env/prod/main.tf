@@ -77,11 +77,6 @@ module "env" {
   shop_iap_verifier      = "store"
   shop_apple_environment = "Production"
 
-  support_cors_allowed_origins  = "https://overloadparty-prod.keyandnotes.com"
-  support_slack_channel_id      = "CHANGEME_PROD_SUPPORT_CHANNEL"
-  support_sendgrid_from_address = "support@keyandnotes.com"
-  support_sendgrid_from_name    = "Overload Party Support"
-
   alert_email                         = var.alert_email
   alert_slack_notification_channel_id = ""
 

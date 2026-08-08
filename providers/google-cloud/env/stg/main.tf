@@ -80,11 +80,6 @@ module "env" {
   shop_iap_verifier      = "stub"
   shop_apple_environment = "Sandbox"
 
-  support_cors_allowed_origins  = "https://overloadparty-stg.keyandnotes.com"
-  support_slack_channel_id      = "CHANGEME_STG_SUPPORT_CHANNEL"
-  support_sendgrid_from_address = "support-stg@keyandnotes.com"
-  support_sendgrid_from_name    = "Overload Party Support (stg)"
-
   alert_email                         = var.alert_email
   alert_slack_notification_channel_id = ""
 

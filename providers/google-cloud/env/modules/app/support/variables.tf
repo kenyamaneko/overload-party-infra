@@ -62,34 +62,3 @@ variable "resources_limit_memory" {
   description = "コンテナメモリ上限 (k8s limits.memory 相当)"
   type        = string
 }
-
-
-variable "cors_allowed_origins" {
-  description = "外部問い合わせフォーム (:9209) の CORS 許可オリジン"
-  type        = string
-}
-
-variable "slack_channel_id" {
-  description = "問い合わせ通知先の Slack チャンネル ID"
-  type        = string
-}
-
-variable "sendgrid_from_address" {
-  description = "問い合わせ返信メールの送信元アドレス"
-  type        = string
-}
-
-variable "sendgrid_from_name" {
-  description = "問い合わせ返信メールの送信者表示名"
-  type        = string
-}
-
-variable "slack_bot_token_secret_id" {
-  description = "Slack Bot Token の Secret Manager secret_id"
-  type        = string
-}
-
-variable "sendgrid_api_key_secret_id" {
-  description = "SendGrid API Key の Secret Manager secret_id"
-  type        = string
-}
