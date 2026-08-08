@@ -128,26 +128,6 @@ variable "shop_apple_environment" {
   type        = string
 }
 
-variable "support_cors_allowed_origins" {
-  description = "support 外部問い合わせフォームの CORS 許可オリジン"
-  type        = string
-}
-
-variable "support_slack_channel_id" {
-  description = "support の問い合わせ通知先 Slack チャンネル ID"
-  type        = string
-}
-
-variable "support_sendgrid_from_address" {
-  description = "support の問い合わせ返信メール送信元アドレス"
-  type        = string
-}
-
-variable "support_sendgrid_from_name" {
-  description = "support の問い合わせ返信メール送信者表示名"
-  type        = string
-}
-
 # ──────────────────────────────────────────────
 # 監視
 # ──────────────────────────────────────────────

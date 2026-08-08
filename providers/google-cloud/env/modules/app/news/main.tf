@@ -1,6 +1,3 @@
-# news は internal (9008, gateway 向け) と admin (9108, 運用 UI) の 2 ポートを待ち受けるが、
-# Cloud Run が公開できるコンテナポートは 1 つのみのため、gateway が使う internal のみを公開する。
-
 resource "google_project_service" "run" {
   project            = var.project_id
   service            = "run.googleapis.com"
@@ -56,10 +53,6 @@ resource "google_cloud_run_v2_service" "news" {
       env {
         name  = "INTERNAL_PORT"
         value = "9008"
-      }
-      env {
-        name  = "ADMIN_PORT"
-        value = "9108"
       }
       env {
         name  = "ENV"

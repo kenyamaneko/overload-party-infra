@@ -357,13 +357,6 @@ module "internal_auth_key" {
   signer_service_account_email = module.service_accounts.accounts["gateway"].email
 }
 
-module "support_secrets" {
-  source = "./app/support/support-secrets"
-
-  project_id                    = var.project_id
-  support_service_account_email = module.service_accounts.accounts["support"].email
-}
-
 module "account" {
   source = "./app/account"
 
@@ -511,13 +504,6 @@ module "support" {
   max_instance_count       = var.cloud_run_max_instance_count
   resources_limit_cpu      = local.standard_resources[var.env_name].cpu
   resources_limit_memory   = local.standard_resources[var.env_name].memory
-
-  cors_allowed_origins       = var.support_cors_allowed_origins
-  slack_channel_id           = var.support_slack_channel_id
-  sendgrid_from_address      = var.support_sendgrid_from_address
-  sendgrid_from_name         = var.support_sendgrid_from_name
-  slack_bot_token_secret_id  = module.support_secrets.slack_bot_token_secret_id
-  sendgrid_api_key_secret_id = module.support_secrets.sendgrid_api_key_secret_id
 
   depends_on = [module.network.service_networking_connection]
 }

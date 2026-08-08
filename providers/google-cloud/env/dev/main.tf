@@ -80,11 +80,6 @@ module "env" {
   shop_iap_verifier      = "stub"
   shop_apple_environment = "Sandbox"
 
-  support_cors_allowed_origins  = "http://localhost:3000"
-  support_slack_channel_id      = "CHANGEME_DEV_SUPPORT_CHANNEL"
-  support_sendgrid_from_address = "support-dev@keyandnotes.com"
-  support_sendgrid_from_name    = "Overload Party Support (dev)"
-
   alert_email                         = var.alert_email
   alert_slack_notification_channel_id = ""
 

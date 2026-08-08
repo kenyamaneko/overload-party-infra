@@ -1,6 +1,3 @@
-# support は internal (9009, gateway 向け) / admin (9109) / external (9209) の 3 ポートを待ち受けるが、
-# Cloud Run が公開できるコンテナポートは 1 つのみのため、gateway が使う internal のみを公開する。
-
 resource "google_project_service" "run" {
   project            = var.project_id
   service            = "run.googleapis.com"
@@ -58,14 +55,6 @@ resource "google_cloud_run_v2_service" "support" {
         value = "9009"
       }
       env {
-        name  = "ADMIN_PORT"
-        value = "9109"
-      }
-      env {
-        name  = "EXTERNAL_PORT"
-        value = "9209"
-      }
-      env {
         name  = "ENV"
         value = var.env_name
       }
@@ -80,44 +69,6 @@ resource "google_cloud_run_v2_service" "support" {
       env {
         name  = "CLOUDSQL_CONNECTION_NAME"
         value = var.cloudsql_connection_name
-      }
-      env {
-        name  = "CORS_ALLOWED_ORIGINS"
-        value = var.cors_allowed_origins
-      }
-      env {
-        name  = "INQUIRY_BODY_SNIPPET_LENGTH"
-        value = "200"
-      }
-      env {
-        name  = "SLACK_CHANNEL_ID"
-        value = var.slack_channel_id
-      }
-      env {
-        name  = "SENDGRID_FROM_ADDRESS"
-        value = var.sendgrid_from_address
-      }
-      env {
-        name  = "SENDGRID_FROM_NAME"
-        value = var.sendgrid_from_name
-      }
-      env {
-        name = "SLACK_BOT_TOKEN"
-        value_source {
-          secret_key_ref {
-            secret  = var.slack_bot_token_secret_id
-            version = "latest"
-          }
-        }
-      }
-      env {
-        name = "SENDGRID_API_KEY"
-        value_source {
-          secret_key_ref {
-            secret  = var.sendgrid_api_key_secret_id
-            version = "latest"
-          }
-        }
       }
 
       startup_probe {
