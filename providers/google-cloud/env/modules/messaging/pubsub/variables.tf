@@ -42,3 +42,8 @@ variable "news_service_url" {
   description = "news Cloud Run サービスの URL。news-article-collected-news-sub の push エンドポイント組み立てに使用"
   type        = string
 }
+
+variable "shop_service_url" {
+  description = "shop Cloud Run サービスの URL。google-play-rtdn-shop-sub の push エンドポイント組み立てに使用"
+  type        = string
+}

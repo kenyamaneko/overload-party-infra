@@ -16,9 +16,9 @@ variable "internal_calls" {
   }))
 }
 
-variable "gateway_cloud_run_service_name" {
-  description = "gateway の Cloud Run サービス名。外部からの唯一の入口として allUsers に run.invoker を付与する対象"
-  type        = string
+variable "unauthenticated_cloud_run_service_names" {
+  description = "allUsers に run.invoker を付与する Cloud Run サービス名のマップ (外部から認証なしで到達させる必要があるサービスのみ)。キーはサービス識別子"
+  type        = map(string)
 }
 
 variable "push_service_account_email" {

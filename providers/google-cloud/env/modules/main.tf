@@ -28,17 +28,19 @@ locals {
   }
 
   # サービスの定義。用途ごとの集合はここから導く。
+  # unauthenticated: gateway は外部からの唯一の入口のため許可する。shop は Apple Server
+  # Notifications V2 が Google IAM で署名できず allUsers 以外の選択肢が無いため許可する。
   services = {
-    account     = { uses_db = true, push_target = true }
-    battle      = { uses_db = true, push_target = false }
-    card        = { uses_db = true, push_target = true }
-    gateway     = { uses_db = true, push_target = true }
-    matchmaking = { uses_db = false, push_target = false }
-    news        = { uses_db = true, push_target = true }
-    newsfeed    = { uses_db = false, push_target = false }
-    scenario    = { uses_db = true, push_target = false }
-    shop        = { uses_db = true, push_target = false }
-    support     = { uses_db = true, push_target = false }
+    account     = { uses_db = true, push_target = true, unauthenticated = false }
+    battle      = { uses_db = true, push_target = false, unauthenticated = false }
+    card        = { uses_db = true, push_target = true, unauthenticated = false }
+    gateway     = { uses_db = true, push_target = true, unauthenticated = true }
+    matchmaking = { uses_db = false, push_target = false, unauthenticated = false }
+    news        = { uses_db = true, push_target = true, unauthenticated = false }
+    newsfeed    = { uses_db = false, push_target = false, unauthenticated = false }
+    scenario    = { uses_db = true, push_target = false, unauthenticated = false }
+    shop        = { uses_db = true, push_target = true, unauthenticated = true }
+    support     = { uses_db = true, push_target = false, unauthenticated = false }
   }
 
   db_services = { for svc, attributes in local.services : svc => "overload-party-${svc}" if attributes.uses_db }
@@ -91,6 +93,10 @@ locals {
 
   push_target_cloud_run_service_names = {
     for svc, attributes in local.services : svc => local.cloud_run_service_names[svc] if attributes.push_target
+  }
+
+  unauthenticated_cloud_run_service_names = {
+    for svc, attributes in local.services : svc => local.cloud_run_service_names[svc] if attributes.unauthenticated
   }
 
   # 実在するサービス間呼び出しの一覧。各サービスの config が持つ *_SERVICE_URL /
@@ -266,6 +272,7 @@ module "pubsub" {
   account_service_url = module.account.uri
   card_service_url    = module.card.uri
   news_service_url    = module.news.uri
+  shop_service_url    = module.shop.uri
 }
 
 module "firestore" {
@@ -582,7 +589,7 @@ module "iam_grants" {
 
   internal_calls = local.internal_calls
 
-  gateway_cloud_run_service_name = local.cloud_run_service_names["gateway"]
+  unauthenticated_cloud_run_service_names = local.unauthenticated_cloud_run_service_names
 
   push_service_account_email          = module.pubsub.push_service_account_email
   push_target_cloud_run_service_names = local.push_target_cloud_run_service_names
