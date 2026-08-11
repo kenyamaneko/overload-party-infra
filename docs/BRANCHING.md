@@ -12,8 +12,6 @@ GitHub Flow を採用する。`main` ブランチが唯一の永続ブランチ�
 |---|---|---|---|
 | `main` | 永続 | — | — |
 | `feature/xxx` | 短命 | `main` | `main` |
-| `fix/xxx` | 短命 | `main` | `main` |
-| `chore/xxx` | 短命 | `main` | `main` |
 
 ## ブランチ運用ルール
 
@@ -26,15 +24,14 @@ GitHub Flow を採用する。`main` ブランチが唯一の永続ブランチ�
 ### 作業ブランチ
 
 - `main` から切って `main` にマージする
-- 命名プレフィックス: `feature/`（新機能・リソース追加）、`fix/`（バグ修正）、`chore/`（依存更新・リファクタ等）
-- 命名例: `feature/add-pubsub-topic`, `feature/infra/issue-123`, `fix/cloudflare-api-record-proxied`
+- 命名: `feature/{issue番号}-{概要}` (例: `feature/42-add-pubsub-topic`)。新機能・バグ修正・依存更新・リファクタを問わず統一する
 - PR マージ時にブランチ削除
 
 ## 開発フロー
 
 ```
 1. main から作業ブランチを切る
-   └─ git switch -c feature/add-pubsub-topic main
+   └─ git switch -c feature/{n}-{summary} main
 
 2. 変更を push → PR を作成
    └─ PR オープンで terraform plan が自動実行され、結果がコメントに貼られる

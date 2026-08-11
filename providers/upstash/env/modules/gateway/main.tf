@@ -37,6 +37,8 @@ resource "google_project_service" "secretmanager" {
   disable_on_destroy = false
 }
 
+# データベースを作った state だけが接続情報を持つため、シークレットの入れ物と権限も
+# この state に置き、値の出所と置き場所が離れないようにする。
 resource "google_secret_manager_secret" "redis_url" {
   project   = local.project_id
   secret_id = local.secret_id

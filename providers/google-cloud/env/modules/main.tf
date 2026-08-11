@@ -7,6 +7,10 @@ terraform {
   }
 }
 
+# env ごとに独立して apply できるよう、dev/stg/prod で state を分ける。各 env/{dev,stg,prod}/main.tf は
+# このモジュールを呼ぶだけの薄い composition とし、環境差異は呼び出し側の変数に閉じ込める。module 内に
+# 環境分岐を持たせないことで、環境間で実装が乖離するバグを防ぐ。
+
 locals {
   migration_image = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/db-migrate:latest"
   newsfeed_image  = "asia-northeast1-docker.pkg.dev/keyandnotes-platform/overload-party/newsfeed:latest"
@@ -150,6 +154,7 @@ locals {
   }
 
   # 監視対象の Cloud Run ジョブ。サービスと違い一覧から導けないため、ジョブを増やしたらここに足す。
+  # ジョブ名はジョブを定義するモジュールの output から受け取り、監視対象が実体とずれないようにする。
   monitored_jobs = {
     newsfeed = module.newsfeed.job_name
   }
@@ -205,6 +210,8 @@ module "monitoring" {
   monthly_budget_jpy            = var.monthly_budget_jpy
 }
 
+# サービスごとに監視を書くと、サービスが増えたときに当て忘れても誰も気づけないため、
+# 当てる範囲をサービス一覧そのものから導く。
 module "service_monitoring" {
   for_each = local.k8s_services
 
@@ -229,6 +236,8 @@ module "job_monitoring" {
   failed_task_attempt_count_threshold = local.job_failed_task_attempt_count_threshold
 }
 
+# インスタンス名はジョブ監視と同じく、インスタンスを定義するモジュールの output から
+# 受け取り、監視対象が実体とずれないようにする。
 module "database_monitoring" {
   source = "./foundation/database-monitoring"
 

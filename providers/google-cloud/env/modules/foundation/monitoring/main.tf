@@ -36,6 +36,8 @@ resource "google_billing_budget" "monthly" {
   billing_account = var.billing_account_id
   display_name    = "${var.project_id}-budget"
 
+  # 請求先アカウント単位でまとめると、どの環境で費用が増えたのか分からないため、
+  # 環境ごとのプロジェクトを対象に予算アラートを 1 つずつ置く。
   # projects の指定はプロジェクト番号で行う (プロジェクト ID は受け付けない)。
   budget_filter {
     projects = ["projects/${data.google_project.current.number}"]
