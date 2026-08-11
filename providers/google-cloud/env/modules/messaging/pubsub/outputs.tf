@@ -12,3 +12,8 @@ output "push_audience" {
   description = "gateway 向け push 購読の OIDC トークンの audience。gateway 側の検証に使う"
   value       = local.push_audiences["gateway"]
 }
+
+output "shop_push_audience" {
+  description = "shop 向け push 購読の OIDC トークンの audience。shop 側の検証に使う"
+  value       = local.push_audiences["shop"]
+}
