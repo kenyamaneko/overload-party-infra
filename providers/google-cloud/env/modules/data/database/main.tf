@@ -44,9 +44,9 @@ resource "google_sql_database_instance" "main" {
   deletion_protection = var.deletion_protection
 
   # root_password は外部投入。activation_policy は dev/stg の停止/起動を
-  # env-lifecycle が所有しており Terraform で enforce するとコスト保護が
-  # 失効するため運用状態は外部に委ねる (prod は env-lifecycle 対象外で
-  # 手動停止が起きない前提)。
+  # cloudsql-activation.yaml (このリポの GitHub Actions) が所有しており Terraform で
+  # enforce するとコスト保護が失効するため運用状態は外部に委ねる (prod は
+  # cloudsql-activation.yaml の対象外で手動停止が起きない前提)。
   lifecycle {
     ignore_changes = [
       root_password,

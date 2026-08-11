@@ -9,6 +9,7 @@ locals {
   auto_close_duration = "604800s"
 }
 
+# ジョブは要求を受けず 5xx も応答時間も出さないため、サービスと別指標で監視する。
 resource "google_monitoring_alert_policy" "task_attempt_failure" {
   project      = var.project_id
   display_name = "${var.job_name}: 実行が失敗した"

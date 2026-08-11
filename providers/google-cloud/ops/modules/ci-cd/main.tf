@@ -20,6 +20,9 @@ resource "google_project_service" "billingbudgets" {
   disable_on_destroy = false
 }
 
+# env や repo ごとに SA を分けると、apply の権限不足のたびに複数の権限定義を横断する必要が
+# 生じるため、CI SA は overload-party-ops に一元化する。SA をこのプロジェクトに置くことで、
+# overload-party-ops の owner だけが CI 認証情報を管理できる状態にする。
 resource "google_service_account" "ci" {
   project      = var.project_id
   account_id   = "github-ci"
