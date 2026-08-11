@@ -12,11 +12,13 @@ resource "google_cloud_run_v2_service" "account" {
 
   ingress = "INGRESS_TRAFFIC_ALL"
 
-  # CI/CD が gcloud でデプロイするたび image が書き換わるため drift を許容する。
+  # CI/CD が gcloud でデプロイするたび image と client 情報が書き換わるため drift を許容する。
   # env/SQL/IAM/インスタンス数の config は Terraform が所有し、CI は image のみ更新する。
   lifecycle {
     ignore_changes = [
       template[0].containers[0].image,
+      client,
+      client_version,
     ]
   }
 
