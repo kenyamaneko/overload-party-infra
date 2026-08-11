@@ -1,4 +1,5 @@
-# Upstash は Google Cloud provider と独立しており、env ごとに state を分けて独立に apply できるようにする。
+# Upstash のリソースと認証情報は google-cloud 側の env state とライフサイクルが異なるため、
+# env ごとに state を分けて独立に apply できるようにする。
 terraform {
   required_version = ">= 1.5"
 

@@ -210,6 +210,8 @@ module "monitoring" {
   monthly_budget_jpy            = var.monthly_budget_jpy
 }
 
+# サービスごとに監視を書くと、サービスが増えたときに当て忘れても誰も気づけないため、
+# 当てる範囲をサービス一覧そのものから導く。
 module "service_monitoring" {
   for_each = local.k8s_services
 
@@ -234,6 +236,8 @@ module "job_monitoring" {
   failed_task_attempt_count_threshold = local.job_failed_task_attempt_count_threshold
 }
 
+# インスタンス名はジョブ監視と同じく、インスタンスを定義するモジュールの output から
+# 受け取り、監視対象が実体とずれないようにする。
 module "database_monitoring" {
   source = "./foundation/database-monitoring"
 
