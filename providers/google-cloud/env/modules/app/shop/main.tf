@@ -113,6 +113,14 @@ resource "google_cloud_run_v2_service" "shop" {
         name  = "INTERNAL_AUTH_PUBLIC_KEY"
         value = var.internal_auth_public_key
       }
+      env {
+        name  = "PUBSUB_PUSH_SERVICE_ACCOUNT_EMAIL"
+        value = var.pubsub_push_service_account_email
+      }
+      env {
+        name  = "PUBSUB_PUSH_AUDIENCE"
+        value = var.pubsub_push_audience
+      }
 
       startup_probe {
         http_get {

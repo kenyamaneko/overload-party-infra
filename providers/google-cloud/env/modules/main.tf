@@ -430,6 +430,9 @@ module "shop" {
   iap_verifier              = var.shop_iap_verifier
   apple_environment         = var.shop_apple_environment
 
+  pubsub_push_service_account_email = module.pubsub.push_service_account_email
+  pubsub_push_audience              = module.pubsub.shop_push_audience
+
   depends_on = [module.network.service_networking_connection]
 }
 
