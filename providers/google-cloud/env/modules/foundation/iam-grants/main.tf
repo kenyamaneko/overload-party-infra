@@ -11,11 +11,19 @@ resource "google_cloud_run_v2_service_iam_member" "internal_invoker" {
   member   = "serviceAccount:${each.value.caller_service_account_email}"
 }
 
-# gateway は外部からの唯一の入口のため、未認証呼び出しを許可する。
-resource "google_cloud_run_v2_service_iam_member" "gateway_unauthenticated" {
+moved {
+  from = google_cloud_run_v2_service_iam_member.gateway_unauthenticated
+  to   = google_cloud_run_v2_service_iam_member.unauthenticated["gateway"]
+}
+
+# 外部から認証なしで到達させる必要があるサービスに未認証呼び出しを許可する。対象は
+# unauthenticated_cloud_run_service_names の説明を参照。
+resource "google_cloud_run_v2_service_iam_member" "unauthenticated" {
+  for_each = var.unauthenticated_cloud_run_service_names
+
   project  = var.project_id
   location = var.region
-  name     = var.gateway_cloud_run_service_name
+  name     = each.value
   role     = "roles/run.invoker"
   member   = "allUsers"
 }

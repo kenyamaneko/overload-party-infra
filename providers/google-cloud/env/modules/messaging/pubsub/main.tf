@@ -5,7 +5,11 @@ locals {
     account = "overload-party-pubsub-push-account"
     card    = "overload-party-pubsub-push-card"
     news    = "overload-party-pubsub-push-news"
+    shop    = "overload-party-pubsub-push-shop"
   }
+
+  # Google Play RTDN の配信元は全 Google Cloud プロジェクトで共通のシステム SA のため var 化しない。
+  google_play_rtdn_publisher_sa = "google-play-developer-notifications@system.gserviceaccount.com"
 
   # 購読プロセスを常駐させずに済ませるため、購読は Cloud Run の受け口への push 配信にする。
   topics = {
@@ -99,6 +103,17 @@ locals {
           sub_name      = "news-article-collected-news-sub"
           sa_email      = null
           push_endpoint = "${var.news_service_url}/internal/v1/pubsub/news-article-collected"
+        }
+      }
+    }
+    google_play_rtdn = {
+      topic_name   = "google-play-rtdn"
+      publisher_sa = local.google_play_rtdn_publisher_sa
+      subscribers = {
+        shop = {
+          sub_name      = "google-play-rtdn-shop-sub"
+          sa_email      = null
+          push_endpoint = "${var.shop_service_url}/webhook/google"
         }
       }
     }
