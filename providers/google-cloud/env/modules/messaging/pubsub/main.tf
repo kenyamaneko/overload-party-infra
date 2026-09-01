@@ -8,8 +8,8 @@ locals {
     shop    = "overload-party-pubsub-push-shop"
   }
 
-  # Google Play RTDN の配信元は全 Google Cloud プロジェクトで共通のシステム SA のため var 化しない。
-  google_play_rtdn_publisher_sa = "google-play-developer-notifications@system.gserviceaccount.com"
+  # Play Store RTDN の配信元は全 Google Cloud プロジェクトで共通のシステム SA のため var 化しない。
+  play_store_rtdn_publisher_sa = "google-play-developer-notifications@system.gserviceaccount.com"
 
   # 購読プロセスを常駐させずに済ませるため、購読は Cloud Run の受け口への push 配信にする。
   topics = {
@@ -106,12 +106,13 @@ locals {
         }
       }
     }
-    google_play_rtdn = {
-      topic_name   = "google-play-rtdn"
-      publisher_sa = local.google_play_rtdn_publisher_sa
+    # Pub/Sub のトピック名・購読名は "goog" で始まる文字列を予約語として拒否するため、play-store と表記する。
+    play_store_rtdn = {
+      topic_name   = "play-store-rtdn"
+      publisher_sa = local.play_store_rtdn_publisher_sa
       subscribers = {
         shop = {
-          sub_name      = "google-play-rtdn-shop-sub"
+          sub_name      = "play-store-rtdn-shop-sub"
           sa_email      = null
           push_endpoint = "${var.shop_service_url}/webhook/google"
         }
