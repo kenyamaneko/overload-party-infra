@@ -44,6 +44,6 @@ variable "news_service_url" {
 }
 
 variable "shop_service_url" {
-  description = "shop Cloud Run サービスの URL。google-play-rtdn-shop-sub の push エンドポイント組み立てに使用"
+  description = "shop Cloud Run サービスの URL。play-store-rtdn-shop-sub の push エンドポイント組み立てに使用"
   type        = string
 }
