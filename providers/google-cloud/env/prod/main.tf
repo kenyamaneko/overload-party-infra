@@ -53,7 +53,7 @@ module "env" {
   # 接続プールの上限を持たないため、この値だけでは決まらない。
   cloud_run_max_instance_count = 1
   database_name                = "overload_party"
-  deletion_protection          = true
+  deletion_protection          = false
   ipv4_enabled                 = false
 
   firestore_location = "asia-northeast1"
