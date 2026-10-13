@@ -134,6 +134,9 @@ locals {
   ]...)
 
   pull_subscriptions = { for k, v in local.subscriptions : k => v if v.push_endpoint == null }
+
+  # 購読の無い DLQ トピックは回ってきたメッセージを保持しないため、契約状態を決める Google Play の通知は DLQ に購読を付けて保持する。
+  retained_dead_letter_topic_keys = toset(["play_store_rtdn"])
 }
 
 # ──────────────────────────────────────────────
@@ -208,6 +211,19 @@ resource "google_pubsub_subscription" "main" {
         audience              = each.value.push_audience
       }
     }
+  }
+}
+
+resource "google_pubsub_subscription" "dead_letter_retention" {
+  for_each = local.retained_dead_letter_topic_keys
+
+  project = var.project_id
+  name    = "${local.topics[each.key].topic_name}-dlq-sub"
+  topic   = google_pubsub_topic.dlq[each.key].name
+
+  # terraform がライフサイクル所有者のため、トラフィックの無い subscription の自動削除を無効化する
+  expiration_policy {
+    ttl = ""
   }
 }
 
