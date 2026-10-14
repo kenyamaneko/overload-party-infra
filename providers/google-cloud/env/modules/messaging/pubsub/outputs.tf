@@ -13,6 +13,11 @@ output "push_audience" {
   value       = local.push_audiences["gateway"]
 }
 
+output "play_store_rtdn_shop_subscription" {
+  description = "shop 向けの Google Play 通知の購読名。DLQ に回った通知の監視対象を実体とずらさないため出力を経由して渡す"
+  value       = google_pubsub_subscription.main["play_store_rtdn.shop"].name
+}
+
 output "shop_push_audience" {
   description = "shop 向け push 購読の OIDC トークンの audience。shop 側の検証に使う"
   value       = local.push_audiences["shop"]

@@ -162,6 +162,9 @@ locals {
   # ジョブは要求を受けず動作確認のエラーが紛れ込まないため、環境を問わず 1 件の失敗で発報する。
   job_failed_task_attempt_count_threshold = 0
 
+  # DLQ に 1 件でも回ると契約状態が実際とずれるため、環境を問わず 1 件で発報する。
+  play_store_rtdn_dead_letter_message_count_threshold = 0
+
   # 最小インスタンス数 0 でインスタンスが常時停止しており、計測される応答時間にコールド
   # スタートが含まれるため、秒単位の余裕を持たせる。
   standard_latency_p95_threshold_ms = 20000
@@ -234,6 +237,17 @@ module "job_monitoring" {
   job_name                            = each.value
   notification_channel_ids            = module.monitoring.notification_channel_ids
   failed_task_attempt_count_threshold = local.job_failed_task_attempt_count_threshold
+}
+
+# 購読名はジョブ監視と同じく、購読を定義するモジュールの output から受け取り、
+# 監視対象が実体とずれないようにする。
+module "play_store_rtdn_dead_letter_monitoring" {
+  source = "./foundation/dead-letter-monitoring"
+
+  project_id                          = var.project_id
+  subscription_name                   = module.pubsub.play_store_rtdn_shop_subscription
+  notification_channel_ids            = module.monitoring.notification_channel_ids
+  dead_letter_message_count_threshold = local.play_store_rtdn_dead_letter_message_count_threshold
 }
 
 # インスタンス名はジョブ監視と同じく、インスタンスを定義するモジュールの output から
